@@ -1,0 +1,56 @@
+<hlm-sidebar-wrapper class="h-dvh">
+  <hlm-sidebar collapsible="offcanvas" class="border-e">
+    <hlm-sidebar-header class="gap-3 px-3 py-3.5">
+      <a routerLink="/chat" class="flex items-center gap-2.5 rounded-md px-1 py-0.5">
+        <span
+          class="bg-primary text-primary-foreground grid size-8 shrink-0 place-items-center rounded-lg"
+        >
+          <ng-icon name="lucideSparkles" class="text-base" />
+        </span>
+        <span class="grid min-w-0 leading-tight">
+          <span class="truncate text-sm font-semibold tracking-tight">iChat</span>
+          <span class="text-muted-foreground truncate text-xs">Retrieval-augmented</span>
+        </span>
+      </a>
+
+      <button hlmBtn size="sm" class="w-full justify-start gap-2" (click)="startNewChat()">
+        <ng-icon name="lucideMessageCirclePlus" class="text-base" />
+        New chat
+      </button>
+    </hlm-sidebar-header>
+
+    <hlm-sidebar-content class="gap-0">
+      <app-conversation-list
+        [groups]="conversationGroups()"
+        [loading]="store.loadingConversations()"
+        [emptyMessage]="conversationsEmptyMessage()"
+        (select)="closeOnMobile()"
+      />
+
+      <app-workspace-nav [items]="navItems" (navigate)="closeOnMobile()" />
+    </hlm-sidebar-content>
+
+    <hlm-sidebar-footer class="flex-row items-center justify-between gap-2 px-3 py-3">
+      <!-- The only honest signal the shell has is whether the last list call came back. -->
+      @if (store.conversationsError()) {
+        <span class="text-destructive flex min-w-0 items-center gap-1.5 text-xs">
+          <ng-icon name="lucideCircleAlert" class="shrink-0 text-sm" />
+          <span class="truncate">IChat API unreachable</span>
+        </span>
+      } @else {
+        <span class="text-muted-foreground truncate text-xs">Connected to IChat API</span>
+      }
+      <app-theme-toggle
+        [preference]="theme.preference()"
+        [resolved]="theme.resolved()"
+        (preferenceChange)="theme.set($event)"
+      />
+    </hlm-sidebar-footer>
+
+    <button hlmSidebarRail></button>
+  </hlm-sidebar>
+
+  <main hlmSidebarInset class="flex min-w-0 flex-1 flex-col overflow-hidden">
+    <router-outlet />
+  </main>
+</hlm-sidebar-wrapper>
