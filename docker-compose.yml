@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: ichat
+      POSTGRES_USER: ichat
+      POSTGRES_PASSWORD: ichat
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ichat -d ichat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Development}
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=ichat;Username=ichat;Password=ichat
+      - Database__AutoMigrate=${Database__AutoMigrate:-true}
+      - Storage__RootPath=/data/documents
+      - Ai__Chat__Provider=${Ai__Chat__Provider:-OpenAI}
+      - Ai__Chat__Model=${Ai__Chat__Model:-gpt-4o-mini}
+      - Ai__Chat__Endpoint=${Ai__Chat__Endpoint:-}
+      # Bỏ trống = không gửi temperature đi; model dòng reasoning trả 400 nếu nhận giá trị khác mặc định.
+      - Ai__Chat__Temperature=${Ai__Chat__Temperature:-}
+      - Ai__Chat__ApiKey=${Ai__Chat__ApiKey:-}
+      - Ai__UtilityChat__Provider=${Ai__UtilityChat__Provider:-}
+      - Ai__UtilityChat__Model=${Ai__UtilityChat__Model:-gpt-4o-mini}
+      - Ai__UtilityChat__Endpoint=${Ai__UtilityChat__Endpoint:-}
+      - Ai__Embedding__Provider=${Ai__Embedding__Provider:-OpenAI}
+      - Ai__Embedding__Model=${Ai__Embedding__Model:-text-embedding-3-small}
+      - Ai__Embedding__Endpoint=${Ai__Embedding__Endpoint:-}
+      - Ai__Embedding__ApiKey=${Ai__Embedding__ApiKey:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - documents:/data/documents
+
+  ui:
+    build:
+      context: ./ui
+    depends_on:
+      # Start order only: nginx resolves the "api" name at startup, so the container
+      # has to exist. It does not need to be ready — an early request just 502s.
+      - api
+    ports:
+      - "4200:80"
+    healthcheck:
+      # 127.0.0.1, not localhost: busybox wget tries ::1 first and nginx only has
+      # `listen 80`, so the name form is refused before it ever reaches IPv4.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  pgdata:
+  documents:
