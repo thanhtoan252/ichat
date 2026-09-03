@@ -1,0 +1,255 @@
+[
+  {
+    "tag": "fact",
+    "question": "Timeout mac dinh cho mot luot chat la bao nhieu giay",
+    "expectedAnswerContains": [
+      "120 giay"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Utility chat dung timeout bao nhieu",
+    "expectedAnswerContains": [
+      "15 giay"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Cong mac dinh cua api la gi",
+    "expectedAnswerContains": [
+      "8080"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "He thong yeu cau phien ban PostgreSQL nao",
+    "expectedAnswerContains": [
+      "PostgreSQL 17"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "pgvector can phien ban toi thieu bao nhieu",
+    "expectedAnswerContains": [
+      "0.8"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Bo nho toi thieu cho service api",
+    "expectedAnswerContains": [
+      "512 MB"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Kich thuoc chunk muc tieu la bao nhieu token",
+    "expectedAnswerContains": [
+      "800 token"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Chong lan giua hai chunk ke nhau la bao nhieu token",
+    "expectedAnswerContains": [
+      "120 token"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Chunk nho hon bao nhieu token thi bi gop",
+    "expectedAnswerContains": [
+      "80 token"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Hang so k cua RRF la bao nhieu",
+    "expectedAnswerContains": [
+      "k bang 60"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Lambda cua MMR la bao nhieu",
+    "expectedAnswerContains": [
+      "lambda bang 0.7"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Moi tai lieu duoc gop toi da bao nhieu chunk",
+    "expectedAnswerContains": [
+      "toi da 3 chunk"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "text-embedding-3-small cho bao nhieu chieu",
+    "expectedAnswerContains": [
+      "1536 chieu"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "text-embedding-3-large cho bao nhieu chieu",
+    "expectedAnswerContains": [
+      "3072 chieu"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "nomic-embed-text cho bao nhieu chieu",
+    "expectedAnswerContains": [
+      "768 chieu"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Cong mac dinh cua api khi chay docker la bao nhieu",
+    "expectedAnswerContains": [
+      "8080"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Nhung nha cung cap LLM nao duoc ho tro",
+    "expectedAnswerContains": [
+      "OpenAI, Azure OpenAI, Anthropic"
+    ]
+  },
+  {
+    "tag": "fact",
+    "question": "Nha cung cap nao bat buoc phai co Endpoint",
+    "expectedAnswerContains": [
+      "Azure OpenAI"
+    ]
+  },
+  {
+    "tag": "multi-hop",
+    "question": "Tai sao khong the dung Anthropic cho embedding",
+    "expectedAnswerContains": [
+      "Anthropic khong cung cap API embedding"
+    ]
+  },
+  {
+    "tag": "multi-hop",
+    "question": "He thong chay bao nhieu nhanh tim kiem va la nhung nhanh nao",
+    "expectedAnswerContains": [
+      "ba nhanh tim kiem song song"
+    ]
+  },
+  {
+    "tag": "multi-hop",
+    "question": "Nhanh trigram co bat san khong va bat bang cach nao",
+    "expectedAnswerContains": [
+      "TrigramCandidates"
+    ]
+  },
+  {
+    "tag": "multi-hop",
+    "question": "RRF co phai la rerank khong",
+    "expectedAnswerContains": [
+      "RRF la buoc fusion chu khong phai rerank"
+    ]
+  },
+  {
+    "tag": "multi-hop",
+    "question": "Chunk lan can co tro thanh citation khong",
+    "expectedAnswerContains": [
+      "khong tro thanh citation"
+    ]
+  },
+  {
+    "tag": "multi-hop",
+    "question": "Chuyen gi xay ra neu doi model embedding ma khong reindex",
+    "expectedAnswerContains": [
+      "hai khong gian khac nhau"
+    ]
+  },
+  {
+    "tag": "followup",
+    "question": "Vay no o dau",
+    "expectedAnswerContains": [
+      "appsettings.json"
+    ],
+    "history": [
+      {
+        "role": "user",
+        "content": "Toi muon cau hinh bien moi truong cho ung dung"
+      },
+      {
+        "role": "assistant",
+        "content": "Ban co the cau hinh bien moi truong cho ung dung trong file cau hinh."
+      }
+    ]
+  },
+  {
+    "tag": "followup",
+    "question": "Con cai kia thi sao",
+    "expectedAnswerContains": [
+      "3072 chieu"
+    ],
+    "history": [
+      {
+        "role": "user",
+        "content": "text-embedding-3-small cho bao nhieu chieu vector"
+      },
+      {
+        "role": "assistant",
+        "content": "Model text-embedding-3-small cho 1536 chieu."
+      }
+    ]
+  },
+  {
+    "tag": "followup",
+    "question": "Gia tri cua no la bao nhieu",
+    "expectedAnswerContains": [
+      "k bang 60"
+    ],
+    "history": [
+      {
+        "role": "user",
+        "content": "He thong tron ket qua ba nhanh bang thuat toan gi"
+      },
+      {
+        "role": "assistant",
+        "content": "He thong dung Reciprocal Rank Fusion de tron ket qua."
+      }
+    ]
+  },
+  {
+    "tag": "followup",
+    "question": "The con no thi can gi",
+    "expectedAnswerContains": [
+      "bat buoc phai co Endpoint"
+    ],
+    "history": [
+      {
+        "role": "user",
+        "content": "Azure OpenAI co can API key khong"
+      },
+      {
+        "role": "assistant",
+        "content": "Azure OpenAI bat buoc phai co API key."
+      }
+    ]
+  },
+  {
+    "tag": "followup",
+    "question": "Bao nhieu chunk truoc va sau",
+    "expectedAnswerContains": [
+      "1 chunk truoc va 1 chunk sau"
+    ],
+    "history": [
+      {
+        "role": "user",
+        "content": "He thong co mo rong chunk lan can khong"
+      },
+      {
+        "role": "assistant",
+        "content": "Co, voi moi chunk duoc chon he thong nap them chunk lan can."
+      }
+    ]
+  }
+]

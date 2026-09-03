@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/IChat.Infrastructure/IChat.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="golden-set.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="corpus/**" CopyToOutputDirectory="PreserveNewest" LinkBase="corpus" />
+  </ItemGroup>
+
+</Project>
