@@ -1,0 +1,66 @@
+<app-documents-toolbar (reindex)="reindexRequested.set(true)" (filesPicked)="upload($event)" />
+
+<div
+  class="min-h-0 flex-1 overflow-y-auto"
+  [class.bg-primary/5]="dragging()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  <div class="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
+    <app-documents-stats [stats]="stats()" />
+
+    @if (store.upload(); as upload) {
+      <app-upload-progress class="mt-4" [upload]="upload" />
+    }
+
+    <app-status-filter
+      class="mt-5"
+      [filters]="filters"
+      [active]="store.filter()"
+      (filterChange)="store.setFilter($event)"
+    />
+
+    <div class="bg-card mt-3 overflow-hidden rounded-xl border">
+      @if (store.loading() && store.allDocuments().length === 0) {
+        <div class="space-y-3 p-4">
+          @for (row of skeletonRows; track row) {
+            <hlm-skeleton class="h-9 w-full" />
+          }
+        </div>
+      } @else if (store.allDocuments().length === 0) {
+        <app-documents-empty />
+      } @else if (store.documents().length === 0) {
+        <!-- An empty corpus and an empty filter are different problems. -->
+        <p class="text-muted-foreground px-6 py-12 text-center text-xs">
+          No document is {{ store.filter() | lowercase }} right now.
+        </p>
+      } @else {
+        <!-- Six columns do not fit a phone; scrolling them beats clipping the delete
+             button and the ingestion status off the edge of the card. -->
+        <div class="overflow-x-auto">
+          <app-documents-table [documents]="store.documents()" (remove)="confirmRemove($event)" />
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<app-confirm-dialog
+  [open]="pendingRemoval() !== null"
+  title="Delete this document?"
+  [description]="removalDescription()"
+  confirmLabel="Delete"
+  variant="destructive"
+  (confirmed)="remove()"
+  (cancelled)="pendingRemoval.set(null)"
+/>
+
+<app-confirm-dialog
+  [open]="reindexRequested()"
+  title="Reindex the whole knowledge base?"
+  [description]="reindexDescription()"
+  confirmLabel="Reindex all"
+  (confirmed)="reindex()"
+  (cancelled)="reindexRequested.set(false)"
+/>

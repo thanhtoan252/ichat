@@ -1,0 +1,32 @@
+<div class="flex items-start gap-3">
+  <span class="bg-muted mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg">
+    <ng-icon name="lucideBrain" class="text-muted-foreground text-sm" />
+  </span>
+
+  <div class="min-w-0 flex-1">
+    <div class="flex flex-wrap items-center gap-2">
+      <p class="text-sm font-medium">{{ row().title }}</p>
+      <span hlmBadge class="gap-1.5" [variant]="row().info.available ? 'secondary' : 'destructive'">
+        <ng-icon [name]="row().info.available ? 'lucideCircleCheck' : 'lucideCircleAlert'" />
+        {{ row().info.available ? 'available' : 'unavailable' }}
+      </span>
+    </div>
+
+    <p class="text-muted-foreground mt-0.5 text-xs">{{ row().explanation }}</p>
+
+    <dl class="mt-2.5 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+      <div class="flex gap-1.5">
+        <dt class="text-muted-foreground">Provider</dt>
+        <dd class="font-medium">{{ row().info.provider }}</dd>
+      </div>
+      <div class="flex gap-1.5">
+        <dt class="text-muted-foreground">Model</dt>
+        <dd class="font-mono">{{ row().info.model }}</dd>
+      </div>
+    </dl>
+
+    @if (row().info.reason) {
+      <p class="text-destructive mt-2 text-xs">{{ row().info.reason }}</p>
+    }
+  </div>
+</div>

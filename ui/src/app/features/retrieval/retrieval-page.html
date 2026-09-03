@@ -1,0 +1,40 @@
+<app-retrieval-toolbar
+  [elapsedMs]="store.result()?.elapsedMs ?? null"
+  [degraded]="store.result()?.degraded ?? false"
+/>
+
+<div class="min-h-0 flex-1 overflow-y-auto">
+  <div class="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
+    <app-retrieval-form
+      [criteria]="store.criteria()"
+      [running]="store.running()"
+      [canRun]="store.canRun()"
+      (criteriaChange)="store.setCriteria($event)"
+      (run)="store.run()"
+    />
+
+    @if (store.running()) {
+      <div class="mt-4 space-y-2">
+        @for (row of skeletonRows; track row) {
+          <hlm-skeleton class="h-14 w-full rounded-xl" />
+        }
+      </div>
+    } @else if (store.result(); as result) {
+      @if (result.rewrittenQuery && result.rewrittenQuery !== result.originalQuery) {
+        <div class="bg-card mt-4 rounded-xl border p-3.5">
+          <p class="text-muted-foreground text-xs">Rewritten for retrieval</p>
+          <p class="mt-1 text-sm">{{ result.rewrittenQuery }}</p>
+        </div>
+      }
+
+      <app-stage-list
+        class="mt-4"
+        [stages]="store.orderedStages()"
+        [expanded]="store.expanded()"
+        (toggle)="store.toggleStage($event)"
+      />
+    } @else {
+      <app-retrieval-empty class="mt-4" />
+    }
+  </div>
+</div>

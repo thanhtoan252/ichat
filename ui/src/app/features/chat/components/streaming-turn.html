@@ -1,0 +1,53 @@
+<div hlmMessage align="end" class="py-1.5">
+  <div hlmMessageContent>
+    <div hlmBubble align="end" variant="tinted">
+      <div hlmBubbleContent class="whitespace-pre-wrap">{{ turn().question }}</div>
+    </div>
+  </div>
+</div>
+
+@if (turn().failure; as failure) {
+  <div hlmAlert variant="destructive" class="mt-3">
+    <ng-icon name="lucideCircleAlert" />
+    <h4 hlmAlertTitle>The answer could not be produced</h4>
+    <p hlmAlertDescription>{{ failure }}</p>
+    <div class="mt-3 flex gap-2">
+      <button hlmBtn variant="outline" size="sm" class="gap-2" (click)="retry.emit()">
+        <ng-icon name="lucideRefreshCw" class="text-sm" />
+        Try again
+      </button>
+      <button hlmBtn variant="ghost" size="sm" (click)="dismiss.emit()">Dismiss</button>
+    </div>
+  </div>
+} @else {
+  <div hlmMessage class="py-1.5">
+    <div hlmMessageContent>
+      @if (stageLabel(); as stage) {
+        <div hlmMarker class="mb-1">
+          <span hlmMarkerIcon>
+            <ng-icon name="lucideLoaderCircle" class="animate-spin" />
+          </span>
+          <span hlmMarkerContent>{{ stage }}</span>
+          @if (sourceCount() > 0) {
+            <span class="text-muted-foreground/70">· {{ sourceCount() }} sources in context</span>
+          }
+        </div>
+      }
+
+      @if (turn().text.length > 0) {
+        <app-answer-content
+          [content]="turn().text"
+          [sourceCount]="sourceCount()"
+          [streaming]="true"
+          (citationClick)="citationClick.emit($event)"
+        />
+      } @else {
+        <div class="mt-1 space-y-2" aria-hidden="true">
+          <hlm-skeleton class="h-3.5 w-[72%]" />
+          <hlm-skeleton class="h-3.5 w-[88%]" />
+          <hlm-skeleton class="h-3.5 w-[54%]" />
+        </div>
+      }
+    </div>
+  </div>
+}

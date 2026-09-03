@@ -1,0 +1,7 @@
+<div class="flex items-center justify-between text-xs">
+  <span class="truncate font-medium">{{ upload().fileName }}</span>
+  <span class="text-muted-foreground tabular-nums">{{ upload().percent }}%</span>
+</div>
+<hlm-progress class="mt-2 h-1.5" [value]="upload().percent">
+  <hlm-progress-indicator />
+</hlm-progress>

@@ -1,0 +1,13 @@
+@for (option of options; track option.value) {
+  <button
+    hlmBtn
+    size="sm"
+    class="gap-2"
+    [variant]="preference() === option.value ? 'secondary' : 'outline'"
+    [attr.aria-pressed]="preference() === option.value"
+    (click)="preferenceChange.emit(option.value)"
+  >
+    <ng-icon [name]="option.icon" class="text-sm" />
+    {{ option.label }}
+  </button>
+}

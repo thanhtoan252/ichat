@@ -1,0 +1,8 @@
+@for (stat of stats(); track stat.label) {
+  <div class="bg-card rounded-xl border p-3.5">
+    <p class="text-muted-foreground text-xs">{{ stat.label }}</p>
+    <p class="mt-1 text-2xl font-semibold tabular-nums tracking-tight">
+      {{ stat.value | number }}
+    </p>
+  </div>
+}
