@@ -3,7 +3,7 @@ import type {
   SearchRequestDto,
   SearchResultDto,
   SearchStageDto,
-} from '@app/shared/data-access/retrieval.dto';
+} from '@app/core/api/retrieval.dto';
 import type { SearchCriteria, SearchHit, SearchResult, SearchStage } from '../model/search.model';
 
 export function toSearchRequestDto(criteria: SearchCriteria): SearchRequestDto {

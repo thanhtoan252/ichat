@@ -2,7 +2,7 @@ import { HttpEventType } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
 import { DocumentsApi } from './documents.api';
-import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
+import { RetrievalApi } from '@app/core/api/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
 import { toDocumentSummary, toReindexResult } from './documents.mapper';
 import type { DocumentSummary, StatusFilter, UploadProgress } from '../model/document.model';

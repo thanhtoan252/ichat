@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
-import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
+import { RetrievalApi } from '@app/core/api/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
 import { toProviderCatalog } from './providers.mapper';
 import type { ProviderCatalog, ProviderRow } from '../model/provider.model';

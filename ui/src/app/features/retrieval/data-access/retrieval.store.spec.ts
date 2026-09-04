@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
-import type { SearchResultDto, SearchStageDto } from '@app/shared/data-access/retrieval.dto';
+import { RetrievalApi } from '@app/core/api/retrieval.api';
+import type { SearchResultDto, SearchStageDto } from '@app/core/api/retrieval.dto';
 import { RetrievalStore } from './retrieval.store';
 
 vi.mock('ngx-sonner', () => ({

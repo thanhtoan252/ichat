@@ -1,4 +1,4 @@
-import type { ReindexResultDto } from '@app/shared/data-access/retrieval.dto';
+import type { ReindexResultDto } from '@app/core/api/retrieval.dto';
 import type {
   DocumentChunkDto,
   DocumentStatusDto,
