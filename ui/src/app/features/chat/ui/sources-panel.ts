@@ -32,7 +32,7 @@ import type { SourceKind, SourceView } from '../model/chat-stream.model';
   host: {
     class:
       'bg-card fixed inset-y-0 end-0 z-40 flex h-full w-[22rem] max-w-[85vw] shrink-0 flex-col border-s shadow-xl lg:static lg:z-auto lg:max-w-none lg:shadow-none xl:w-[26rem]',
-    '(keydown.escape)': 'close.emit()',
+    '(keydown.escape)': 'closeRequested.emit()',
     tabindex: '-1',
   },
   templateUrl: './sources-panel.html',
@@ -49,7 +49,7 @@ export class SourcesPanel {
   /** Marker index to reveal, set when the reader clicks a citation chip. */
   public readonly highlighted = input<number | null>(null);
 
-  public readonly close = output<void>();
+  public readonly closeRequested = output<void>();
 
   /** Set only for a thread read back from history, where the API stored no passages. */
   protected readonly passagesUnavailable = computed(

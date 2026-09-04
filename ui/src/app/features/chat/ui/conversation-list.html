@@ -34,7 +34,7 @@
                 [routerLink]="item.link"
                 [isActive]="link.isActive"
                 [tooltip]="item.title"
-                (click)="select.emit(item.id)"
+                (click)="conversationSelect.emit(item.id)"
               >
                 <ng-icon name="lucideMessageSquare" />
                 <span class="min-w-0 flex-1 truncate">{{ item.title }}</span>

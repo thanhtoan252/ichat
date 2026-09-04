@@ -24,7 +24,7 @@
         [groups]="conversationGroups()"
         [loading]="store.loadingConversations()"
         [emptyMessage]="conversationsEmptyMessage()"
-        (select)="closeOnMobile()"
+        (conversationSelect)="closeOnMobile()"
       />
 
       <app-workspace-nav [items]="navItems" (navigate)="closeOnMobile()" />

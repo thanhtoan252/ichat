@@ -66,6 +66,6 @@
     [sources]="store.visibleSources()"
     [kind]="store.visibleSourceKind()"
     [highlighted]="highlightedSource()"
-    (close)="sourcesOpen.set(false)"
+    (closeRequested)="sourcesOpen.set(false)"
   />
 }

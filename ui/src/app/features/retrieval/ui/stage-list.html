@@ -4,7 +4,7 @@
       type="button"
       class="hover:bg-muted/40 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start transition-colors"
       [attr.aria-expanded]="expanded() === stage.name"
-      (click)="toggle.emit(stage.name)"
+      (click)="stageToggle.emit(stage.name)"
     >
       <ng-icon
         name="lucideChevronDown"

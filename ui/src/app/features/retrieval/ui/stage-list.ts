@@ -21,5 +21,5 @@ export class StageList {
   public readonly stages = input.required<readonly SearchStage[]>();
   public readonly expanded = input<string | null>(null);
 
-  public readonly toggle = output<string>();
+  public readonly stageToggle = output<string>();
 }

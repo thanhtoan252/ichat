@@ -41,7 +41,7 @@ export class ConversationList {
   public readonly loading = input(false);
   public readonly emptyMessage = input('No conversations yet. Ask something to start one.');
 
-  public readonly select = output<string>();
+  public readonly conversationSelect = output<string>();
 
   protected readonly skeletonRows = [0, 1, 2, 3, 4];
 }

@@ -31,7 +31,7 @@
         class="mt-4"
         [stages]="store.orderedStages()"
         [expanded]="store.expanded()"
-        (toggle)="store.toggleStage($event)"
+        (stageToggle)="store.toggleStage($event)"
       />
     } @else {
       <app-retrieval-empty class="mt-4" />
