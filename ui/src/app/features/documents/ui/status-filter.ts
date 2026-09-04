@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { HlmButton } from '@app/ui/button';
-import type { StatusFilter } from '../documents.store';
+import type { StatusFilter } from '../model/document.model';
 
 /** Presentational. Ingestion-status filter pills. */
 @Component({

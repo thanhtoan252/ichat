@@ -1,14 +1,14 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
-import { API_BASE_URL, API_V1 } from './api.config';
+import { API_BASE_URL, API_V1 } from '@app/core/api/api.config';
 import type { PagedResponse } from '@app/shared/util/api-envelope.model';
 import type {
-  DocumentChunk,
-  DocumentStatus,
-  DocumentSummary,
-  UploadDocumentResult,
-} from './api.models';
+  DocumentChunkDto,
+  DocumentStatusDto,
+  DocumentSummaryDto,
+  UploadDocumentResultDto,
+} from './documents.dto';
 
 @Injectable({ providedIn: 'root' })
 export class DocumentsApi {
@@ -19,25 +19,31 @@ export class DocumentsApi {
     return `${this.baseUrl}${API_V1}/documents`;
   }
 
-  list(page = 1, pageSize = 20, status?: DocumentStatus): Promise<PagedResponse<DocumentSummary>> {
+  list(
+    page = 1,
+    pageSize = 20,
+    status?: DocumentStatusDto,
+  ): Promise<PagedResponse<DocumentSummaryDto>> {
     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
 
     if (status) {
       params = params.set('status', status);
     }
 
-    return firstValueFrom(this.http.get<PagedResponse<DocumentSummary>>(this.root, { params }));
+    return firstValueFrom(
+      this.http.get<PagedResponse<DocumentSummaryDto>>(this.root, { params }),
+    );
   }
 
-  byId(id: string): Promise<DocumentSummary> {
-    return firstValueFrom(this.http.get<DocumentSummary>(`${this.root}/${id}`));
+  byId(id: string): Promise<DocumentSummaryDto> {
+    return firstValueFrom(this.http.get<DocumentSummaryDto>(`${this.root}/${id}`));
   }
 
-  chunks(id: string, page = 1, pageSize = 50): Promise<PagedResponse<DocumentChunk>> {
+  chunks(id: string, page = 1, pageSize = 50): Promise<PagedResponse<DocumentChunkDto>> {
     const params = new HttpParams().set('page', page).set('pageSize', pageSize);
 
     return firstValueFrom(
-      this.http.get<PagedResponse<DocumentChunk>>(`${this.root}/${id}/chunks`, { params }),
+      this.http.get<PagedResponse<DocumentChunkDto>>(`${this.root}/${id}/chunks`, { params }),
     );
   }
 
@@ -45,7 +51,7 @@ export class DocumentsApi {
   upload(
     file: File,
     title?: string,
-  ): Observable<import('@angular/common/http').HttpEvent<UploadDocumentResult>> {
+  ): Observable<import('@angular/common/http').HttpEvent<UploadDocumentResultDto>> {
     const form = new FormData();
     form.append('file', file, file.name);
 
@@ -53,7 +59,7 @@ export class DocumentsApi {
       form.append('title', title);
     }
 
-    return this.http.post<UploadDocumentResult>(this.root, form, {
+    return this.http.post<UploadDocumentResultDto>(this.root, form, {
       reportProgress: true,
       observe: 'events',
     });

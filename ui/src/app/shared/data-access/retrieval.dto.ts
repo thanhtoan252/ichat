@@ -66,3 +66,9 @@ export interface SearchResultDto {
   readonly degraded: boolean;
   readonly elapsedMs: number;
 }
+
+// ----------------------------------------------------------------------- admin
+
+export interface ReindexResultDto {
+  readonly documentCount: number;
+}

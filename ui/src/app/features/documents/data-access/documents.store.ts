@@ -1,17 +1,11 @@
 import { HttpEventType } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
-import { DocumentsApi } from '@app/core/api/documents.api';
+import { DocumentsApi } from './documents.api';
 import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import type { DocumentStatus, DocumentSummary } from '@app/core/api/api.models';
-
-export type StatusFilter = DocumentStatus | 'All';
-
-export interface UploadProgress {
-  readonly fileName: string;
-  readonly percent: number;
-}
+import { toDocumentSummary, toReindexResult } from './documents.mapper';
+import type { DocumentSummary, StatusFilter, UploadProgress } from '../model/document.model';
 
 /** Ingestion is asynchronous, so the list is re-polled while anything is still working. */
 const POLL_INTERVAL_MS = 3000;
@@ -69,7 +63,7 @@ export class DocumentsStore {
     try {
       const page = await this.api.list(1, 100);
 
-      this.documentsSignal.set(page.items);
+      this.documentsSignal.set(page.items.map(toDocumentSummary));
       this.totalSignal.set(page.totalCount);
       this.schedulePoll();
     } catch (error) {
@@ -129,7 +123,7 @@ export class DocumentsStore {
 
   public async reindexAll(): Promise<void> {
     try {
-      const result = await this.admin.reindex();
+      const result = toReindexResult(await this.admin.reindex());
 
       toast.success(`Reindexing ${result.documentCount} documents.`);
       await this.load();

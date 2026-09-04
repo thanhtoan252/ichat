@@ -18,9 +18,7 @@ export const routes: Routes = [
       },
       {
         path: 'documents',
-        title: 'Knowledge base · iChat',
-        loadComponent: () =>
-          import('./features/documents/documents-page').then((m) => m.DocumentsPage),
+        loadChildren: () => import('./features/documents').then((m) => m.DOCUMENTS_ROUTES),
       },
       {
         path: 'retrieval',
