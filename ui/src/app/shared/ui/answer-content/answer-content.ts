@@ -7,7 +7,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { renderAnswer } from './markdown';
+import { renderAnswer } from '@app/shared/util/markdown';
 
 /**
  * Renders one assistant answer and reports clicks on its `[n]` citation chips.

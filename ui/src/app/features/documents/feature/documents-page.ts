@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { LowerCasePipe } from '@angular/common';
 import { HlmSkeleton } from '@app/ui/skeleton';
-import { ConfirmDialog } from '@app/shared/confirm/confirm-dialog';
+import { ConfirmDialog } from '@app/shared/ui/confirm-dialog/confirm-dialog';
 import { DocumentsEmpty } from '../ui/documents-empty';
 import { DocumentsStats, type DocumentStat } from '../ui/documents-stats';
 import { DocumentsTable } from '../ui/documents-table';

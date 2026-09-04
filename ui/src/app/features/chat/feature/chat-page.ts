@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { toast } from 'ngx-sonner';
 import { HlmButton } from '@app/ui/button';
-import { StickToBottom } from '@app/shared/scroll/stick-to-bottom';
+import { StickToBottom } from '@app/shared/ui/stick-to-bottom/stick-to-bottom';
 import { ChatComposer } from '../ui/chat-composer';
 import { ChatEmptyState } from '../ui/chat-empty-state';
 import { ChatHeader } from '../ui/chat-header';

@@ -7,7 +7,7 @@ import { HlmButton } from '@app/ui/button';
 import { HlmMessage, HlmMessageContent, HlmMessageFooter } from '@app/ui/message';
 import { HlmTooltip } from '@app/ui/tooltip';
 import type { ChatMessage } from '../model/chat.model';
-import { AnswerContent } from '@app/shared/markdown/answer-content';
+import { AnswerContent } from '@app/shared/ui/answer-content/answer-content';
 
 /**
  * Presentational. One persisted message. User turns render as a bubble; assistant turns render as
