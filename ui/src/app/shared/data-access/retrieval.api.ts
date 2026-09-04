@@ -2,7 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL, API_V1 } from '@app/core/api/api.config';
-import type { ProviderCatalog, ReindexResult, SearchRequest, SearchResult } from '@app/core/api/api.models';
+import type { ReindexResult, SearchRequest, SearchResult } from '@app/core/api/api.models';
+import type { ProviderCatalogDto } from './retrieval.dto';
 
 /** `/search` and the admin endpoints: the retrieval-debugging surface of the API. */
 @Injectable({ providedIn: 'root' })
@@ -14,8 +15,10 @@ export class RetrievalApi {
     return firstValueFrom(this.http.post<SearchResult>(`${this.baseUrl}${API_V1}/search`, request));
   }
 
-  providers(): Promise<ProviderCatalog> {
-    return firstValueFrom(this.http.get<ProviderCatalog>(`${this.baseUrl}${API_V1}/providers`));
+  providers(): Promise<ProviderCatalogDto> {
+    return firstValueFrom(
+      this.http.get<ProviderCatalogDto>(`${this.baseUrl}${API_V1}/providers`),
+    );
   }
 
   reindex(): Promise<ReindexResult> {

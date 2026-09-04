@@ -2,14 +2,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
 import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import type { ProviderCatalog, ProviderInfo } from '@app/core/api/api.models';
-
-/** One provider card as the view renders it. */
-export interface ProviderRow {
-  readonly title: string;
-  readonly explanation: string;
-  readonly info: ProviderInfo;
-}
+import { toProviderCatalog } from './providers.mapper';
+import type { ProviderCatalog, ProviderRow } from '../model/provider.model';
 
 @Injectable()
 export class SettingsStore {
@@ -55,7 +49,7 @@ export class SettingsStore {
     this.loadingSignal.set(true);
 
     try {
-      this.catalogSignal.set(await this.api.providers());
+      this.catalogSignal.set(toProviderCatalog(await this.api.providers()));
     } catch (error) {
       toast.error(describeHttpError(error, 'Could not read the provider catalog.'));
     } finally {

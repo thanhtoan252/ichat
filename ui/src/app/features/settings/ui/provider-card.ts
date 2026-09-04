@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { HlmBadge } from '@app/ui/badge';
-import type { ProviderRow } from '../settings.store';
+import type { ProviderRow } from '../model/provider.model';
 
 /** Presentational. One configured provider. */
 @Component({
