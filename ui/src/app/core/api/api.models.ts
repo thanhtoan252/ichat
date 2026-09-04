@@ -201,7 +201,7 @@ export interface SearchStage {
 export interface SearchResult {
   readonly originalQuery: string;
   readonly rewrittenQuery: string;
-  /** Keyed by stage name: rewrite, vector, fulltext, fusion, mmr, neighbors, rerank, final. */
+  /** Keyed by stage name: vector, fulltext, trigram, fused, afterMmr, reranked, final. */
   readonly stages: Readonly<Record<string, SearchStage>>;
   readonly degraded: boolean;
   readonly elapsedMs: number;

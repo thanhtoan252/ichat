@@ -25,16 +25,21 @@ const DEFAULT_CRITERIA: SearchCriteria = {
   rerank: true,
 };
 
-/** The order the pipeline actually runs in; `stages` is a map, so the UI supplies the order. */
+/**
+ * The order the pipeline actually runs in; `stages` is a map, so the UI supplies the order.
+ *
+ * These names are a published contract with the API — they must match
+ * `RetrievalStageName` on the backend exactly. A name that does not match still renders,
+ * because unknown stages are appended at the end, which is precisely how a typo here hides:
+ * nothing breaks, the stages just stop reading in pipeline order.
+ */
 const STAGE_ORDER: readonly string[] = [
-  'rewrite',
   'vector',
   'fulltext',
   'trigram',
-  'fusion',
-  'mmr',
-  'neighbors',
-  'rerank',
+  'fused',
+  'afterMmr',
+  'reranked',
   'final',
 ];
 
