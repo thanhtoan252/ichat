@@ -5,7 +5,7 @@ import { HlmBadge, type BadgeVariants } from '@app/ui/badge';
 import { HlmButton } from '@app/ui/button';
 import { HlmTable, HlmTBody, HlmTd, HlmTh, HlmTHead, HlmTr } from '@app/ui/table';
 import { HlmTooltip } from '@app/ui/tooltip';
-import type { DocumentStatus, DocumentSummary } from '../model/document.model';
+import type { DocumentStatus, DocumentSummary } from '../data/document.model';
 
 interface StatusStyle {
   readonly variant: NonNullable<BadgeVariants['variant']>;

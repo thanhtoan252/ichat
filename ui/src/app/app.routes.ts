@@ -12,7 +12,8 @@ export const routes: Routes = [
       },
       {
         path: 'documents',
-        loadChildren: () => import('./features/documents').then((m) => m.DOCUMENTS_ROUTES),
+        loadChildren: () =>
+          import('./features/documents/documents.routes').then((m) => m.DOCUMENTS_ROUTES),
       },
       {
         path: 'retrieval',

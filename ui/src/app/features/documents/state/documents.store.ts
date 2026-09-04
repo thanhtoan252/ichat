@@ -1,11 +1,11 @@
 import { HttpEventType } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
-import { DocumentsApi } from './documents.api';
+import { DocumentsApi } from '../data/documents.api';
 import { RetrievalApi } from '@app/core/api/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import { toDocumentSummary, toReindexResult } from './documents.mapper';
-import type { DocumentSummary, StatusFilter, UploadProgress } from '../model/document.model';
+import { toDocumentSummary, toReindexResult } from '../data/documents.mapper';
+import type { DocumentSummary, StatusFilter, UploadProgress } from '../data/document.model';
 
 /** Ingestion is asynchronous, so the list is re-polled while anything is still working. */
 const POLL_INTERVAL_MS = 3000;

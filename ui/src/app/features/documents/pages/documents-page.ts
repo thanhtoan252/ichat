@@ -9,14 +9,14 @@ import {
 import { LowerCasePipe } from '@angular/common';
 import { HlmSkeleton } from '@app/ui/skeleton';
 import { ConfirmDialog } from '@app/shared/ui/confirm-dialog/confirm-dialog';
-import { DocumentsEmpty } from '../ui/documents-empty';
-import { DocumentsStats, type DocumentStat } from '../ui/documents-stats';
-import { DocumentsTable } from '../ui/documents-table';
-import { DocumentsToolbar } from '../ui/documents-toolbar';
-import { StatusFilterBar } from '../ui/status-filter';
-import { UploadProgressBar } from '../ui/upload-progress';
-import { DocumentsStore } from '../data-access/documents.store';
-import type { DocumentSummary, StatusFilter } from '../model/document.model';
+import { DocumentsEmpty } from '../components/documents-empty';
+import { DocumentsStats, type DocumentStat } from '../components/documents-stats';
+import { DocumentsTable } from '../components/documents-table';
+import { DocumentsToolbar } from '../components/documents-toolbar';
+import { StatusFilterBar } from '../components/status-filter';
+import { UploadProgressBar } from '../components/upload-progress';
+import { DocumentsStore } from '../state/documents.store';
+import type { DocumentSummary, StatusFilter } from '../data/document.model';
 
 const FILTERS: readonly StatusFilter[] = ['All', 'Indexed', 'Processing', 'Pending', 'Failed'];
 

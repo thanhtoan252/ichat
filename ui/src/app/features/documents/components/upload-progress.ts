@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HlmProgress, HlmProgressIndicator } from '@app/ui/progress';
-import type { UploadProgress } from '../model/document.model';
+import type { UploadProgress } from '../data/document.model';
 
 /** Presentational. The bar shown while a file is being sent. */
 @Component({

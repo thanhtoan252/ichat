@@ -11,7 +11,7 @@ import type {
   DocumentSummary,
   ReindexResult,
   UploadDocumentResult,
-} from '../model/document.model';
+} from './document.model';
 
 function toDocumentStatus(dto: DocumentStatusDto): DocumentStatus {
   return dto;
