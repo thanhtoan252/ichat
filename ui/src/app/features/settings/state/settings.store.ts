@@ -2,8 +2,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
 import { RetrievalApi } from '@app/core/api/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import { toProviderCatalog } from './providers.mapper';
-import type { ProviderCatalog, ProviderRow } from '../model/provider.model';
+import { toProviderCatalog } from '../data/providers.mapper';
+import type { ProviderCatalog, ProviderRow } from '../data/provider.model';
 
 @Injectable()
 export class SettingsStore {

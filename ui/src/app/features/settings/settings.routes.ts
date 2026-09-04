@@ -4,6 +4,6 @@ export const SETTINGS_ROUTES: Routes = [
   {
     path: '',
     title: 'Settings · iChat',
-    loadComponent: () => import('./settings-page').then((m) => m.SettingsPage),
+    loadComponent: () => import('./pages/settings-page').then((m) => m.SettingsPage),
   },
 ];

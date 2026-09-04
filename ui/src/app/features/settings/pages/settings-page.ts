@@ -3,10 +3,10 @@ import { HlmBadge } from '@app/ui/badge';
 import { HlmSeparator } from '@app/ui/separator';
 import { HlmSkeleton } from '@app/ui/skeleton';
 import { ThemeService } from '@app/core/theme/theme.service';
-import { ProviderCard } from '../ui/provider-card';
-import { SettingsToolbar } from '../ui/settings-toolbar';
-import { ThemePicker } from '../ui/theme-picker';
-import { SettingsStore } from '../data-access/settings.store';
+import { ProviderCard } from '../components/provider-card';
+import { SettingsToolbar } from '../components/settings-toolbar';
+import { ThemePicker } from '../components/theme-picker';
+import { SettingsStore } from '../state/settings.store';
 
 /**
  * Container. Reports the active providers and owns the local appearance setting.

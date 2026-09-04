@@ -1,5 +1,5 @@
 import type { ProviderCatalogDto, ProviderInfoDto } from '@app/core/api/retrieval.dto';
-import type { ProviderCatalog, ProviderInfo } from '../model/provider.model';
+import type { ProviderCatalog, ProviderInfo } from './provider.model';
 
 export function toProviderInfo(dto: ProviderInfoDto): ProviderInfo {
   return {
