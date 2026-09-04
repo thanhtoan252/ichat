@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { HlmBadge } from '@app/ui/badge';
-import type { SearchStage } from '../model/search.model';
+import type { SearchStage } from '../data/search.model';
 
 /**
  * Presentational. One expandable row per pipeline stage.

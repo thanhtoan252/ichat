@@ -2,8 +2,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
 import { RetrievalApi } from '@app/core/api/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import { toSearchRequestDto, toSearchResult } from './search.mapper';
-import type { SearchCriteria, SearchResult, SearchStage } from '../model/search.model';
+import { toSearchRequestDto, toSearchResult } from '../data/search.mapper';
+import type { SearchCriteria, SearchResult, SearchStage } from '../data/search.model';
 
 const DEFAULT_CRITERIA: SearchCriteria = {
   query: '',

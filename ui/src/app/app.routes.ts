@@ -16,7 +16,8 @@ export const routes: Routes = [
       },
       {
         path: 'retrieval',
-        loadChildren: () => import('./features/retrieval').then((m) => m.RETRIEVAL_ROUTES),
+        loadChildren: () =>
+          import('./features/retrieval/retrieval.routes').then((m) => m.RETRIEVAL_ROUTES),
       },
       {
         path: 'settings',

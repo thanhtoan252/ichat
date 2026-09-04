@@ -4,7 +4,7 @@ import type {
   SearchResultDto,
   SearchStageDto,
 } from '@app/core/api/retrieval.dto';
-import type { SearchCriteria, SearchHit, SearchResult, SearchStage } from '../model/search.model';
+import type { SearchCriteria, SearchHit, SearchResult, SearchStage } from './search.model';
 
 export function toSearchRequestDto(criteria: SearchCriteria): SearchRequestDto {
   return {

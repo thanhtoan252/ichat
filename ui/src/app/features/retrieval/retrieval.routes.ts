@@ -4,6 +4,6 @@ export const RETRIEVAL_ROUTES: Routes = [
   {
     path: '',
     title: 'Retrieval lab · iChat',
-    loadComponent: () => import('./retrieval-page').then((m) => m.RetrievalPage),
+    loadComponent: () => import('./pages/retrieval-page').then((m) => m.RetrievalPage),
   },
 ];
