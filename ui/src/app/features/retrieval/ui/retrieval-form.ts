@@ -1,5 +1,6 @@
-import { FormsModule } from '@angular/forms';
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, effect, input, output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgIcon } from '@ng-icons/core';
 import { HlmButton } from '@app/ui/button';
 import { HlmInput } from '@app/ui/input';
@@ -31,7 +32,7 @@ const TOGGLES: readonly Toggle[] = [
  */
 @Component({
   selector: 'app-retrieval-form',
-  imports: [FormsModule, NgIcon, HlmButton, HlmInput, HlmSeparator, HlmSwitch, HlmTooltip],
+  imports: [ReactiveFormsModule, NgIcon, HlmButton, HlmInput, HlmSeparator, HlmSwitch, HlmTooltip],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'bg-card block rounded-xl border p-4' },
   templateUrl: './retrieval-form.html',
@@ -46,6 +47,32 @@ export class RetrievalForm {
 
   protected readonly modes = MODES;
   protected readonly toggles = TOGGLES;
+
+  /**
+   * Only `query` and `topK` are plain text inputs; mode and the toggles are already
+   * input/output-bound custom controls, so they stay on the existing `patch` path.
+   */
+  protected readonly form = new FormGroup({
+    query: new FormControl('', { nonNullable: true }),
+    topK: new FormControl(8, { nonNullable: true }),
+  });
+
+  constructor() {
+    // Keeps the form in step with `criteria` when it changes from outside (a reset, a
+    // loaded search). `emitEvent: false` stops that write from bouncing straight back
+    // out through `valueChanges` below as a patch of itself.
+    effect(() => {
+      const criteria = this.criteria();
+
+      this.form.setValue({ query: criteria.query, topK: criteria.topK }, { emitEvent: false });
+    });
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      const value = this.form.getRawValue();
+
+      this.patch({ query: value.query, topK: value.topK });
+    });
+  }
 
   protected isEnabled(key: ToggleKey): boolean {
     return this.criteria()[key];
