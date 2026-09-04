@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
-import type { SearchResult, SearchStage } from '@app/core/api/api.models';
+import type { SearchResultDto, SearchStageDto } from '@app/shared/data-access/retrieval.dto';
 import { RetrievalStore } from './retrieval.store';
 
 vi.mock('ngx-sonner', () => ({
@@ -13,7 +13,7 @@ vi.mock('ngx-sonner', () => ({
   }),
 }));
 
-function stage(name: string): SearchStage {
+function stage(name: string): SearchStageDto {
   return { name, count: 1, elapsedMs: 1, tsQuery: null, top: [] };
 }
 
@@ -21,7 +21,7 @@ function stage(name: string): SearchStage {
  * The keys the API actually emits (`RetrievalStageName` on the backend), deliberately
  * given to the store out of order — `stages` is a map, so arrival order proves nothing.
  */
-function result(...names: readonly string[]): SearchResult {
+function result(...names: readonly string[]): SearchResultDto {
   return {
     originalQuery: 'q',
     rewrittenQuery: 'q',
@@ -31,7 +31,7 @@ function result(...names: readonly string[]): SearchResult {
   };
 }
 
-function makeStore(search: SearchResult): RetrievalStore {
+function makeStore(search: SearchResultDto): RetrievalStore {
   TestBed.configureTestingModule({
     providers: [
       RetrievalStore,

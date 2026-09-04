@@ -6,8 +6,7 @@ import { HlmInput } from '@app/ui/input';
 import { HlmSeparator } from '@app/ui/separator';
 import { HlmSwitch } from '@app/ui/switch';
 import { HlmTooltip } from '@app/ui/tooltip';
-import type { SearchMode } from '@app/core/api/api.models';
-import type { SearchCriteria } from '../retrieval.store';
+import type { SearchCriteria, SearchMode } from '../model/search.model';
 
 const MODES: readonly SearchMode[] = ['Hybrid', 'Vector', 'FullText', 'Trigram'];
 

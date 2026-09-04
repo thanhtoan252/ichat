@@ -142,52 +142,6 @@ export interface UploadDocumentResult {
   readonly status: DocumentStatus;
 }
 
-// ---------------------------------------------------------------------- search
-
-export type SearchMode = 'Hybrid' | 'Vector' | 'FullText' | 'Trigram';
-
-export interface SearchHistoryTurn {
-  readonly role: string;
-  readonly content: string;
-}
-
-export interface SearchRequest {
-  readonly query: string;
-  readonly topK?: number;
-  readonly mode?: SearchMode;
-  readonly rewrite?: boolean;
-  readonly history?: readonly SearchHistoryTurn[];
-  readonly applyMmr?: boolean;
-  readonly expandNeighbors?: boolean;
-  readonly rerank?: boolean;
-}
-
-export interface SearchHit {
-  readonly chunkId: string;
-  readonly documentId: string;
-  readonly headingPath: string | null;
-  readonly snippet: string;
-  readonly chunkIndex: number;
-  readonly score: number;
-}
-
-export interface SearchStage {
-  readonly name: string;
-  readonly count: number;
-  readonly elapsedMs: number;
-  readonly tsQuery: string | null;
-  readonly top: readonly SearchHit[];
-}
-
-export interface SearchResult {
-  readonly originalQuery: string;
-  readonly rewrittenQuery: string;
-  /** Keyed by stage name: vector, fulltext, trigram, fused, afterMmr, reranked, final. */
-  readonly stages: Readonly<Record<string, SearchStage>>;
-  readonly degraded: boolean;
-  readonly elapsedMs: number;
-}
-
 // ----------------------------------------------------------------------- admin
 
 export interface ReindexResult {

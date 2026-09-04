@@ -24,9 +24,7 @@ export const routes: Routes = [
       },
       {
         path: 'retrieval',
-        title: 'Retrieval lab · iChat',
-        loadComponent: () =>
-          import('./features/retrieval/retrieval-page').then((m) => m.RetrievalPage),
+        loadChildren: () => import('./features/retrieval').then((m) => m.RETRIEVAL_ROUTES),
       },
       {
         path: 'settings',

@@ -2,18 +2,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
 import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import type { SearchMode, SearchResult, SearchStage } from '@app/core/api/api.models';
-
-/** Everything the form controls, as one value so the form has a single input/output pair. */
-export interface SearchCriteria {
-  readonly query: string;
-  readonly topK: number;
-  readonly mode: SearchMode;
-  readonly rewrite: boolean;
-  readonly applyMmr: boolean;
-  readonly expandNeighbors: boolean;
-  readonly rerank: boolean;
-}
+import { toSearchRequestDto, toSearchResult } from './search.mapper';
+import type { SearchCriteria, SearchResult, SearchStage } from '../model/search.model';
 
 const DEFAULT_CRITERIA: SearchCriteria = {
   query: '',
@@ -91,9 +81,10 @@ export class RetrievalStore {
     this.runningSignal.set(true);
 
     try {
-      const result = await this.api.search({ ...criteria, query: criteria.query.trim() });
+      const request = toSearchRequestDto({ ...criteria, query: criteria.query.trim() });
+      const result = await this.api.search(request);
 
-      this.resultSignal.set(result);
+      this.resultSignal.set(toSearchResult(result));
       // The final stage is what actually reached the model, so open that one first.
       this.expandedSignal.set('final');
     } catch (error) {

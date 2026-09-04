@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { HlmSkeleton } from '@app/ui/skeleton';
-import { RetrievalEmpty } from './components/retrieval-empty';
-import { RetrievalForm } from './components/retrieval-form';
-import { RetrievalToolbar } from './components/retrieval-toolbar';
-import { StageList } from './components/stage-list';
-import { RetrievalStore } from './retrieval.store';
+import { RetrievalEmpty } from '../ui/retrieval-empty';
+import { RetrievalForm } from '../ui/retrieval-form';
+import { RetrievalToolbar } from '../ui/retrieval-toolbar';
+import { StageList } from '../ui/stage-list';
+import { RetrievalStore } from '../data-access/retrieval.store';
 
 /**
  * Container. A window onto the hybrid search pipeline.
