@@ -43,7 +43,7 @@ POST /documents ─► Channel<Guid> ─► DocumentIngestionWorker
               parse (docx│pdf│md│txt) ─┤─► HeadingAwareChunker ─► batched embedding ─► pgvector
                                        │
 Question ─► rewrite ─► ┌─ vector ─┐
-                       ├─ full-text ┼─► RRF ─► MMR ─► neighbors ─► rerank ─► context ─► LLM ─► SSE
+                       ├─ full-text ┼─► RRF ─► MMR ─► rerank ─► neighbors ─► context ─► LLM ─► SSE
                        └─ trigram ─┘
 ```
 
@@ -190,8 +190,8 @@ dotnet test --filter "Category!=RequiresApiKey"   # skip contract tests that nee
 Integration tests use Testcontainers with the `pgvector/pgvector:pg17` image and a deterministic
 fake AI client, so they need no API key and make no network calls.
 
-There is also a Postman/Newman suite that runs against a live API — 37 requests, 202 assertions,
-covering ingestion, search, SSE and the error cases:
+There is also a Postman/Newman suite that runs against a live API — 35 requests covering
+ingestion, search, SSE and the error cases:
 
 ```bash
 npx newman run postman/IChat.postman_collection.json \
