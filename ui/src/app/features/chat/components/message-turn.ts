@@ -6,7 +6,7 @@ import { HlmBubble, HlmBubbleContent } from '@app/ui/bubble';
 import { HlmButton } from '@app/ui/button';
 import { HlmMessage, HlmMessageContent, HlmMessageFooter } from '@app/ui/message';
 import { HlmTooltip } from '@app/ui/tooltip';
-import type { ChatMessage } from '../model/chat.model';
+import type { ChatMessage } from '../data/chat.model';
 import { AnswerContent } from '@app/shared/ui/answer-content/answer-content';
 
 /**

@@ -3,11 +3,11 @@ import { provideRouter } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { render, screen } from '@testing-library/angular';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversationsApi } from '../data-access/conversations.api';
+import { ConversationsApi } from '../data/conversations.api';
 import { provideSpartanHlm } from '@app/ui/utils';
-import type { ChatMessageDto } from '../data-access/conversations.dto';
+import type { ChatMessageDto } from '../data/conversations.dto';
 import { APP_ICONS } from '@app/core/icons';
-import { ChatStore } from '../data-access/chat.store';
+import { ChatStore } from '../state/chat.store';
 import { ChatPage } from './chat-page';
 
 /**

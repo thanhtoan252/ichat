@@ -8,7 +8,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'chat' },
       {
         path: 'chat',
-        loadChildren: () => import('./features/chat').then((m) => m.CHAT_ROUTES),
+        loadChildren: () => import('./features/chat/chat.routes').then((m) => m.CHAT_ROUTES),
       },
       {
         path: 'documents',

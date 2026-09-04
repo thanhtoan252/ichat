@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversationsApi } from './conversations.api';
-import type { ConversationDto } from './conversations.dto';
-import type { ChatStreamEvent } from '../model/chat-stream.model';
+import { ConversationsApi } from '../data/conversations.api';
+import type { ConversationDto } from '../data/conversations.dto';
+import type { ChatStreamEvent } from '../data/chat-stream.model';
 import { ChatStore } from './chat.store';
 
 vi.mock('ngx-sonner', () => ({

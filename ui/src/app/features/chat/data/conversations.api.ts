@@ -17,7 +17,7 @@ import type {
   ErrorPayload,
   SourcesPayload,
   StatusPayload,
-} from '../model/chat-stream.model';
+} from './chat-stream.model';
 
 @Injectable({ providedIn: 'root' })
 export class ConversationsApi {

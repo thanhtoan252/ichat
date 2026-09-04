@@ -1,10 +1,10 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
-import { ConversationsApi } from './conversations.api';
+import { ConversationsApi } from '../data/conversations.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import { toChatMessage, toConversation } from './conversations.mapper';
-import type { ChatMessage, Citation, Conversation } from '../model/chat.model';
-import type { DonePayload, PendingTurn, SourceKind, SourceView } from '../model/chat-stream.model';
+import { toChatMessage, toConversation } from '../data/conversations.mapper';
+import type { ChatMessage, Citation, Conversation } from '../data/chat.model';
+import type { DonePayload, PendingTurn, SourceKind, SourceView } from '../data/chat-stream.model';
 
 interface SourceSelection {
   readonly sources: readonly SourceView[];

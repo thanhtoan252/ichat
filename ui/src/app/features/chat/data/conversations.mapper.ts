@@ -1,5 +1,5 @@
 import type { ChatMessageDto, CitationDto, ConversationDto, MessageRoleDto } from './conversations.dto';
-import type { ChatMessage, Citation, Conversation, MessageRole } from '../model/chat.model';
+import type { ChatMessage, Citation, Conversation, MessageRole } from './chat.model';
 
 function toMessageRole(dto: MessageRoleDto): MessageRole {
   return dto;

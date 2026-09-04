@@ -7,7 +7,7 @@ import { HlmMarker, HlmMarkerContent, HlmMarkerIcon } from '@app/ui/marker';
 import { HlmMessage, HlmMessageContent } from '@app/ui/message';
 import { HlmSkeleton } from '@app/ui/skeleton';
 import { AnswerContent } from '@app/shared/ui/answer-content/answer-content';
-import type { PendingTurn } from '../model/chat-stream.model';
+import type { PendingTurn } from '../data/chat-stream.model';
 
 const STAGE_LABELS: Readonly<Record<string, string>> = {
   rewriting: 'Rewriting the question',

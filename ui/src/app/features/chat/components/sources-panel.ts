@@ -12,7 +12,7 @@ import { NgIcon } from '@ng-icons/core';
 import { HlmBadge } from '@app/ui/badge';
 import { HlmButton } from '@app/ui/button';
 import { HlmSeparator } from '@app/ui/separator';
-import type { SourceKind, SourceView } from '../model/chat-stream.model';
+import type { SourceKind, SourceView } from '../data/chat-stream.model';
 
 /**
  * The context the answer was built from, one card per source.

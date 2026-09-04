@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Conversation } from '../model/chat.model';
+import type { Conversation } from './chat.model';
 import { groupConversations } from './conversation-groups';
 
 const NOW = new Date('2026-08-29T12:00:00Z').getTime();
