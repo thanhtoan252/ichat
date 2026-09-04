@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RetrievalApi } from '@app/core/api/retrieval.api';
+import { RetrievalApi } from '@app/shared/data-access/retrieval.api';
 import type { SearchResult, SearchStage } from '@app/core/api/api.models';
 import { RetrievalStore } from './retrieval.store';
 

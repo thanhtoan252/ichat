@@ -2,11 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
 import { API_BASE_URL, API_V1 } from './api.config';
+import type { PagedResponse } from '@app/shared/util/api-envelope.model';
 import type {
   DocumentChunk,
   DocumentStatus,
   DocumentSummary,
-  PagedResponse,
   UploadDocumentResult,
 } from './api.models';
 

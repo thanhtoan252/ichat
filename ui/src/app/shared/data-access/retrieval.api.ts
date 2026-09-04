@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { API_BASE_URL, API_V1 } from './api.config';
-import type { ProviderCatalog, ReindexResult, SearchRequest, SearchResult } from './api.models';
+import { API_BASE_URL, API_V1 } from '@app/core/api/api.config';
+import type { ProviderCatalog, ReindexResult, SearchRequest, SearchResult } from '@app/core/api/api.models';
 
 /** `/search` and the admin endpoints: the retrieval-debugging surface of the API. */
 @Injectable({ providedIn: 'root' })

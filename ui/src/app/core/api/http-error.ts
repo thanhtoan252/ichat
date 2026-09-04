@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import type { ProblemDetails } from './api.models';
+import type { ProblemDetails } from '@app/shared/util/api-envelope.model';
 
 /**
  * Turns any transport failure into one sentence fit for a toast.

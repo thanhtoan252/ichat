@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL, API_V1 } from './api.config';
+import type { PagedResponse } from '@app/shared/util/api-envelope.model';
 import type {
   ChatMessage,
   ChatStreamEvent,
@@ -10,7 +11,6 @@ import type {
   DeltaPayload,
   DonePayload,
   ErrorPayload,
-  PagedResponse,
   SendMessageRequest,
   SourcesPayload,
   StatusPayload,
