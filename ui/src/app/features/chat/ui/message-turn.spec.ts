@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { render, screen } from '@testing-library/angular';
 import { describe, expect, it } from 'vitest';
-import type { ChatMessage } from '@app/core/api/api.models';
+import type { ChatMessage } from '../model/chat.model';
 import { MessageTurn } from './message-turn';
 
 /**

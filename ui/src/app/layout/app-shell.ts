@@ -13,9 +13,7 @@ import {
   HlmSidebarWrapper,
 } from '@app/ui/sidebar';
 import { ThemeService } from '@app/core/theme/theme.service';
-import { ConversationList } from '../features/chat/components/conversation-list';
-import { groupConversations } from '../features/chat/conversation-groups';
-import { ChatStore } from '../features/chat/chat.store';
+import { ChatStore, ConversationList, groupConversations } from '@app/features/chat';
 import { ThemeToggle } from './components/theme-toggle';
 import { WorkspaceNav, type NavItem } from './components/workspace-nav';
 

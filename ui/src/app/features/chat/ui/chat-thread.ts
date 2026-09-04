@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { HlmSkeleton } from '@app/ui/skeleton';
-import type { ChatMessage } from '@app/core/api/api.models';
-import type { PendingTurn } from '../chat.store';
+import type { ChatMessage } from '../model/chat.model';
+import type { PendingTurn } from '../model/chat-stream.model';
 import { MessageTurn } from './message-turn';
 import { StreamingTurn } from './streaming-turn';
 

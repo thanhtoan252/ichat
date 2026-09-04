@@ -1,21 +1,23 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { API_BASE_URL, API_V1 } from './api.config';
+import { API_BASE_URL, API_V1 } from '@app/core/api/api.config';
+import { readSse } from '@app/core/api/sse';
 import type { PagedResponse } from '@app/shared/util/api-envelope.model';
 import type {
-  ChatMessage,
+  ChatMessageDto,
+  ConversationDto,
+  CreateConversationRequestDto,
+  SendMessageRequestDto,
+} from './conversations.dto';
+import type {
   ChatStreamEvent,
-  Conversation,
-  CreateConversationRequest,
   DeltaPayload,
   DonePayload,
   ErrorPayload,
-  SendMessageRequest,
   SourcesPayload,
   StatusPayload,
-} from './api.models';
-import { readSse } from './sse';
+} from '../model/chat-stream.model';
 
 @Injectable({ providedIn: 'root' })
 export class ConversationsApi {
@@ -26,25 +28,29 @@ export class ConversationsApi {
     return `${this.baseUrl}${API_V1}/conversations`;
   }
 
-  list(page = 1, pageSize = 20, userId?: string): Promise<PagedResponse<Conversation>> {
+  list(page = 1, pageSize = 20, userId?: string): Promise<PagedResponse<ConversationDto>> {
     let params = new HttpParams().set('page', page).set('pageSize', pageSize);
 
     if (userId) {
       params = params.set('userId', userId);
     }
 
-    return firstValueFrom(this.http.get<PagedResponse<Conversation>>(this.root, { params }));
+    return firstValueFrom(this.http.get<PagedResponse<ConversationDto>>(this.root, { params }));
   }
 
-  create(request: CreateConversationRequest = {}): Promise<Conversation> {
-    return firstValueFrom(this.http.post<Conversation>(this.root, request));
+  create(request: CreateConversationRequestDto = {}): Promise<ConversationDto> {
+    return firstValueFrom(this.http.post<ConversationDto>(this.root, request));
   }
 
-  messages(conversationId: string, page = 1, pageSize = 50): Promise<PagedResponse<ChatMessage>> {
+  messages(
+    conversationId: string,
+    page = 1,
+    pageSize = 50,
+  ): Promise<PagedResponse<ChatMessageDto>> {
     const params = new HttpParams().set('page', page).set('pageSize', pageSize);
 
     return firstValueFrom(
-      this.http.get<PagedResponse<ChatMessage>>(`${this.root}/${conversationId}/messages`, {
+      this.http.get<PagedResponse<ChatMessageDto>>(`${this.root}/${conversationId}/messages`, {
         params,
       }),
     );
@@ -57,7 +63,7 @@ export class ConversationsApi {
    */
   async *streamAnswer(
     conversationId: string,
-    request: SendMessageRequest,
+    request: SendMessageRequestDto,
     signal: AbortSignal,
   ): AsyncGenerator<ChatStreamEvent, void, undefined> {
     const frames = readSse(`${this.root}/${conversationId}/messages`, {

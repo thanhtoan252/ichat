@@ -1,4 +1,4 @@
-import type { Conversation } from '@app/core/api/api.models';
+import type { Conversation } from '../model/chat.model';
 
 /** One row as the sidebar renders it — no domain object reaches the presentational layer. */
 export interface ConversationListItem {

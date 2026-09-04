@@ -10,7 +10,7 @@ import {
   HlmSidebarMenuItem,
   HlmSidebarMenuSkeleton,
 } from '@app/ui/sidebar';
-import type { ConversationGroup } from '../conversation-groups';
+import type { ConversationGroup } from '../util/conversation-groups';
 
 /**
  * Presentational. Renders the grouped conversation history.

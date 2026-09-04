@@ -13,12 +13,12 @@ import { NgIcon } from '@ng-icons/core';
 import { toast } from 'ngx-sonner';
 import { HlmButton } from '@app/ui/button';
 import { StickToBottom } from '@app/shared/scroll/stick-to-bottom';
-import { ChatComposer } from './components/chat-composer';
-import { ChatEmptyState } from './components/chat-empty-state';
-import { ChatHeader } from './components/chat-header';
-import { ChatThread } from './components/chat-thread';
-import { SourcesPanel } from './components/sources-panel';
-import { ChatStore } from './chat.store';
+import { ChatComposer } from '../ui/chat-composer';
+import { ChatEmptyState } from '../ui/chat-empty-state';
+import { ChatHeader } from '../ui/chat-header';
+import { ChatThread } from '../ui/chat-thread';
+import { SourcesPanel } from '../ui/sources-panel';
+import { ChatStore } from '../data-access/chat.store';
 
 /** Matches the `lg` breakpoint the sources panel docks at. */
 function matchesWideViewport(): boolean {

@@ -3,11 +3,11 @@ import { provideRouter } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { render, screen } from '@testing-library/angular';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversationsApi } from '@app/core/api/conversations.api';
+import { ConversationsApi } from '../data-access/conversations.api';
 import { provideSpartanHlm } from '@app/ui/utils';
-import type { ChatMessage } from '@app/core/api/api.models';
+import type { ChatMessageDto } from '../data-access/conversations.dto';
 import { APP_ICONS } from '@app/core/icons';
-import { ChatStore } from './chat.store';
+import { ChatStore } from '../data-access/chat.store';
 import { ChatPage } from './chat-page';
 
 /**
@@ -40,7 +40,7 @@ vi.mock('ngx-sonner', () => ({
   }),
 }));
 
-const MESSAGES: ChatMessage[] = [
+const MESSAGES: ChatMessageDto[] = [
   {
     id: 'm-1',
     role: 'User',
@@ -57,7 +57,7 @@ const MESSAGES: ChatMessage[] = [
   },
 ];
 
-function page(items: readonly ChatMessage[] = []) {
+function page(items: readonly ChatMessageDto[] = []) {
   return { items, page: 1, pageSize: 200, totalCount: items.length };
 }
 

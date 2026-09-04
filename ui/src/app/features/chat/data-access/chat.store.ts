@@ -1,31 +1,14 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { toast } from 'ngx-sonner';
-import { ConversationsApi } from '@app/core/api/conversations.api';
+import { ConversationsApi } from './conversations.api';
 import { describeHttpError } from '@app/core/api/http-error';
-import type {
-  ChatMessage,
-  ChatStage,
-  Citation,
-  Conversation,
-  DonePayload,
-  SourceView,
-} from '@app/core/api/api.models';
-
-/** Whether the panel holds the live retrieved context or citations read back from history. */
-export type SourceKind = 'retrieved' | 'cited';
+import { toChatMessage, toConversation } from './conversations.mapper';
+import type { ChatMessage, Citation, Conversation } from '../model/chat.model';
+import type { DonePayload, PendingTurn, SourceKind, SourceView } from '../model/chat-stream.model';
 
 interface SourceSelection {
   readonly sources: readonly SourceView[];
   readonly kind: SourceKind;
-}
-
-/** The turn currently in flight. Absent between turns. */
-export interface PendingTurn {
-  readonly question: string;
-  readonly stage: ChatStage | string | null;
-  readonly sources: readonly SourceView[];
-  readonly text: string;
-  readonly failure: string | null;
 }
 
 const EMPTY_TURN: PendingTurn = {
@@ -150,7 +133,7 @@ export class ChatStore {
     try {
       const page = await this.api.list(1, 50);
 
-      this.conversationsSignal.set(page.items);
+      this.conversationsSignal.set(page.items.map(toConversation));
       this.conversationsErrorSignal.set(null);
     } catch (error) {
       const message = describeHttpError(error, 'Could not load conversations.');
@@ -181,7 +164,7 @@ export class ChatStore {
 
       // Guard against a fast second click: only paint what is still the active thread.
       if (this.activeIdSignal() === id) {
-        this.messagesSignal.set(page.items);
+        this.messagesSignal.set(page.items.map(toChatMessage));
       }
     } catch (error) {
       toast.error(describeHttpError(error, 'Could not load this conversation.'));
@@ -209,7 +192,7 @@ export class ChatStore {
 
   public async startConversation(title?: string): Promise<Conversation | null> {
     try {
-      const conversation = await this.api.create(title ? { title } : {});
+      const conversation = toConversation(await this.api.create(title ? { title } : {}));
 
       this.conversationsSignal.update((list) => [conversation, ...list]);
       this.cancelStream();

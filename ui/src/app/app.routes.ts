@@ -8,13 +8,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'chat' },
       {
         path: 'chat',
-        title: 'Chat · iChat',
-        loadComponent: () => import('./features/chat/chat-page').then((m) => m.ChatPage),
-      },
-      {
-        path: 'chat/:conversationId',
-        title: 'Chat · iChat',
-        loadComponent: () => import('./features/chat/chat-page').then((m) => m.ChatPage),
+        loadChildren: () => import('./features/chat').then((m) => m.CHAT_ROUTES),
       },
       {
         path: 'documents',
