@@ -1,7 +1,9 @@
 <button hlmSidebarTrigger class="size-8"></button>
 <hlm-separator orientation="vertical" class="mx-1 h-5 self-center" />
 <h1 class="flex-1 truncate text-sm font-medium">Settings</h1>
-<button hlmBtn variant="ghost" size="sm" class="gap-2" (click)="refresh.emit()">
-  <ng-icon name="lucideRefreshCw" class="text-sm" />
-  Refresh
-</button>
+@if (canRefresh()) {
+  <button hlmBtn variant="ghost" size="sm" class="gap-2" (click)="refresh.emit()">
+    <ng-icon name="lucideRefreshCw" class="text-sm" />
+    Refresh
+  </button>
+}

@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL, API_V1 } from '@app/core/api/api.config';
 import { readSse } from '@app/core/api/sse';
+import { AuthStore } from '@app/core/auth/auth.store';
 import type { PagedResponse } from '@app/shared/util/api-envelope.model';
 import type {
   ChatMessageDto,
@@ -23,17 +24,15 @@ import type {
 export class ConversationsApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  private readonly auth = inject(AuthStore);
 
   private get root(): string {
     return `${this.baseUrl}${API_V1}/conversations`;
   }
 
-  list(page = 1, pageSize = 20, userId?: string): Promise<PagedResponse<ConversationDto>> {
-    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
-
-    if (userId) {
-      params = params.set('userId', userId);
-    }
+  /** No owner parameter: the API scopes the list to the caller's own token. */
+  list(page = 1, pageSize = 20): Promise<PagedResponse<ConversationDto>> {
+    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
 
     return firstValueFrom(this.http.get<PagedResponse<ConversationDto>>(this.root, { params }));
   }
@@ -60,16 +59,24 @@ export class ConversationsApi {
    * Streams one answer. Every frame the API defines is mapped onto the
    * `ChatStreamEvent` union; anything unrecognised is dropped rather than guessed at,
    * so a future event type cannot crash an older client.
+   *
+   * The bearer token is attached here by hand: `readSse` talks to `fetch` directly
+   * because the endpoint is a POST, so no `HttpClient` interceptor ever sees it.
    */
   async *streamAnswer(
     conversationId: string,
     request: SendMessageRequestDto,
     signal: AbortSignal,
   ): AsyncGenerator<ChatStreamEvent, void, undefined> {
+    const accessToken = await this.auth.getAccessToken();
+
     const frames = readSse(`${this.root}/${conversationId}/messages`, {
       method: 'POST',
       body: JSON.stringify(request),
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
       signal,
     });
 

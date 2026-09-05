@@ -47,6 +47,8 @@ const STATUS_STYLES: Readonly<Record<DocumentStatus, StatusStyle>> = {
 })
 export class DocumentsTable {
   public readonly documents = input.required<readonly DocumentSummary[]>();
+  /** Deleting is administrator-only; a reader without the role gets no dead button. */
+  public readonly canManage = input(false);
 
   public readonly remove = output<DocumentSummary>();
 

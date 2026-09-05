@@ -6,7 +6,9 @@
       <th hlmTh class="w-[10%] text-end">Chunks</th>
       <th hlmTh class="w-[10%] text-end">Size</th>
       <th hlmTh class="w-[18%]">Indexed</th>
-      <th hlmTh class="w-[8%]"></th>
+      @if (canManage()) {
+        <th hlmTh class="w-[8%]"></th>
+      }
     </tr>
   </thead>
   <tbody hlmTBody>
@@ -39,23 +41,25 @@
         <td hlmTd class="text-muted-foreground text-xs">
           {{ document.indexedAt ? (document.indexedAt | date: 'dd MMM, HH:mm') : '—' }}
         </td>
-        <td hlmTd>
-          <button
-            hlmBtn
-            variant="ghost"
-            size="icon"
-            class="text-muted-foreground hover:text-destructive size-7"
-            [attr.aria-label]="'Delete ' + document.title"
-            (click)="remove.emit(document)"
-          >
-            <ng-icon name="lucideTrash2" class="text-sm" />
-          </button>
-        </td>
+        @if (canManage()) {
+          <td hlmTd>
+            <button
+              hlmBtn
+              variant="ghost"
+              size="icon"
+              class="text-muted-foreground hover:text-destructive size-7"
+              [attr.aria-label]="'Delete ' + document.title"
+              (click)="remove.emit(document)"
+            >
+              <ng-icon name="lucideTrash2" class="text-sm" />
+            </button>
+          </td>
+        }
       </tr>
 
       @if (document.status === 'Failed' && document.errorMessage) {
         <tr hlmTr>
-          <td hlmTd colspan="6" class="text-destructive pt-0 text-xs">
+          <td hlmTd [attr.colspan]="canManage() ? 6 : 5" class="text-destructive pt-0 text-xs">
             {{ document.errorMessage }}
           </td>
         </tr>

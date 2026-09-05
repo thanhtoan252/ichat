@@ -1,7 +1,8 @@
 export interface Conversation {
   readonly id: string;
   readonly title: string;
-  readonly userId: string | null;
+  /** The owner's id. The API derives it from the token, so it is never absent. */
+  readonly userId: string;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

@@ -17,7 +17,7 @@ vi.mock('ngx-sonner', () => ({
 const CONVERSATION: ConversationDto = {
   id: 'c-1',
   title: 'New conversation',
-  userId: null,
+  userId: 'u-1',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 };

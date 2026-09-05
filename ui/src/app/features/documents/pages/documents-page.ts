@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { LowerCasePipe } from '@angular/common';
 import { HlmSkeleton } from '@app/ui/skeleton';
+import { AuthStore } from '@app/core/auth/auth.store';
 import { ConfirmDialog } from '@app/shared/ui/confirm-dialog/confirm-dialog';
 import { DocumentsEmpty } from '../components/documents-empty';
 import { DocumentsStats, type DocumentStat } from '../components/documents-stats';
@@ -41,6 +42,7 @@ const FILTERS: readonly StatusFilter[] = ['All', 'Indexed', 'Processing', 'Pendi
 })
 export class DocumentsPage {
   protected readonly store = inject(DocumentsStore);
+  protected readonly auth = inject(AuthStore);
   protected readonly filters = FILTERS;
   protected readonly skeletonRows = [0, 1, 2, 3];
   protected readonly dragging = signal(false);

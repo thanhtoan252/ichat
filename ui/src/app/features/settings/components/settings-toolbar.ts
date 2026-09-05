@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { HlmButton } from '@app/ui/button';
 import { HlmSeparator } from '@app/ui/separator';
@@ -13,5 +13,8 @@ import { HlmSidebarTrigger } from '@app/ui/sidebar';
   templateUrl: './settings-toolbar.html',
 })
 export class SettingsToolbar {
+  /** Only the provider catalog can be refreshed, and only an administrator may read it. */
+  public readonly canRefresh = input(false);
+
   public readonly refresh = output<void>();
 }

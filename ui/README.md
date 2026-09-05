@@ -22,7 +22,7 @@ Helm components are **source in this repo**, not a dependency. Edit them freely;
 
 ## Running it
 
-The API is expected on `http://localhost:5140` (its `http` launch profile). `ng serve` proxies
+The API is expected on `http://localhost:8080` (its `http` launch profile). `ng serve` proxies
 `/api` and `/health` there — see `proxy.conf.json` — so there is no CORS setup on either side.
 
 ```bash

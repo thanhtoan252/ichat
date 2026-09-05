@@ -9,7 +9,7 @@ function conversation(id: string, ageHours: number): Conversation {
   return {
     id,
     title: `Conversation ${id}`,
-    userId: null,
+    userId: 'u-1',
     createdAt: new Date(NOW - ageHours * HOUR).toISOString(),
     updatedAt: new Date(NOW - ageHours * HOUR).toISOString(),
   };

@@ -27,24 +27,26 @@
         (conversationSelect)="closeOnMobile()"
       />
 
-      <app-workspace-nav [items]="navItems" (navigate)="closeOnMobile()" />
+      <app-workspace-nav [items]="navItems()" (navigate)="closeOnMobile()" />
     </hlm-sidebar-content>
 
-    <hlm-sidebar-footer class="flex-row items-center justify-between gap-2 px-3 py-3">
+    <hlm-sidebar-footer class="gap-2 px-3 py-3">
+      <div class="flex items-center gap-2">
+        <app-account-menu [user]="auth.user()" (signOut)="signOut()" />
+        <app-theme-toggle
+          [preference]="theme.preference()"
+          [resolved]="theme.resolved()"
+          (preferenceChange)="theme.set($event)"
+        />
+      </div>
+
       <!-- The only honest signal the shell has is whether the last list call came back. -->
       @if (store.conversationsError()) {
         <span class="text-destructive flex min-w-0 items-center gap-1.5 text-xs">
           <ng-icon name="lucideCircleAlert" class="shrink-0 text-sm" />
           <span class="truncate">IChat API unreachable</span>
         </span>
-      } @else {
-        <span class="text-muted-foreground truncate text-xs">Connected to IChat API</span>
       }
-      <app-theme-toggle
-        [preference]="theme.preference()"
-        [resolved]="theme.resolved()"
-        (preferenceChange)="theme.set($event)"
-      />
     </hlm-sidebar-footer>
 
     <button hlmSidebarRail></button>

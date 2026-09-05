@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { HlmButton } from '@app/ui/button';
 import { HlmSeparator } from '@app/ui/separator';
@@ -13,6 +13,9 @@ import { HlmSidebarTrigger } from '@app/ui/sidebar';
   templateUrl: './documents-toolbar.html',
 })
 export class DocumentsToolbar {
+  /** Upload and reindex are administrator-only; the API rejects them for anyone else. */
+  public readonly canManage = input(false);
+
   public readonly reindex = output<void>();
   public readonly filesPicked = output<readonly File[]>();
 

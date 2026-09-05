@@ -12,12 +12,19 @@ import {
   HlmSidebarService,
   HlmSidebarWrapper,
 } from '@app/ui/sidebar';
+import { AuthStore } from '@app/core/auth/auth.store';
 import { ThemeService } from '@app/core/theme/theme.service';
 import { ChatStore, ConversationList, groupConversations } from '@app/features/chat';
+import { AccountMenu } from './components/account-menu';
 import { ThemeToggle } from './components/theme-toggle';
 import { WorkspaceNav, type NavItem } from './components/workspace-nav';
 
-const NAV_ITEMS: readonly NavItem[] = [
+interface GuardedNavItem extends NavItem {
+  /** Admin-only entries are hidden rather than disabled: the routes reject them anyway. */
+  readonly adminOnly?: boolean;
+}
+
+const NAV_ITEMS: readonly GuardedNavItem[] = [
   {
     link: ['/documents'],
     label: 'Knowledge base',
@@ -29,6 +36,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     label: 'Retrieval lab',
     icon: 'lucideLayers',
     hint: 'Inspect the hybrid search pipeline',
+    adminOnly: true,
   },
   {
     link: ['/settings'],
@@ -58,6 +66,7 @@ const NAV_ITEMS: readonly NavItem[] = [
     HlmSidebarInset,
     HlmSidebarRail,
     HlmSidebarWrapper,
+    AccountMenu,
     ConversationList,
     ThemeToggle,
     WorkspaceNav,
@@ -71,7 +80,11 @@ export class AppShell {
 
   protected readonly store = inject(ChatStore);
   protected readonly theme = inject(ThemeService);
-  protected readonly navItems = NAV_ITEMS;
+  protected readonly auth = inject(AuthStore);
+
+  protected readonly navItems = computed<readonly NavItem[]>(() =>
+    NAV_ITEMS.filter((item) => !item.adminOnly || this.auth.isAdmin()),
+  );
 
   protected readonly conversationGroups = computed(() =>
     groupConversations(this.store.conversations()),
@@ -90,6 +103,11 @@ export class AppShell {
     }
 
     this.closeOnMobile();
+  }
+
+  protected async signOut(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigate(['/login']);
   }
 
   protected closeOnMobile(): void {

@@ -7,7 +7,7 @@
 export interface ConversationDto {
   readonly id: string;
   readonly title: string;
-  readonly userId: string | null;
+  readonly userId: string;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -40,7 +40,6 @@ export interface ChatMessageDto {
 
 export interface CreateConversationRequestDto {
   readonly title?: string;
-  readonly userId?: string;
 }
 
 export interface SendMessageRequestDto {

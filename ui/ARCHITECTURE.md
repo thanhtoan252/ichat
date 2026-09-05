@@ -6,12 +6,14 @@ Feature-based: find anything by the feature name first, technical role second.
 src/app/
   core/                     app-wide singletons — HTTP config, error formatting, SSE
                             transport, RetrievalApi (shared by 3 features — see below),
+                            auth (session store, JWT interceptor, route guards),
                             icon registry, theme service
   shared/
     ui/                     dumb, reusable presentational components/directives
                             (includes the vendored spartan/ui component library)
     util/                   pure functions, type guards — no Angular DI
   features/
+    auth/                   the sign-in screen
     chat/
     documents/
     retrieval/
@@ -23,8 +25,49 @@ src/app/
   app.config.ts
 ```
 
-No `core/auth/` — this app has no authentication. If that ever changes, auth
-singletons and a JWT interceptor belong in `core/`.
+## Authentication
+
+`core/auth/` owns the session; `features/auth/` owns only the one screen that asks for
+it. There is no sign-up and no account-management screen: accounts come from the API's
+seeder alone (`admin`/`admin` and `user`/`user`), which is what makes this a showcase
+rather than a multi-tenant product. That split is what the boundary rules require: `app.routes.ts` may import `core`
+but never a feature's internals, and the guards are referenced from the route table.
+
+- `auth.store.ts` is the single owner of the session. The access token lives in a plain
+  private field — never a signal, never `localStorage` — so it cannot be rendered and
+  does not survive a tab close. What survives is the httpOnly refresh cookie, which the
+  store trades for a new access token on startup (`provideAppInitializer`) and again
+  whenever the current one is within 30s of expiring. Concurrent callers share one
+  in-flight refresh: the API rotates the refresh token on every use, so three parallel
+  refreshes would leave two of them holding a revoked token.
+- `auth.interceptor.ts` attaches the bearer token to everything except `/auth/*`, and
+  gives a 401 exactly one forced refresh before it gives up.
+- `auth.guard.ts` exports `authGuard` and `adminGuard`. Both wait for the bootstrap
+  refresh before deciding. An anonymous reader goes to `/login?returnUrl=…` and lands
+  back on the page they were aiming at once they sign in — `safeReturnUrl()` in
+  `login-page.ts` accepts only an in-app path, so a crafted link cannot turn the login
+  screen into an open redirector. `adminGuard` sends a signed-in non-administrator to
+  `/chat` rather than to `/login`, because asking them to sign in again would read as
+  though their password had stopped working.
+- `app.routes.ts` — **the order of the two empty-path routes is load-bearing.** The shell
+  comes first and the auth screens second; the router takes the first route whose
+  children can absorb the rest of the URL, so with auth first `/` matched it, found no
+  empty-path child, and rendered a blank page that never reached a guard.
+  `app.routes.spec.ts` pins this down against the real route table.
+
+**The chat stream is the exception.** `core/api/sse.ts` talks to `fetch` directly (the
+endpoint is a POST, which `EventSource` cannot do), so no `HttpClient` interceptor ever
+sees it. `conversations.api.ts#streamAnswer()` therefore attaches the `Authorization`
+header by hand. Any future transport that bypasses `HttpClient` has to do the same.
+
+Roles are `User` and `Admin`. Admin-only surfaces — the Retrieval lab, the provider
+catalog on Settings, and every write on the knowledge base — are hidden in the UI *and*
+rejected by the API. The hiding is a courtesy; the API is the
+control.
+
+Conversations are the one thing the role does **not** unlock: they belong to their owner
+and to no one else, an administrator included. Nothing in the UI offers to browse another
+account's threads, because the API would answer `404` if it tried.
 
 ## Inside a feature
 

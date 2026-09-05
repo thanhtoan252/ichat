@@ -41,5 +41,15 @@ export function describeHttpError(error: unknown, fallback = 'Something went wro
     }
   }
 
+  // Last resort for the two auth statuses: the API does answer them with a detail, so
+  // these only show when it could not — and "Unauthorized" tells a reader nothing.
+  if (error.status === 401) {
+    return 'Your session has expired. Sign in again.';
+  }
+
+  if (error.status === 403) {
+    return 'You do not have permission to do that.';
+  }
+
   return error.statusText || fallback;
 }

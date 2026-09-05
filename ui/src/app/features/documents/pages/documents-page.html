@@ -1,4 +1,8 @@
-<app-documents-toolbar (reindex)="reindexRequested.set(true)" (filesPicked)="upload($event)" />
+<app-documents-toolbar
+  [canManage]="auth.isAdmin()"
+  (reindex)="reindexRequested.set(true)"
+  (filesPicked)="upload($event)"
+/>
 
 <div
   class="min-h-0 flex-1 overflow-y-auto"
@@ -39,7 +43,11 @@
         <!-- Six columns do not fit a phone; scrolling them beats clipping the delete
              button and the ingestion status off the edge of the card. -->
         <div class="overflow-x-auto">
-          <app-documents-table [documents]="store.documents()" (remove)="confirmRemove($event)" />
+          <app-documents-table
+            [documents]="store.documents()"
+            [canManage]="auth.isAdmin()"
+            (remove)="confirmRemove($event)"
+          />
         </div>
       }
     </div>
