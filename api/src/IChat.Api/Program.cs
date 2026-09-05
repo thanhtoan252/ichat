@@ -2,6 +2,7 @@ using IChat.Api.Authorization;
 using IChat.Api.Endpoints;
 using IChat.Api.HealthChecks;
 using IChat.Api.Middleware;
+using IChat.Api.OpenApi;
 using IChat.Api.Security;
 using System.Security.Claims;
 using System.Text;
@@ -102,7 +103,11 @@ try
 
     builder.Services.AddProblemDetails();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-    builder.Services.AddOpenApi();
+    builder.Services.AddOpenApi(options =>
+    {
+        options.AddDocumentTransformer<JwtBearerSecuritySchemeTransformer>();
+        options.AddOperationTransformer<AuthorizationOperationTransformer>();
+    });
 
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<IChatDbContext>("postgres", tags: ["ready"])
@@ -153,7 +158,12 @@ try
     {
         app.MapOpenApi();
         // UI đọc trực tiếp document ở /openapi/v1.json, chỉ bật ở Development.
-        app.MapScalarApiReference("/docs", options => options.WithTitle("IChat API"));
+        app.MapScalarApiReference("/docs", options => options
+            .WithTitle("IChat API")
+            // Chọn sẵn ô Bearer và giữ token qua các lần F5 để thử endpoint cần đăng nhập
+            // không phải dán lại token sau mỗi lần reload.
+            .AddPreferredSecuritySchemes(JwtBearerSecuritySchemeTransformer.SchemeName)
+            .EnablePersistentAuthentication());
     }
 
     app.MapIChatEndpoints();
