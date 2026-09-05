@@ -5,11 +5,10 @@
 
 export interface PagedResponse<T> {
   readonly items: readonly T[];
-  readonly page: number;
-  readonly pageSize: number;
+  readonly offset: number;
+  readonly limit: number;
   readonly totalCount: number;
-  readonly totalPages: number;
-  readonly hasNextPage: boolean;
+  readonly hasMore: boolean;
 }
 
 /** RFC 7807 body returned by ProblemDetails and the validation problem helper. */

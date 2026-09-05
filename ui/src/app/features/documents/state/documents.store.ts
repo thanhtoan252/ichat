@@ -61,10 +61,10 @@ export class DocumentsStore {
     this.loadingSignal.set(true);
 
     try {
-      const page = await this.api.list(1, 100);
+      const result = await this.api.list(0, 100);
 
-      this.documentsSignal.set(page.items.map(toDocumentSummary));
-      this.totalSignal.set(page.totalCount);
+      this.documentsSignal.set(result.items.map(toDocumentSummary));
+      this.totalSignal.set(result.totalCount);
       this.schedulePoll();
     } catch (error) {
       toast.error(describeHttpError(error, 'Could not load documents.'));

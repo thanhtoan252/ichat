@@ -167,7 +167,7 @@ describe('ChatStore.closeConversation', () => {
     const store = makeStore({
       list: vi
         .fn()
-        .mockResolvedValue({ items: [CONVERSATION], page: 1, pageSize: 50, totalCount: 1 }),
+        .mockResolvedValue({ items: [CONVERSATION], offset: 0, limit: 50, totalCount: 1, hasMore: false }),
       create: vi.fn(),
       streamAnswer: vi.fn(),
     });

@@ -89,16 +89,16 @@ public sealed class DocumentService(
 
         var items = await source
             .OrderByDescending(document => document.CreatedAt)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+            .Skip(request.Offset)
+            .Take(request.Limit)
             .Select(ToSummary)
             .ToListAsync(cancellationToken);
 
         return Result.Success(new PaginatedList<DocumentSummary>
         {
             Items = items,
-            Page = request.Page,
-            PageSize = request.PageSize,
+            Offset = request.Offset,
+            Limit = request.Limit,
             TotalCount = totalCount
         });
     }
@@ -130,8 +130,8 @@ public sealed class DocumentService(
 
         var items = await source
             .OrderBy(chunk => chunk.ChunkIndex)
-            .Skip((request.Page - 1) * request.PageSize)
-            .Take(request.PageSize)
+            .Skip(request.Offset)
+            .Take(request.Limit)
             .Select(chunk => new ChunkView
             {
                 Id = chunk.Id,
@@ -149,8 +149,8 @@ public sealed class DocumentService(
         return Result.Success(new PaginatedList<ChunkView>
         {
             Items = items,
-            Page = request.Page,
-            PageSize = request.PageSize,
+            Offset = request.Offset,
+            Limit = request.Limit,
             TotalCount = totalCount
         });
     }

@@ -300,7 +300,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/documents?page=1&pageSize=5",
+              "raw": "{{baseUrl}}/api/v1/documents?offset=0&limit=5",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -311,11 +311,11 @@
               ],
               "query": [
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "offset",
+                  "value": "0"
                 },
                 {
-                  "key": "pageSize",
+                  "key": "limit",
                   "value": "5"
                 }
               ]
@@ -333,13 +333,15 @@
                   "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
                   "pm.test(\"Uses the PaginatedList shape\", function () {",
                   "    pm.expect(json.items).to.be.an(\"array\");",
-                  "    pm.expect(json.page).to.eql(1);",
-                  "    pm.expect(json.pageSize).to.eql(5);",
+                  "    pm.expect(json.offset).to.eql(0);",
+                  "    pm.expect(json.limit).to.eql(5);",
                   "    pm.expect(json.totalCount).to.be.at.least(1);",
-                  "    pm.expect(json.totalPages).to.be.at.least(1);",
-                  "    pm.expect(json.hasNextPage).to.be.a(\"boolean\");",
+                  "    pm.expect(json.hasMore).to.be.a(\"boolean\");",
                   "});",
-                  "pm.test(\"Returns no more than pageSize items\", () => pm.expect(json.items.length).to.be.at.most(5));",
+                  "pm.test(\"Returns no more than limit items\", () => pm.expect(json.items.length).to.be.at.most(5));",
+                  "pm.test(\"hasMore agrees with what is left behind\", function () {",
+                  "    pm.expect(json.hasMore).to.eql(json.offset + json.items.length < json.totalCount);",
+                  "});",
                   "pm.test(\"Sorted by createdAt descending\", function () {",
                   "    const dates = json.items.map((item) => new Date(item.createdAt).getTime());",
                   "    pm.expect(dates).to.eql(dates.slice().sort((a, b) => b - a));",
@@ -354,12 +356,56 @@
           ]
         },
         {
+          "name": "GET /api/v1/documents - limit above the cap is clamped",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents?offset=0&limit=500",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "500"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK - an oversized limit is not an error\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"The response reports the limit actually applied\", () => pm.expect(json.limit).to.eql(100));",
+                  "pm.test(\"Returns no more than the cap\", () => pm.expect(json.items.length).to.be.at.most(100));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "GET /api/v1/documents?status=Indexed - filter by status",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/documents?status=Indexed&page=1&pageSize=20",
+              "raw": "{{baseUrl}}/api/v1/documents?status=Indexed&offset=0&limit=20",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -374,11 +420,11 @@
                   "value": "Indexed"
                 },
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "offset",
+                  "value": "0"
                 },
                 {
-                  "key": "pageSize",
+                  "key": "limit",
                   "value": "20"
                 }
               ]
@@ -408,7 +454,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?page=1&pageSize=50",
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=0&limit=50",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -421,11 +467,11 @@
               ],
               "query": [
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "offset",
+                  "value": "0"
                 },
                 {
-                  "key": "pageSize",
+                  "key": "limit",
                   "value": "50"
                 }
               ]
@@ -473,6 +519,111 @@
                   "pm.test(\"metadata is a valid JSON string\", () => JSON.parse(first.metadata));",
                   "",
                   "pm.collectionVariables.set(\"chunkId\", first.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id}/chunks - offset skips ahead",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=1&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}",
+                "chunks"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Echoes back the window that was applied\", function () {",
+                  "    pm.expect(json.offset).to.eql(1);",
+                  "    pm.expect(json.limit).to.eql(1);",
+                  "});",
+                  "pm.test(\"Skips the first chunk instead of restarting at 0\", function () {",
+                  "    if (json.totalCount > 1) {",
+                  "        pm.expect(json.items).to.have.lengthOf(1);",
+                  "        pm.expect(json.items[0].chunkIndex).to.eql(1);",
+                  "    } else {",
+                  "        pm.expect(json.items).to.be.empty;",
+                  "    }",
+                  "});",
+                  "pm.test(\"hasMore agrees with what is left behind\", function () {",
+                  "    pm.expect(json.hasMore).to.eql(json.offset + json.items.length < json.totalCount);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id}/chunks - limit above the cap is clamped",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=0&limit=999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}",
+                "chunks"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "999"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK - an oversized limit is not an error\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"The response reports the limit actually applied\", () => pm.expect(json.limit).to.eql(200));",
+                  "pm.test(\"Returns no more than the cap\", () => pm.expect(json.items.length).to.be.at.most(200));"
                 ]
               }
             }
@@ -823,7 +974,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/conversations?userId=postman-runner&page=1&pageSize=20",
+              "raw": "{{baseUrl}}/api/v1/conversations?userId=postman-runner&offset=0&limit=20",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -838,11 +989,11 @@
                   "value": "postman-runner"
                 },
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "offset",
+                  "value": "0"
                 },
                 {
-                  "key": "pageSize",
+                  "key": "limit",
                   "value": "20"
                 }
               ]
@@ -1003,7 +1154,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages?page=1&pageSize=50",
+              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages?offset=0&limit=50",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1016,11 +1167,11 @@
               ],
               "query": [
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "offset",
+                  "value": "0"
                 },
                 {
-                  "key": "pageSize",
+                  "key": "limit",
                   "value": "50"
                 }
               ]
@@ -1196,93 +1347,6 @@
                 "exec": [
                   "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
                   "pm.test(\"The error code is Document.NotFound\", () => pm.expect(pm.response.json().code).to.eql(\"Document.NotFound\"));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET /api/v1/documents/{id}/chunks - pageSize above the cap -> 400",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?page=1&pageSize=999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "documents",
-                "{{documentId}}",
-                "chunks"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "999"
-                }
-              ]
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "",
-                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"The error code is Validation\", () => pm.expect(json.code).to.eql(\"Validation\"));",
-                  "pm.test(\"States which limit was violated\", () => pm.expect(json.detail).to.include(\"200\"));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "GET /api/v1/documents - pageSize above the cap -> 400",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/documents?page=1&pageSize=500",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "documents"
-              ],
-              "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "pageSize",
-                  "value": "500"
-                }
-              ]
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"The error code is Validation\", () => pm.expect(pm.response.json().code).to.eql(\"Validation\"));"
                 ]
               }
             }
@@ -1691,7 +1755,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages?page=1&pageSize=50",
+              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages?offset=0&limit=50",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1704,11 +1768,11 @@
               ],
               "query": [
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "offset",
+                  "value": "0"
                 },
                 {
-                  "key": "pageSize",
+                  "key": "limit",
                   "value": "50"
                 }
               ]
@@ -1923,7 +1987,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?page=1&pageSize=50",
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=0&limit=50",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -1936,11 +2000,11 @@
               ],
               "query": [
                 {
-                  "key": "page",
-                  "value": "1"
+                  "key": "offset",
+                  "value": "0"
                 },
                 {
-                  "key": "pageSize",
+                  "key": "limit",
                   "value": "50"
                 }
               ]

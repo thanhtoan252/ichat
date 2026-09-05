@@ -48,7 +48,7 @@ earlier ones through collection variables. Running a single request from the mid
 |---|---|
 | 1. Health | `/health/live`, `/health/ready`. If ready fails the suite stops immediately instead of pouring out identical errors |
 | 2. Providers | provider configuration, and the assertion that no API key leaks |
-| 3. Documents | upload → wait for ingestion → paging → filter by status → inspect chunks |
+| 3. Documents | upload → wait for ingestion → offset/limit paging, including the clamped cap and an offset that skips → filter by status → inspect chunks |
 | 4. Search | hybrid, full-text, `topK`, and an all-stopword query |
 | 5. Conversations & Chat | create a conversation, ask over SSE, read the history back with citations |
 | 6. Error cases | 415, 404, 400 and three error cases travelling over the SSE channel |

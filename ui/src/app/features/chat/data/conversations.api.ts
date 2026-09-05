@@ -31,8 +31,8 @@ export class ConversationsApi {
   }
 
   /** No owner parameter: the API scopes the list to the caller's own token. */
-  list(page = 1, pageSize = 20): Promise<PagedResponse<ConversationDto>> {
-    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+  list(offset = 0, limit = 20): Promise<PagedResponse<ConversationDto>> {
+    const params = new HttpParams().set('offset', offset).set('limit', limit);
 
     return firstValueFrom(this.http.get<PagedResponse<ConversationDto>>(this.root, { params }));
   }
@@ -43,10 +43,10 @@ export class ConversationsApi {
 
   messages(
     conversationId: string,
-    page = 1,
-    pageSize = 50,
+    offset = 0,
+    limit = 50,
   ): Promise<PagedResponse<ChatMessageDto>> {
-    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    const params = new HttpParams().set('offset', offset).set('limit', limit);
 
     return firstValueFrom(
       this.http.get<PagedResponse<ChatMessageDto>>(`${this.root}/${conversationId}/messages`, {

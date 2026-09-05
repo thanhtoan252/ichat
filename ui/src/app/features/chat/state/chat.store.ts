@@ -131,9 +131,9 @@ export class ChatStore {
     this.loadingConversationsSignal.set(true);
 
     try {
-      const page = await this.api.list(1, 50);
+      const result = await this.api.list(0, 50);
 
-      this.conversationsSignal.set(page.items.map(toConversation));
+      this.conversationsSignal.set(result.items.map(toConversation));
       this.conversationsErrorSignal.set(null);
     } catch (error) {
       const message = describeHttpError(error, 'Could not load conversations.');
@@ -160,11 +160,11 @@ export class ChatStore {
     this.loadingMessagesSignal.set(true);
 
     try {
-      const page = await this.api.messages(id, 1, 200);
+      const result = await this.api.messages(id, 0, 200);
 
       // Guard against a fast second click: only paint what is still the active thread.
       if (this.activeIdSignal() === id) {
-        this.messagesSignal.set(page.items.map(toChatMessage));
+        this.messagesSignal.set(result.items.map(toChatMessage));
       }
     } catch (error) {
       toast.error(describeHttpError(error, 'Could not load this conversation.'));

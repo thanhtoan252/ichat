@@ -27,15 +27,13 @@ public static class ConversationEndpoints
             .WithName("GetConversations")
             .WithSummary("List conversations.")
             .WithDescription("Paged, most recently updated first. Scoped to the caller; an administrator sees every conversation.")
-            .Produces<PagedResponse<ConversationResponse>>()
-            .ProducesValidationProblem();
+            .Produces<PagedResponse<ConversationResponse>>();
 
         group.MapGet("/{id:guid}/messages", GetConversationMessagesAsync)
             .WithName("GetConversationMessages")
             .WithSummary("Message history of a conversation.")
             .WithDescription("Oldest first, including the marker-verified citations of each answer.")
             .Produces<PagedResponse<MessageResponse>>()
-            .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapPost("/{id:guid}/messages", SendMessage)
@@ -75,21 +73,10 @@ public static class ConversationEndpoints
 
     private static async Task<IResult> GetConversationsAsync(
         [AsParameters] GetConversationsQuery query,
-        IValidator<GetConversationsQuery> validator,
         IConversationService conversations,
         CancellationToken cancellationToken)
     {
-        var validation = await validator.ValidateAsync(query, cancellationToken);
-
-        if (!validation.IsValid)
-        {
-            return validation.ToValidationProblem();
-        }
-
-        var result = await conversations.GetListAsync(
-            query.EffectivePage,
-            query.EffectivePageSize,
-            cancellationToken);
+        var result = await conversations.GetListAsync(query.Offset, query.Limit, cancellationToken);
 
         if (result.IsFailure)
         {
@@ -102,22 +89,10 @@ public static class ConversationEndpoints
     private static async Task<IResult> GetConversationMessagesAsync(
         Guid id,
         [AsParameters] GetMessagesQuery query,
-        IValidator<GetMessagesQuery> validator,
         IConversationService conversations,
         CancellationToken cancellationToken)
     {
-        var validation = await validator.ValidateAsync(query, cancellationToken);
-
-        if (!validation.IsValid)
-        {
-            return validation.ToValidationProblem();
-        }
-
-        var result = await conversations.GetMessagesAsync(
-            id,
-            query.EffectivePage,
-            query.EffectivePageSize,
-            cancellationToken);
+        var result = await conversations.GetMessagesAsync(id, query.Offset, query.Limit, cancellationToken);
 
         if (result.IsFailure)
         {

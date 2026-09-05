@@ -11,11 +11,10 @@ public static class PagedResponseMapper
         return new PagedResponse<TItem>
         {
             Items = source.Items.Select(map).ToArray(),
-            Page = source.Page,
-            PageSize = source.PageSize,
+            Offset = source.Offset,
+            Limit = source.Limit,
             TotalCount = source.TotalCount,
-            TotalPages = source.TotalPages,
-            HasNextPage = source.HasNextPage
+            HasMore = source.HasMore
         };
     }
 }

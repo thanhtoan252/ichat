@@ -5,18 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 
 public sealed class GetDocumentsQuery(
     [FromQuery(Name = "status")] DocumentStatusFilter? status,
-    [FromQuery(Name = "page")] int? page,
-    [FromQuery(Name = "pageSize")] int? pageSize) : IPagedQuery
+    [FromQuery(Name = "offset")] int? offset,
+    [FromQuery(Name = "limit")] int? limit)
 {
-    private const int DefaultPageSize = 20;
-
     public DocumentStatusFilter? Status { get; } = status;
 
-    public int? Page { get; } = page;
+    public int Offset { get; } = PagingQuery.ResolveOffset(offset);
 
-    public int? PageSize { get; } = pageSize;
-
-    public int EffectivePage => PageQuery.ResolvePage(Page);
-
-    public int EffectivePageSize => PageQuery.ResolvePageSize(PageSize, DefaultPageSize);
+    public int Limit { get; } = PagingQuery.ResolveLimit(limit, defaultLimit: 20, maxLimit: 100);
 }

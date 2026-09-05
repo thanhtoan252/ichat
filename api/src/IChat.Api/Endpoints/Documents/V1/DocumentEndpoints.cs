@@ -29,8 +29,7 @@ public static class DocumentEndpoints
             .WithName("GetDocuments")
             .WithSummary("List documents.")
             .WithDescription("Paged, newest first, optionally filtered by ingestion status.")
-            .Produces<PagedResponse<DocumentResponse>>()
-            .ProducesValidationProblem();
+            .Produces<PagedResponse<DocumentResponse>>();
 
         group.MapGet("/{id:guid}", GetDocumentByIdAsync)
             .WithName("GetDocumentById")
@@ -44,7 +43,6 @@ public static class DocumentEndpoints
             .WithSummary("Chunks of a document.")
             .WithDescription("An ingestion debugging tool: shows the headingPath and embeddedText that were actually produced. Does not return embedding vectors.")
             .Produces<PagedResponse<DocumentChunkResponse>>()
-            .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapDelete("/{id:guid}", DeleteDocumentAsync)
@@ -88,17 +86,9 @@ public static class DocumentEndpoints
 
     private static async Task<IResult> GetDocumentsAsync(
         [AsParameters] GetDocumentsQuery query,
-        IValidator<GetDocumentsQuery> validator,
         IDocumentService documents,
         CancellationToken cancellationToken)
     {
-        var validation = await validator.ValidateAsync(query, cancellationToken);
-
-        if (!validation.IsValid)
-        {
-            return validation.ToValidationProblem();
-        }
-
         var result = await documents.GetListAsync(query.ToServiceRequest(), cancellationToken);
 
         if (result.IsFailure)
@@ -127,17 +117,9 @@ public static class DocumentEndpoints
     private static async Task<IResult> GetDocumentChunksAsync(
         Guid id,
         [AsParameters] GetDocumentChunksQuery query,
-        IValidator<GetDocumentChunksQuery> validator,
         IDocumentService documents,
         CancellationToken cancellationToken)
     {
-        var validation = await validator.ValidateAsync(query, cancellationToken);
-
-        if (!validation.IsValid)
-        {
-            return validation.ToValidationProblem();
-        }
-
         var result = await documents.GetChunksAsync(query.ToServiceRequest(id), cancellationToken);
 
         if (result.IsFailure)

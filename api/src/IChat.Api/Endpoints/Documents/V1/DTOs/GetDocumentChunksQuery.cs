@@ -4,16 +4,10 @@ using IChat.Api.Endpoints.Common;
 using Microsoft.AspNetCore.Mvc;
 
 public sealed class GetDocumentChunksQuery(
-    [FromQuery(Name = "page")] int? page,
-    [FromQuery(Name = "pageSize")] int? pageSize) : IPagedQuery
+    [FromQuery(Name = "offset")] int? offset,
+    [FromQuery(Name = "limit")] int? limit)
 {
-    private const int DefaultPageSize = 50;
+    public int Offset { get; } = PagingQuery.ResolveOffset(offset);
 
-    public int? Page { get; } = page;
-
-    public int? PageSize { get; } = pageSize;
-
-    public int EffectivePage => PageQuery.ResolvePage(Page);
-
-    public int EffectivePageSize => PageQuery.ResolvePageSize(PageSize, DefaultPageSize);
+    public int Limit { get; } = PagingQuery.ResolveLimit(limit, defaultLimit: 50, maxLimit: 200);
 }

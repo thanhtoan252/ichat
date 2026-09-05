@@ -45,7 +45,7 @@ public sealed class ConversationService(
         return Result.Success(ToView(conversation));
     }
 
-    public async Task<Result<PaginatedList<ConversationView>>> GetListAsync(int page, int pageSize, CancellationToken cancellationToken)
+    public async Task<Result<PaginatedList<ConversationView>>> GetListAsync(int offset, int limit, CancellationToken cancellationToken)
     {
         // Hội thoại là riêng tư TUYỆT ĐỐI: kể cả admin cũng không đọc được của người khác.
         // Quản trị viên quản lý tài khoản và tri thức, không đọc nội dung người ta hỏi.
@@ -59,21 +59,21 @@ public sealed class ConversationService(
 
         var items = await source
             .OrderByDescending(conversation => conversation.UpdatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .Skip(offset)
+            .Take(limit)
             .Select(ToViewExpression)
             .ToListAsync(cancellationToken);
 
         return Result.Success(new PaginatedList<ConversationView>
         {
             Items = items,
-            Page = page,
-            PageSize = pageSize,
+            Offset = offset,
+            Limit = limit,
             TotalCount = totalCount
         });
     }
 
-    public async Task<Result<PaginatedList<MessageView>>> GetMessagesAsync(Guid conversationId, int page, int pageSize, CancellationToken cancellationToken)
+    public async Task<Result<PaginatedList<MessageView>>> GetMessagesAsync(Guid conversationId, int offset, int limit, CancellationToken cancellationToken)
     {
         var ownerId = await dbContext.Conversations
             .AsNoTracking()
@@ -93,8 +93,8 @@ public sealed class ConversationService(
 
         var items = await source
             .OrderBy(message => message.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
+            .Skip(offset)
+            .Take(limit)
             .Select(message => new MessageView
             {
                 Id = message.Id,
@@ -126,8 +126,8 @@ public sealed class ConversationService(
         return Result.Success(new PaginatedList<MessageView>
         {
             Items = items,
-            Page = page,
-            PageSize = pageSize,
+            Offset = offset,
+            Limit = limit,
             TotalCount = totalCount
         });
     }

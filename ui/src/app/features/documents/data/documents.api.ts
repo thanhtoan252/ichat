@@ -20,11 +20,11 @@ export class DocumentsApi {
   }
 
   list(
-    page = 1,
-    pageSize = 20,
+    offset = 0,
+    limit = 20,
     status?: DocumentStatusDto,
   ): Promise<PagedResponse<DocumentSummaryDto>> {
-    let params = new HttpParams().set('page', page).set('pageSize', pageSize);
+    let params = new HttpParams().set('offset', offset).set('limit', limit);
 
     if (status) {
       params = params.set('status', status);
@@ -39,8 +39,8 @@ export class DocumentsApi {
     return firstValueFrom(this.http.get<DocumentSummaryDto>(`${this.root}/${id}`));
   }
 
-  chunks(id: string, page = 1, pageSize = 50): Promise<PagedResponse<DocumentChunkDto>> {
-    const params = new HttpParams().set('page', page).set('pageSize', pageSize);
+  chunks(id: string, offset = 0, limit = 50): Promise<PagedResponse<DocumentChunkDto>> {
+    const params = new HttpParams().set('offset', offset).set('limit', limit);
 
     return firstValueFrom(
       this.http.get<PagedResponse<DocumentChunkDto>>(`${this.root}/${id}/chunks`, { params }),

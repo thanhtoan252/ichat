@@ -58,7 +58,7 @@ const MESSAGES: ChatMessageDto[] = [
 ];
 
 function page(items: readonly ChatMessageDto[] = []) {
-  return { items, page: 1, pageSize: 200, totalCount: items.length };
+  return { items, offset: 0, limit: 200, totalCount: items.length, hasMore: false };
 }
 
 async function renderPage(conversationId: string | undefined) {

@@ -55,7 +55,7 @@ public class ChatTests(IChatApiFactory factory)
 
     private static async Task<string> ReadTitleAsync(HttpClient client, Guid conversationId)
     {
-        var response = await client.GetAsync("/api/v1/conversations?page=1&pageSize=50");
+        var response = await client.GetAsync("/api/v1/conversations?offset=0&limit=50");
         response.EnsureSuccessStatusCode();
 
         return JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement

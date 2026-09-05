@@ -4,7 +4,7 @@ public sealed class GetDocumentChunksRequest
 {
     public required Guid DocumentId { get; init; }
 
-    public int Page { get; init; } = 1;
+    public required int Offset { get; init; }
 
-    public int PageSize { get; init; } = 50;
+    public required int Limit { get; init; }
 }

@@ -20,16 +20,16 @@ public static class DocumentMapper
         new()
         {
             Status = (DocumentStatus?)query.Status,
-            Page = query.EffectivePage,
-            PageSize = query.EffectivePageSize
+            Offset = query.Offset,
+            Limit = query.Limit
         };
 
     public static GetDocumentChunksRequest ToServiceRequest(this GetDocumentChunksQuery query, Guid documentId) =>
         new()
         {
             DocumentId = documentId,
-            Page = query.EffectivePage,
-            PageSize = query.EffectivePageSize
+            Offset = query.Offset,
+            Limit = query.Limit
         };
 
     public static UploadDocumentResponse ToResponse(this UploadDocumentResult result) =>

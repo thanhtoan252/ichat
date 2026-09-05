@@ -8,16 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 /// (admin thì thấy tất cả), quyết định bởi token chứ không bởi query string.
 /// </summary>
 public sealed class GetConversationsQuery(
-    [FromQuery(Name = "page")] int? page,
-    [FromQuery(Name = "pageSize")] int? pageSize) : IPagedQuery
+    [FromQuery(Name = "offset")] int? offset,
+    [FromQuery(Name = "limit")] int? limit)
 {
-    private const int DefaultPageSize = 20;
+    public int Offset { get; } = PagingQuery.ResolveOffset(offset);
 
-    public int? Page { get; } = page;
-
-    public int? PageSize { get; } = pageSize;
-
-    public int EffectivePage => PageQuery.ResolvePage(Page);
-
-    public int EffectivePageSize => PageQuery.ResolvePageSize(PageSize, DefaultPageSize);
+    public int Limit { get; } = PagingQuery.ResolveLimit(limit, defaultLimit: 20, maxLimit: 100);
 }
