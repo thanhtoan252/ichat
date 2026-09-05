@@ -8,8 +8,7 @@ public static class ConversationMapper
     public static CreateConversationRequest ToServiceRequest(this CreateConversationDto dto) =>
         new()
         {
-            Title = dto.Title,
-            UserId = dto.UserId
+            Title = dto.Title
         };
 
     public static SendMessageRequest ToServiceRequest(this SendMessageDto dto, Guid conversationId) =>

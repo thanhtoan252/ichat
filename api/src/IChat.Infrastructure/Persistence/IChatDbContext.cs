@@ -3,6 +3,7 @@ namespace IChat.Infrastructure.Persistence;
 using IChat.Core.Abstractions;
 using IChat.Core.Domain.Conversations;
 using IChat.Core.Domain.Documents;
+using IChat.Core.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 
 public sealed class IChatDbContext(DbContextOptions<IChatDbContext> options) : DbContext(options), IApplicationDbContext
@@ -16,6 +17,10 @@ public sealed class IChatDbContext(DbContextOptions<IChatDbContext> options) : D
     public DbSet<Message> Messages => Set<Message>();
 
     public DbSet<MessageCitation> MessageCitations => Set<MessageCitation>();
+
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     Task<int> IApplicationDbContext.SaveChangesAsync(CancellationToken cancellationToken)
     {

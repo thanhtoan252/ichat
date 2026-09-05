@@ -10,7 +10,8 @@ public sealed class Conversation
 
     public Guid Id { get; private set; }
 
-    public string? UserId { get; private set; }
+    /// <summary>Khoá ngoại sang users; luôn lấy từ access token, không bao giờ từ client.</summary>
+    public Guid UserId { get; private set; }
 
     public string Title { get; private set; } = string.Empty;
 
@@ -20,7 +21,7 @@ public sealed class Conversation
 
     public IReadOnlyList<Message> Messages => _messages;
 
-    public static Conversation Create(string? userId, string title, DateTimeOffset createdAt)
+    public static Conversation Create(Guid userId, string title, DateTimeOffset createdAt)
     {
         return new Conversation
         {

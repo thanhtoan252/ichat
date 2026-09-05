@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 public sealed class ConversationService(
     IApplicationDbContext dbContext,
+    ICurrentUser currentUser,
     TimeProvider timeProvider) : IConversationService
 {
     /// <summary>
@@ -31,7 +32,12 @@ public sealed class ConversationService(
     public async Task<Result<ConversationView>> CreateAsync(CreateConversationRequest request, CancellationToken cancellationToken)
     {
         var title = string.IsNullOrWhiteSpace(request.Title) ? ConversationTitle.Default : request.Title.Trim();
-        var conversation = Conversation.Create(request.UserId, title, timeProvider.GetUtcNow());
+        if (currentUser.Id is not { } ownerId)
+        {
+            return Result.Failure<ConversationView>(Error.Unauthorized("Không có phiên đăng nhập nào."));
+        }
+
+        var conversation = Conversation.Create(ownerId, title, timeProvider.GetUtcNow());
 
         dbContext.Conversations.Add(conversation);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -39,14 +45,15 @@ public sealed class ConversationService(
         return Result.Success(ToView(conversation));
     }
 
-    public async Task<Result<PaginatedList<ConversationView>>> GetListAsync(int page, int pageSize, string? userId, CancellationToken cancellationToken)
+    public async Task<Result<PaginatedList<ConversationView>>> GetListAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
-        var source = dbContext.Conversations.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(userId))
-        {
-            source = source.Where(conversation => conversation.UserId == userId);
-        }
+        // Hội thoại là riêng tư TUYỆT ĐỐI: kể cả admin cũng không đọc được của người khác.
+        // Quản trị viên quản lý tài khoản và tri thức, không đọc nội dung người ta hỏi.
+        // Đừng thêm nhánh "nếu IsAdmin thì thấy tất cả" vào đây.
+        var ownerId = currentUser.Id;
+        var source = dbContext.Conversations
+            .AsNoTracking()
+            .Where(conversation => conversation.UserId == ownerId);
 
         var totalCount = await source.CountAsync(cancellationToken);
 
@@ -68,9 +75,15 @@ public sealed class ConversationService(
 
     public async Task<Result<PaginatedList<MessageView>>> GetMessagesAsync(Guid conversationId, int page, int pageSize, CancellationToken cancellationToken)
     {
-        var exists = await dbContext.Conversations.AnyAsync(item => item.Id == conversationId, cancellationToken);
+        var ownerId = await dbContext.Conversations
+            .AsNoTracking()
+            .Where(item => item.Id == conversationId)
+            .Select(item => (Guid?)item.UserId)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (!exists)
+        // Hội thoại của người khác trả 404 chứ không phải 403: 403 sẽ xác nhận rằng
+        // id đó có tồn tại, cho phép dò ra ai đang hỏi gì.
+        if (ownerId is null || !IsOwner(ownerId.Value))
         {
             return Result.Failure<PaginatedList<MessageView>>(Error.NotFound("Conversation", conversationId));
         }
@@ -118,4 +131,7 @@ public sealed class ConversationService(
             TotalCount = totalCount
         });
     }
+
+    /// <summary>Không có ngoại lệ cho admin — xem ghi chú ở GetListAsync.</summary>
+    private bool IsOwner(Guid ownerId) => ownerId == currentUser.Id;
 }

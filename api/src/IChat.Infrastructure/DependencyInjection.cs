@@ -8,6 +8,7 @@ using IChat.Infrastructure.Ingestion.Parsing;
 using IChat.Infrastructure.Persistence;
 using IChat.Infrastructure.Search;
 using IChat.Infrastructure.Search.Branches;
+using IChat.Infrastructure.Security;
 using IChat.Infrastructure.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,10 @@ public static class DependencyInjection
             .BindConfiguration(StorageOptions.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+        // Chạy sau khi migration ở Program.cs xong, nên bảng users đã tồn tại.
+        services.AddHostedService<IdentitySeeder>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddScoped<ContextAssembler>();

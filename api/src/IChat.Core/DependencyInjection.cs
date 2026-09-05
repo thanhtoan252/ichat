@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<AnswerGenerator>();
         services.AddScoped<ChatTurnRecorder>();
 
+        services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IConversationService, ConversationService>();
         services.AddScoped<IChatService, ChatService>();

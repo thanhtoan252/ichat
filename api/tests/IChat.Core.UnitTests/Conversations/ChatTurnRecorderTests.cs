@@ -187,7 +187,7 @@ public class ChatTurnRecorderTests
 
     private static Conversation Conversation()
     {
-        return Domain.Conversations.Conversation.Create(userId: null, ConversationTitle.Default, DateTimeOffset.UnixEpoch);
+        return Domain.Conversations.Conversation.Create(Guid.CreateVersion7(), ConversationTitle.Default, DateTimeOffset.UnixEpoch);
     }
 
     private static GeneratedAnswer Answer(string text)

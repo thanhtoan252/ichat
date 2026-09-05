@@ -47,6 +47,60 @@ Question ─► rewrite ─► ┌─ vector ─┐
                        └─ trigram ─┘
 ```
 
+### Authentication and authorization
+
+Own JWT, own tables — no ASP.NET Identity. `users` (BCrypt hash, role stored as a name) and
+`refresh_tokens` (SHA-256 of the token, never the token itself).
+
+`MapIChatEndpoints` closes the whole `/api/v1` group with `RequireAuthorization()` and reopens
+only what must be public. **Adding a route without thinking about permissions produces a 401,
+not a hole.** `/health/*` stays anonymous — an orchestrator carries no token.
+
+| Surface | Who |
+| --- | --- |
+| `POST /auth/{register,login,refresh}` | anonymous |
+| `POST /auth/logout`, `GET /auth/me` | any signed-in account |
+| `GET /documents`, `/documents/{id}`, `/documents/{id}/chunks` | any signed-in account |
+| `POST`/`DELETE /documents`, `POST /admin/reindex`, `POST /search`, `GET /providers` | `Admin` |
+| `/conversations/*` | the owner, and only the owner — `Admin` included |
+
+Two tokens. The **access token** is a 15-minute JWT the client keeps in memory. The **refresh
+token** goes out in an httpOnly, SameSite=Strict cookie scoped to `/api/v1/auth`, and is
+**rotated on every use** — the one just spent is revoked and points at its replacement, so a
+stolen token works at most once and its second use is visibly dead.
+
+A conversation belongs to whoever created it, taken from the token. `userId` is no longer
+accepted from the body or the query string; someone else's conversation answers `404` rather
+than `403`, because `403` would confirm that the id exists.
+
+**There is no administrator override on conversations.** An `Admin` manages accounts and the
+knowledge base; they do not read what other people ask. Listing returns only the caller's own
+threads and reading someone else's answers `404`, for every role. Do not add an `IsAdmin`
+branch to `ConversationService` — `AuthorizationTests` fails if you do.
+
+`conversations.user_id` is a real foreign key onto `users` (`uuid NOT NULL`, cascade delete).
+It used to be free-text supplied by the client, and none of those values map onto an actual
+account — so **the `AddIdentity` migration deletes every existing conversation** (messages and
+citations follow by cascade). Documents are untouched: the corpus has no owner. That is a
+deliberate one-off for an unreleased showcase app, not a pattern to repeat.
+
+Two accounts are seeded on start — `admin`/`admin` (Admin) and `user`/`user` (User).
+Showcase project: they are hardcoded in `Infrastructure/Security/IdentitySeeder.cs`, not
+configuration. Each is created only if that username is missing, so restarting never
+overwrites a changed password. **Change them before exposing an instance.**
+
+There is no account-management API: accounts come from these seeds and from public
+sign-up, which always produces the `User` role. Promoting someone means a SQL update.
+
+```bash
+curl -c cookies.txt -X POST localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' -d '{"userName":"admin","password":"admin"}'
+```
+
+`Jwt:SigningKey` has no default and must be at least 32 characters; the host refuses to start
+without it. Development supplies one in `appsettings.Development.json`, production through
+`Jwt__SigningKey` or user-secrets.
+
 ### Which files a provider change touches
 
 Exactly two: `appsettings.json` (or environment variables) and — only when adding a brand new
@@ -239,7 +293,8 @@ Full recall@8 and MRR with real embeddings need a real API key; run `eval` above
 ## Conventions
 
 No MediatR, no CQRS, no AutoMapper, no generic repository. Each business area is one service
-(`DocumentService`, `ConversationService`, `ChatService`, `SearchService`, `AdminService`) behind
+(`AuthService`, `UserService`, `DocumentService`, `ConversationService`, `ChatService`,
+`SearchService`, `AdminService`) behind
 an interface in `IChat.Core/Abstractions`; endpoints inject the interface and call the method
 directly. DTOs live in `IChat.Core/Contracts`, validators in `IChat.Core/Validation`. Business
 errors use `Result<T>` rather than throwing. Errors are returned per RFC 7807 with a `traceId`;

@@ -1,5 +1,6 @@
 namespace IChat.Api.Endpoints.Admin.V1;
 
+using IChat.Api.Authorization;
 using IChat.Api.Endpoints.Admin.V1.DTOs;
 using IChat.Api.Endpoints.Admin.V1.Mappings;
 using IChat.Api.Extensions;
@@ -9,7 +10,7 @@ public static class AdminEndpoints
 {
     public static IEndpointRouteBuilder MapAdminV1Endpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup(string.Empty).WithTags("Admin");
+        var group = app.MapGroup(string.Empty).WithTags("Admin").RequireAuthorization(AuthPolicies.Admin);
 
         group.MapGet("/providers", GetProviders)
             .WithName("GetProviders")

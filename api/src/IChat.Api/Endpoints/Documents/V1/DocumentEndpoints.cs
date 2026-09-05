@@ -1,5 +1,6 @@
 namespace IChat.Api.Endpoints.Documents.V1;
 
+using IChat.Api.Authorization;
 using IChat.Api.Endpoints.Common;
 using IChat.Api.Endpoints.Documents.V1.DTOs;
 using IChat.Api.Endpoints.Documents.V1.Mappings;
@@ -15,6 +16,7 @@ public static class DocumentEndpoints
         var group = app.MapGroup("/documents").WithTags("Documents");
 
         group.MapPost("/", UploadDocumentAsync)
+            .RequireAuthorization(AuthPolicies.Admin)
             .DisableAntiforgery()
             .WithName("UploadDocument")
             .WithSummary("Upload a document.")
@@ -46,6 +48,7 @@ public static class DocumentEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         group.MapDelete("/{id:guid}", DeleteDocumentAsync)
+            .RequireAuthorization(AuthPolicies.Admin)
             .WithName("DeleteDocument")
             .WithSummary("Delete a document.")
             .WithDescription("Deletes both the stored file and every chunk by cascade.")

@@ -20,6 +20,7 @@ public sealed class ChatService(
     AnswerGenerator answerGenerator,
     ChatTurnRecorder turnRecorder,
     IModelCatalog modelCatalog,
+    ICurrentUser currentUser,
     IValidator<SendMessageRequest> validator) : IChatService
 {
     public async IAsyncEnumerable<SseEvent> StreamAnswerAsync(
@@ -38,7 +39,9 @@ public sealed class ChatService(
         var conversation = await dbContext.Conversations
             .FirstOrDefaultAsync(item => item.Id == request.ConversationId, cancellationToken);
 
-        if (conversation is null)
+        // Hội thoại của người khác trả về đúng thông điệp "không tồn tại" như khi id sai:
+        // phân biệt hai trường hợp là để lộ rằng id đó có thật.
+        if (conversation is null || conversation.UserId != currentUser.Id)
         {
             yield return SseEvent.Failure(
                 SseErrorCode.NotFound,
@@ -164,4 +167,5 @@ public sealed class ChatService(
             })
             .ToList();
     }
+
 }

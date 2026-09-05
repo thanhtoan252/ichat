@@ -49,7 +49,7 @@ public class RetrievalTests(IChatApiFactory factory)
     {
         // REGRESSION TEST cho lỗi plainto_tsquery: nó AND mọi lexeme nên câu hỏi dài
         // sẽ trả rỗng gần như luôn luôn, và hybrid search âm thầm chỉ còn nhánh vector.
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         var result = await SearchAsync(client, new
@@ -71,7 +71,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task Search_ExposesTsQueryForDebugging()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         var result = await SearchAsync(client, new { query = "cau hinh bien moi truong", rewrite = false });
@@ -83,7 +83,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task Search_ReturnsEveryPipelineStage()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         var stages = await SearchAsync(client, new { query = "cau hinh timeout", rewrite = false });
@@ -95,7 +95,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task HybridSearch_FindsExpectedChunk()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         var result = await SearchAsync(client, new { query = "timeout mac dinh la bao nhieu giay", rewrite = false });
@@ -110,7 +110,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task VectorBranchOnly_StillReturnsResults()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         var result = await SearchAsync(client, new { query = "cau hinh bien moi truong", mode = "Vector", rewrite = false });
@@ -121,7 +121,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task EmbeddingProviderFailure_DegradesToFullText_AndFlagsDegraded()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         FakeEmbeddingGenerator.ShouldFail = true;
@@ -144,7 +144,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task Search_QueryOfOnlyStopWords_DoesNotCrash()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         var result = await SearchAsync(client, new { query = "của là và các một cho với", mode = "FullText", rewrite = false });
@@ -155,7 +155,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task Search_EmptyQuery_Returns400()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
 
         var response = await client.PostAsJsonAsync("/api/v1/search", new { query = "" });
 
@@ -165,7 +165,7 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task Search_MaxChunksPerDocumentIsRespected()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 
         var result = await SearchAsync(client, new { query = "cau hinh trien khai he thong", rewrite = false, topK = 8 });

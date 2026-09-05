@@ -26,7 +26,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task Upload_LegacyDocBinary_Returns415WithGuidance_NotServerError()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
 
         var response = await client.PostAsync(
             "/api/v1/documents",
@@ -43,7 +43,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task Upload_UnsupportedExtension_Returns415()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
 
         var response = await client.PostAsync(
             "/api/v1/documents",
@@ -55,7 +55,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task Upload_Docx_ProducesChunksWithHeadingPathAndEmbeddedText()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         var documentId = await UploadAsync(client, TestHelpers.FileContent(
             "sample-traps.docx",
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -85,7 +85,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task Upload_Markdown_ProducesHeadingPath()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         var documentId = await UploadAsync(client, TestHelpers.FileContent("sample.md", "text/markdown", "Tai lieu MD"));
 
         (await TestHelpers.WaitForStatusAsync(factory, documentId, IngestTimeout)).Should().Be("Indexed");
@@ -101,7 +101,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task Upload_PlainText_ProducesChunksWithoutHeadingPath()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         var documentId = await UploadAsync(client, TestHelpers.FileContent("sample.txt", "text/plain", "Tai lieu TXT"));
 
         (await TestHelpers.WaitForStatusAsync(factory, documentId, IngestTimeout)).Should().Be("Indexed");
@@ -117,7 +117,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task Upload_Pdf_ProducesChunksWithHeadingPathAndPageMetadata()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         var documentId = await UploadAsync(client, TestHelpers.FileContent("sample.pdf", "application/pdf", "Tai lieu PDF"));
 
         (await TestHelpers.WaitForStatusAsync(factory, documentId, IngestTimeout)).Should().Be("Indexed");
@@ -137,7 +137,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task GetChunks_ExposesHeadingPathAndEmbeddedTextForDebugging()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         var documentId = await UploadAsync(client, TestHelpers.FileContent("sample.md", "text/markdown", "Tai lieu"));
 
         (await TestHelpers.WaitForStatusAsync(factory, documentId, IngestTimeout)).Should().Be("Indexed");
@@ -155,7 +155,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task Delete_CascadesChunks_AndReturns204()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         var documentId = await UploadAsync(client, TestHelpers.FileContent("sample.md", "text/markdown"));
 
         (await TestHelpers.WaitForStatusAsync(factory, documentId, IngestTimeout)).Should().Be("Indexed");
@@ -172,7 +172,7 @@ public class IngestionTests(IChatApiFactory factory)
     [Fact]
     public async Task GetDocumentById_UnknownId_Returns404()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
 
         var response = await client.GetAsync($"/api/v1/documents/{Guid.NewGuid()}");
 

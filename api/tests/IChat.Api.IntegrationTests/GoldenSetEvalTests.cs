@@ -58,7 +58,7 @@ public class GoldenSetEvalTests(IChatApiFactory factory, ITestOutputHelper outpu
     [Fact]
     public async Task GoldenSet_FullTextBranchIsAlmostNeverEmpty()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedCorpusAsync(client);
 
         var goldenSet = JsonSerializer.Deserialize<List<GoldenItem>>(

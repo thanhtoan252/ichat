@@ -26,6 +26,10 @@ services:
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=ichat;Username=ichat;Password=ichat
       - Database__AutoMigrate=${Database__AutoMigrate:-true}
       - Storage__RootPath=/data/documents
+      # Khoá ký JWT: tối thiểu 32 ký tự, host từ chối khởi động nếu thiếu. Giá trị mặc
+      # định dưới đây chỉ để `docker compose up` chạy được ngay — đặt Jwt__SigningKey
+      # trong .env trước khi đưa ra ngoài máy của bạn.
+      - Jwt__SigningKey=${Jwt__SigningKey:-ichat-compose-signing-key-change-me-please}
       - Ai__Chat__Provider=${Ai__Chat__Provider:-OpenAI}
       - Ai__Chat__Model=${Ai__Chat__Model:-gpt-4o-mini}
       - Ai__Chat__Endpoint=${Ai__Chat__Endpoint:-}

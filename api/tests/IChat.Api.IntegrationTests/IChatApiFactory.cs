@@ -1,6 +1,11 @@
 namespace IChat.Api.IntegrationTests;
 
+using System.Net.Http.Headers;
 using IChat.Api.IntegrationTests.Fakes;
+using IChat.Api.Security;
+using IChat.Core.Abstractions;
+using IChat.Core.Contracts.Auth;
+using IChat.Core.Domain.Identity;
 using IChat.Infrastructure.Ai;
 using IChat.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -34,6 +39,7 @@ public sealed class IChatApiFactory : WebApplicationFactory<Program>, IAsyncLife
         builder.UseSetting("ConnectionStrings:Default", _postgres.GetConnectionString());
         builder.UseSetting("Database:AutoMigrate", "true");
         builder.UseSetting("Storage:RootPath", Path.Combine(Path.GetTempPath(), "ichat-tests", Guid.NewGuid().ToString("N")));
+        builder.UseSetting("Jwt:SigningKey", "integration-tests-signing-key-at-least-32-chars");
 
         builder.ConfigureServices(services =>
         {
@@ -69,6 +75,52 @@ public sealed class IChatApiFactory : WebApplicationFactory<Program>, IAsyncLife
         var dbContext = scope.ServiceProvider.GetRequiredService<IChatDbContext>();
 
         await dbContext.Database.ExecuteSqlRawAsync(
-            "TRUNCATE message_citations, messages, conversations, document_chunks, documents CASCADE;");
+            "TRUNCATE message_citations, messages, conversations, document_chunks, documents, refresh_tokens, users CASCADE;");
+    }
+
+    /// <summary>
+    /// Client đã đăng nhập sẵn. Token được ký thẳng từ DI thay vì gọi /auth/login: test
+    /// nào cũng cần một danh tính, và đi qua HTTP mỗi lần chỉ thêm một điểm hỏng.
+    /// Mọi endpoint giờ mặc định đóng nên đây là cách duy nhất gọi được API.
+    /// </summary>
+    public async Task<HttpClient> CreateClientAsync(UserRole role = UserRole.Admin, string userName = "tester")
+    {
+        var user = await EnsureUserAsync(role, userName);
+
+        using var scope = Services.CreateScope();
+        var accessToken = scope.ServiceProvider.GetRequiredService<IAccessTokenService>().Create(user);
+
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.Value);
+
+        return client;
+    }
+
+    public async Task<UserView> EnsureUserAsync(UserRole role, string userName)
+    {
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<IChatDbContext>();
+        var normalized = User.Normalize(userName);
+
+        var user = await dbContext.Users.FirstOrDefaultAsync(item => item.UserName == normalized);
+
+        if (user is null)
+        {
+            var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+
+            user = User.Create(normalized, normalized, passwordHasher.Hash("password"), role, DateTimeOffset.UtcNow);
+            dbContext.Users.Add(user);
+            await dbContext.SaveChangesAsync();
+        }
+
+        return new UserView
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            DisplayName = user.DisplayName,
+            Role = user.Role,
+            IsActive = user.IsActive,
+            CreatedAt = user.CreatedAt
+        };
     }
 }

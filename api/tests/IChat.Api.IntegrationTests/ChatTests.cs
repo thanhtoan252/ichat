@@ -103,7 +103,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_EmitsAllFourEventTypesInOrder()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
@@ -124,7 +124,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_StatusStagesAreReported()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
@@ -141,7 +141,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_OnlyValidMarkersBecomeCitations()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
@@ -174,7 +174,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_AnswerWithNoMarkers_WritesNoCitations()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
@@ -189,7 +189,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_PersistsRewrittenQueryAndProviderMetadata()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
@@ -218,7 +218,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_QueryRewritingTimeout_FallsBackToOriginal_RequestStillSucceeds()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
@@ -243,7 +243,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_ModelOutsideAllowlist_EmitsErrorEvent()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         var conversationId = await CreateConversationAsync(client);
 
         var frames = await ReadSseAsync(client, conversationId, new { content = "xin chao", model = "gpt-khong-ton-tai" });
@@ -254,7 +254,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_UnknownConversation_EmitsErrorEvent()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
 
         var frames = await ReadSseAsync(client, Guid.NewGuid(), new { content = "xin chao" });
 
@@ -264,7 +264,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task GetMessages_ReturnsPersistedConversation()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
@@ -282,7 +282,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_FirstTurnOfUntitledConversation_NamesItAfterTheQuestion()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateUntitledConversationAsync(client);
 
@@ -296,7 +296,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_SecondTurn_KeepsTheTitleOfTheFirstQuestion()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateUntitledConversationAsync(client);
 
@@ -310,7 +310,7 @@ public class ChatTests(IChatApiFactory factory)
     [Fact]
     public async Task SendMessage_ConversationCreatedWithATitle_KeepsIt()
     {
-        var client = factory.CreateClient();
+        var client = await factory.CreateClientAsync();
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 

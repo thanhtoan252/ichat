@@ -8,6 +8,5 @@ public sealed class CreateConversationDtoValidator : AbstractValidator<CreateCon
     public CreateConversationDtoValidator()
     {
         RuleFor(dto => dto.Title).MaximumLength(300).WithName("title");
-        RuleFor(dto => dto.UserId).MaximumLength(200).WithName("userId");
     }
 }

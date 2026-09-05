@@ -26,7 +26,7 @@ public static class ConversationEndpoints
         group.MapGet("/", GetConversationsAsync)
             .WithName("GetConversations")
             .WithSummary("List conversations.")
-            .WithDescription("Paged, most recently updated first, optionally filtered by userId.")
+            .WithDescription("Paged, most recently updated first. Scoped to the caller; an administrator sees every conversation.")
             .Produces<PagedResponse<ConversationResponse>>()
             .ProducesValidationProblem();
 
@@ -89,7 +89,6 @@ public static class ConversationEndpoints
         var result = await conversations.GetListAsync(
             query.EffectivePage,
             query.EffectivePageSize,
-            query.UserId,
             cancellationToken);
 
         if (result.IsFailure)

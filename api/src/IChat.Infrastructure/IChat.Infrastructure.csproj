@@ -28,6 +28,10 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup Label="Security">
+    <PackageReference Include="BCrypt.Net-Next" />
+  </ItemGroup>
+
   <ItemGroup Label="Parsing">
     <PackageReference Include="DocumentFormat.OpenXml" />
     <PackageReference Include="PdfPig" />

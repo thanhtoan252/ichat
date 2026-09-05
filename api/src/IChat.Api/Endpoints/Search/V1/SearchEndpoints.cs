@@ -1,5 +1,6 @@
 namespace IChat.Api.Endpoints.Search.V1;
 
+using IChat.Api.Authorization;
 using IChat.Api.Endpoints.Search.V1.DTOs;
 using IChat.Api.Endpoints.Search.V1.Mappings;
 using IChat.Api.Extensions;
@@ -10,7 +11,7 @@ public static class SearchEndpoints
 {
     public static IEndpointRouteBuilder MapSearchV1Endpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/search").WithTags("Search");
+        var group = app.MapGroup("/search").WithTags("Search").RequireAuthorization(AuthPolicies.Admin);
 
         group.MapPost("/", SearchChunksAsync)
             .WithName("SearchChunks")

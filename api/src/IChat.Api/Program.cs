@@ -1,13 +1,21 @@
+using IChat.Api.Authorization;
 using IChat.Api.Endpoints;
 using IChat.Api.HealthChecks;
 using IChat.Api.Middleware;
+using IChat.Api.Security;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json.Serialization;
 using FluentValidation;
 using IChat.Core;
+using IChat.Core.Abstractions;
+using IChat.Core.Domain.Identity;
 using IChat.Infrastructure;
 using IChat.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -40,6 +48,49 @@ try
     // service model nằm trong Core và được AddIChatCore đăng ký riêng.
     builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
     builder.Services.AddIChatInfrastructure(builder.Configuration);
+
+    builder.Services.AddOptions<JwtOptions>()
+        .BindConfiguration(JwtOptions.SectionName)
+        .ValidateDataAnnotations()
+        .ValidateOnStart();
+
+    builder.Services.AddHttpContextAccessor();
+    builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
+    builder.Services.AddSingleton<IAccessTokenService, JwtAccessTokenService>();
+
+    // Đọc sớm để dựng TokenValidationParameters; ValidateOnStart ở trên chỉ chạy sau
+    // khi host build xong nên khoá rỗng phải bị chặn ngay tại đây với thông điệp rõ ràng.
+    var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+        ?? throw new InvalidOperationException($"Missing configuration section '{JwtOptions.SectionName}'.");
+
+    if (jwtOptions.SigningKey.Length < 32)
+    {
+        throw new InvalidOperationException(
+            "Jwt:SigningKey must be at least 32 characters. Set it through user-secrets or the Jwt__SigningKey environment variable.");
+    }
+
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtOptions.Issuer,
+                ValidateAudience = true,
+                ValidAudience = jwtOptions.Audience,
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+                ValidateLifetime = true,
+                // Access token chỉ sống 15 phút, cộng thêm 5 phút mặc định của thư viện
+                // là biến hết hạn thành chuyện không kiểm chứng được ở phía client.
+                ClockSkew = TimeSpan.Zero,
+                RoleClaimType = ClaimTypes.Role,
+                NameClaimType = ClaimTypes.Name
+            };
+        });
+
+    builder.Services.AddAuthorization(options =>
+        options.AddPolicy(AuthPolicies.Admin, policy => policy.RequireRole(nameof(UserRole.Admin))));
 
     // Enum đi/về dưới dạng chuỗi ("Hybrid", "FullText") thay vì số thứ tự.
     builder.Services.ConfigureHttpJsonOptions(options =>
@@ -90,6 +141,9 @@ try
     });
 
     app.UseRateLimiter();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     if (app.Environment.IsDevelopment())
     {
@@ -149,6 +203,7 @@ static void EnrichRequestLog(IDiagnosticContext diagnosticContext, HttpContext h
     diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
     diagnosticContext.Set("UserAgent", request.Headers.UserAgent.ToString());
     diagnosticContext.Set("TraceIdentifier", httpContext.TraceIdentifier);
+    diagnosticContext.Set("UserId", httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
 
     if (request.QueryString.HasValue)
     {
