@@ -3,75 +3,101 @@ namespace IChat.Core.UnitTests.Rag;
 using IChat.Core.Rag;
 using FluentAssertions;
 using Microsoft.Extensions.AI;
-using Xunit;
+using NUnit.Framework;
 
+[TestFixture]
 public class ChatHistoryNormalizerTests
 {
-    [Fact]
+    [Test]
     public void Normalize_DropsEmptyMessages()
     {
-        var normalized = ChatHistoryNormalizer.Normalize(
+        // Arrange
+        ChatMessage[] history =
         [
-            new ChatMessage(ChatRole.User, "  "),
-            new ChatMessage(ChatRole.User, "câu hỏi thật")
-        ]);
+            new(ChatRole.User, "  "),
+            new(ChatRole.User, "câu hỏi thật")
+        ];
 
+        // Act
+        var normalized = ChatHistoryNormalizer.Normalize(history);
+
+        // Assert
         normalized.Should().ContainSingle().Which.Text.Should().Be("câu hỏi thật");
     }
 
-    [Fact]
+    [Test]
     public void Normalize_MergesAdjacentSameRoleMessages()
     {
-        var normalized = ChatHistoryNormalizer.Normalize(
+        // Arrange
+        ChatMessage[] history =
         [
-            new ChatMessage(ChatRole.User, "phần một"),
-            new ChatMessage(ChatRole.User, "phần hai"),
-            new ChatMessage(ChatRole.Assistant, "trả lời")
-        ]);
+            new(ChatRole.User, "phần một"),
+            new(ChatRole.User, "phần hai"),
+            new(ChatRole.Assistant, "trả lời")
+        ];
 
+        // Act
+        var normalized = ChatHistoryNormalizer.Normalize(history);
+
+        // Assert
         normalized.Should().HaveCount(2);
         normalized[0].Text.Should().Be("phần một\n\nphần hai");
         normalized[1].Role.Should().Be(ChatRole.Assistant);
     }
 
-    [Fact]
+    [Test]
     public void Normalize_FirstMessageIsAlwaysUser()
     {
-        var normalized = ChatHistoryNormalizer.Normalize(
+        // Arrange
+        ChatMessage[] history =
         [
-            new ChatMessage(ChatRole.Assistant, "tôi nói trước"),
-            new ChatMessage(ChatRole.User, "người dùng hỏi")
-        ]);
+            new(ChatRole.Assistant, "tôi nói trước"),
+            new(ChatRole.User, "người dùng hỏi")
+        ];
 
+        // Act
+        var normalized = ChatHistoryNormalizer.Normalize(history);
+
+        // Assert
         normalized.Should().ContainSingle();
         normalized[0].Role.Should().Be(ChatRole.User);
     }
 
-    [Fact]
+    [Test]
     public void Normalize_StripsSystemMessages()
     {
-        var normalized = ChatHistoryNormalizer.Normalize(
+        // Arrange
+        ChatMessage[] history =
         [
-            new ChatMessage(ChatRole.System, "system cũ"),
-            new ChatMessage(ChatRole.User, "hỏi")
-        ]);
+            new(ChatRole.System, "system cũ"),
+            new(ChatRole.User, "hỏi")
+        ];
 
+        // Act
+        var normalized = ChatHistoryNormalizer.Normalize(history);
+
+        // Assert
         normalized.Should().ContainSingle();
         normalized[0].Role.Should().Be(ChatRole.User);
     }
 
-    [Fact]
+    [Test]
     public void Normalize_ProducesStrictlyAlternatingRoles()
     {
-        var normalized = ChatHistoryNormalizer.Normalize(
+        // Arrange
+        ChatMessage[] history =
         [
-            new ChatMessage(ChatRole.User, "u1"),
-            new ChatMessage(ChatRole.Assistant, "a1"),
-            new ChatMessage(ChatRole.Assistant, "a2"),
-            new ChatMessage(ChatRole.User, "u2"),
-            new ChatMessage(ChatRole.User, "u3")
-        ]);
+            new(ChatRole.User, "u1"),
+            new(ChatRole.Assistant, "a1"),
+            new(ChatRole.Assistant, "a2"),
+            new(ChatRole.User, "u2"),
+            new(ChatRole.User, "u3")
+        ];
 
+        // Act
+        var normalized = ChatHistoryNormalizer.Normalize(history);
+
+        // Assert
         for (var i = 1; i < normalized.Count; i++)
         {
             normalized[i].Role.Should().NotBe(normalized[i - 1].Role);
@@ -80,9 +106,16 @@ public class ChatHistoryNormalizerTests
         normalized[0].Role.Should().Be(ChatRole.User);
     }
 
-    [Fact]
+    [Test]
     public void Normalize_AllEmpty_ReturnsEmpty()
     {
-        ChatHistoryNormalizer.Normalize([new ChatMessage(ChatRole.Assistant, "")]).Should().BeEmpty();
+        // Arrange
+        ChatMessage[] history = [new(ChatRole.Assistant, "")];
+
+        // Act
+        var normalized = ChatHistoryNormalizer.Normalize(history);
+
+        // Assert
+        normalized.Should().BeEmpty();
     }
 }

@@ -2,58 +2,84 @@ namespace IChat.Core.UnitTests.Search;
 
 using IChat.Infrastructure.Search;
 using FluentAssertions;
-using Xunit;
+using NUnit.Framework;
 
 /// <summary>
 /// Bốn test cuối là bắt buộc theo spec: chúng chặn đúng lỗi khiến nhánh full-text
 /// im lặng trả rỗng gần như mọi lúc.
 /// </summary>
+[TestFixture]
 public class TsQueryBuilderTests
 {
-    [Fact]
+    [Test]
     public void Build_LongQuestion_ProducesOrQuery_NotAnd()
     {
-        var tsquery = TsQueryBuilder.Build(
-            "làm thế nào để tôi cấu hình biến môi trường cho ứng dụng trong file cấu hình vậy");
+        // Arrange
+        const string question = "làm thế nào để tôi cấu hình biến môi trường cho ứng dụng trong file cấu hình vậy";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().NotBeNull();
         tsquery.Should().Contain(" | ", "plainto_tsquery joins with &, so a long question would match nothing");
         tsquery.Should().NotContain("&");
     }
 
-    [Fact]
+    [Test]
     public void Build_FifteenWordQuestion_KeepsEveryContentLexeme()
     {
-        var tsquery = TsQueryBuilder.Build("cấu hình biến môi trường ứng dụng");
+        // Arrange
+        const string question = "cấu hình biến môi trường ứng dụng";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().Contain("cau").And.Contain("hinh").And.Contain("bien").And.Contain("moi").And.Contain("truong");
     }
 
-    [Fact]
+    [Test]
     public void Build_FiltersStopWords()
     {
-        var tsquery = TsQueryBuilder.Build("cấu hình của hệ thống là gì và các bước cho việc này");
+        // Arrange
+        const string question = "cấu hình của hệ thống là gì và các bước cho việc này";
+        string[] stopWords = ["cua", "la", "va", "cac", "cho"];
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().NotBeNull();
-        foreach (var stopWord in new[] { "cua", "la", "va", "cac", "cho" })
+        foreach (var stopWord in stopWords)
         {
             tsquery.Should().NotMatchRegex($@"(^|\|\s*){stopWord}(\s*\||$)", $"'{stopWord}' is a stopword; keeping it would match every chunk");
         }
     }
 
-    [Fact]
+    [Test]
     public void Build_QueryOfOnlyStopWords_ReturnsNull()
     {
-        var tsquery = TsQueryBuilder.Build("của là và các một cho với");
+        // Arrange
+        const string question = "của là và các một cho với";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().BeNull("return null rather than forcing ''::tsquery");
     }
 
-    [Fact]
+    [Test]
     public void Build_SpecialCharacters_DoNotBreakSyntax()
     {
-        var tsquery = TsQueryBuilder.Build("cấu hình @!#$%^&*()':\" | & ! ( ) <-> biến môi trường");
+        // Arrange
+        const string question = "cấu hình @!#$%^&*()':\" | & ! ( ) <-> biến môi trường";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().NotBeNull();
         tsquery.Should().NotContain("'");
         tsquery.Should().NotContain("!");
@@ -62,63 +88,99 @@ public class TsQueryBuilderTests
         tsquery.Should().Contain("cau");
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
     public void Build_EmptyQuery_ReturnsNull(string? query)
     {
-        TsQueryBuilder.Build(query).Should().BeNull();
+        // Arrange & Act
+        var tsquery = TsQueryBuilder.Build(query);
+
+        // Assert
+        tsquery.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public void Build_SingleCharacterTokens_AreDropped()
     {
-        TsQueryBuilder.Build("a b c d e").Should().BeNull("single-character lexemes are dropped");
+        // Arrange
+        const string question = "a b c d e";
+
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
+        tsquery.Should().BeNull("single-character lexemes are dropped");
     }
 
-    [Fact]
+    [Test]
     public void Build_RemovesVietnameseDiacritics_MatchingUnaccent()
     {
-        var tsquery = TsQueryBuilder.Build("đặt cấu hình");
+        // Arrange
+        const string question = "đặt cấu hình";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().Contain("dat", "PostgreSQL unaccent maps đ to d");
         tsquery.Should().NotContain("đ");
     }
 
-    [Fact]
+    [Test]
     public void Build_DeduplicatesRepeatedLexemes()
     {
-        var tsquery = TsQueryBuilder.Build("cấu hình cấu hình cấu hình");
+        // Arrange
+        const string question = "cấu hình cấu hình cấu hình";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery!.Split(" | ").Should().OnlyHaveUniqueItems();
     }
 
-    [Fact]
+    [Test]
     public void Build_EnglishStopWordsAlsoFiltered()
     {
-        var tsquery = TsQueryBuilder.Build("what is the configuration of the system");
+        // Arrange
+        const string question = "what is the configuration of the system";
+        string[] stopWords = ["what", "is", "the", "of"];
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().Contain("configuration");
-        foreach (var stopWord in new[] { "what", "is", "the", "of" })
+        foreach (var stopWord in stopWords)
         {
             tsquery.Should().NotMatchRegex($@"(^|\|\s*){stopWord}(\s*\||$)");
         }
     }
 
-    [Fact]
+    [Test]
     public void Build_MixedVietnameseEnglish_KeepsBothLanguages()
     {
-        var tsquery = TsQueryBuilder.Build("cách config timeout của service");
+        // Arrange
+        const string question = "cách config timeout của service";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().Contain("cach").And.Contain("config").And.Contain("timeout").And.Contain("service");
     }
 
-    [Fact]
+    [Test]
     public void Build_NumbersArePreserved()
     {
-        var tsquery = TsQueryBuilder.Build("timeout 120 giây");
+        // Arrange
+        const string question = "timeout 120 giây";
 
+        // Act
+        var tsquery = TsQueryBuilder.Build(question);
+
+        // Assert
         tsquery.Should().Contain("120");
     }
 }

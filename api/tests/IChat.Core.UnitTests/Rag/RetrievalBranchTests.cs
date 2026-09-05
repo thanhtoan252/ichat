@@ -7,113 +7,192 @@ using FluentAssertions;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Xunit;
+using Moq;
+using NUnit.Framework;
 
+[TestFixture]
 public class RetrievalBranchTests
 {
-    [Theory]
-    [InlineData(SearchMode.Hybrid, true)]
-    [InlineData(SearchMode.Vector, true)]
-    [InlineData(SearchMode.FullText, false)]
-    [InlineData(SearchMode.Trigram, false)]
+    private Mock<IChunkSearch> _chunkSearch = null!;
+    private Mock<IEmbeddingGenerator<string, Embedding<float>>> _embeddings = null!;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _chunkSearch = new Mock<IChunkSearch>();
+        _chunkSearch
+            .Setup(search => search.SearchVectorAsync(It.IsAny<float[]>(), It.IsAny<int>(), It.IsAny<double>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(EmptyResult);
+        _chunkSearch
+            .Setup(search => search.SearchFullTextAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<double>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(EmptyResult);
+        _chunkSearch
+            .Setup(search => search.SearchTrigramAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(EmptyResult);
+
+        _embeddings = new Mock<IEmbeddingGenerator<string, Embedding<float>>>();
+        _embeddings
+            .Setup(generator => generator.GenerateAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<EmbeddingGenerationOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IEnumerable<string> values, EmbeddingGenerationOptions? _, CancellationToken _) =>
+                new GeneratedEmbeddings<Embedding<float>>(values.Select(_ => new Embedding<float>(new float[] { 1f, 0f })).ToList()));
+    }
+
+    [TestCase(SearchMode.Hybrid, true)]
+    [TestCase(SearchMode.Vector, true)]
+    [TestCase(SearchMode.FullText, false)]
+    [TestCase(SearchMode.Trigram, false)]
     public void VectorBranch_IsEnabled_OnlyForHybridAndVector(SearchMode mode, bool expected)
     {
-        VectorBranch(new RecordingChunkSearch()).IsEnabledFor(mode).Should().Be(expected);
+        // Arrange
+        var branch = VectorBranch();
+
+        // Act
+        var enabled = branch.IsEnabledFor(mode);
+
+        // Assert
+        enabled.Should().Be(expected);
     }
 
-    [Theory]
-    [InlineData(SearchMode.Hybrid, true)]
-    [InlineData(SearchMode.FullText, true)]
-    [InlineData(SearchMode.Vector, false)]
-    [InlineData(SearchMode.Trigram, false)]
+    [TestCase(SearchMode.Hybrid, true)]
+    [TestCase(SearchMode.FullText, true)]
+    [TestCase(SearchMode.Vector, false)]
+    [TestCase(SearchMode.Trigram, false)]
     public void FullTextBranch_IsEnabled_OnlyForHybridAndFullText(SearchMode mode, bool expected)
     {
-        new FullTextSearchBranch(new RecordingChunkSearch(), Rag()).IsEnabledFor(mode).Should().Be(expected);
+        // Arrange
+        var branch = new FullTextSearchBranch(_chunkSearch.Object, Rag());
+
+        // Act
+        var enabled = branch.IsEnabledFor(mode);
+
+        // Assert
+        enabled.Should().Be(expected);
     }
 
-    [Theory]
-    [InlineData(SearchMode.Hybrid, true)]
-    [InlineData(SearchMode.Trigram, true)]
-    [InlineData(SearchMode.Vector, false)]
-    [InlineData(SearchMode.FullText, false)]
+    [TestCase(SearchMode.Hybrid, true)]
+    [TestCase(SearchMode.Trigram, true)]
+    [TestCase(SearchMode.Vector, false)]
+    [TestCase(SearchMode.FullText, false)]
     public void TrigramBranch_IsEnabled_OnlyForHybridAndTrigram_WhenCandidatesAreConfigured(SearchMode mode, bool expected)
     {
-        var branch = new TrigramSearchBranch(new RecordingChunkSearch(), Rag(trigramCandidates: 20));
+        // Arrange
+        var branch = new TrigramSearchBranch(_chunkSearch.Object, Rag(trigramCandidates: 20));
 
-        branch.IsEnabledFor(mode).Should().Be(expected);
+        // Act
+        var enabled = branch.IsEnabledFor(mode);
+
+        // Assert
+        enabled.Should().Be(expected);
     }
 
     // TrigramCandidates = 0 là công tắc tắt nhánh 3 (mặc định của appsettings).
-    [Theory]
-    [InlineData(SearchMode.Hybrid)]
-    [InlineData(SearchMode.Trigram)]
+    [TestCase(SearchMode.Hybrid)]
+    [TestCase(SearchMode.Trigram)]
     public void TrigramBranch_IsDisabled_WhenTrigramCandidatesIsZero(SearchMode mode)
     {
-        var branch = new TrigramSearchBranch(new RecordingChunkSearch(), Rag(trigramCandidates: 0));
+        // Arrange
+        var branch = new TrigramSearchBranch(_chunkSearch.Object, Rag(trigramCandidates: 0));
 
-        branch.IsEnabledFor(mode).Should().BeFalse();
+        // Act
+        var enabled = branch.IsEnabledFor(mode);
+
+        // Assert
+        enabled.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public void StageNames_MatchThePublishedContract()
     {
-        var chunkSearch = new RecordingChunkSearch();
+        // Arrange
+        var vector = VectorBranch();
+        var fullText = new FullTextSearchBranch(_chunkSearch.Object, Rag());
+        var trigram = new TrigramSearchBranch(_chunkSearch.Object, Rag());
 
-        VectorBranch(chunkSearch).StageName.Should().Be("vector");
-        new FullTextSearchBranch(chunkSearch, Rag()).StageName.Should().Be("fulltext");
-        new TrigramSearchBranch(chunkSearch, Rag()).StageName.Should().Be("trigram");
+        // Act & Assert
+        vector.StageName.Should().Be("vector");
+        fullText.StageName.Should().Be("fulltext");
+        trigram.StageName.Should().Be("trigram");
     }
 
-    [Fact]
+    [Test]
     public async Task VectorBranch_PassesConfiguredLimitsToTheStore()
     {
-        var chunkSearch = new RecordingChunkSearch();
+        // Arrange
+        var branch = VectorBranch();
 
-        await VectorBranch(chunkSearch).SearchAsync("cau hoi", CancellationToken.None);
+        // Act
+        await branch.SearchAsync("cau hoi", CancellationToken.None);
 
-        chunkSearch.VectorLimit.Should().Be(40);
-        chunkSearch.VectorMinSimilarity.Should().Be(0.20);
+        // Assert
+        _chunkSearch.Verify(
+            search => search.SearchVectorAsync(It.IsAny<float[]>(), 40, 0.20, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     // Embedding hỏng là bước phụ có thể degrade: nhánh tự báo Degraded thay vì ném lỗi ra
     // pipeline, để full-text và trigram vẫn trả lời được.
-    [Fact]
+    [Test]
     public async Task VectorBranch_EmbeddingFails_ReturnsDegradedWithNoCandidates()
     {
-        var chunkSearch = new RecordingChunkSearch();
-        var branch = VectorBranch(chunkSearch, new StubEmbeddingGenerator { ShouldFail = true });
+        // Arrange
+        _embeddings
+            .Setup(generator => generator.GenerateAsync(
+                It.IsAny<IEnumerable<string>>(),
+                It.IsAny<EmbeddingGenerationOptions?>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Stub embedding provider failing on purpose."));
+        var branch = VectorBranch();
 
+        // Act
         var result = await branch.SearchAsync("cau hoi", CancellationToken.None);
 
+        // Assert
         result.Degraded.Should().BeTrue();
         result.Candidates.Should().BeEmpty();
-        chunkSearch.VectorCalls.Should().Be(0, "the store must not be queried without an embedding");
+        _chunkSearch.Verify(
+            search => search.SearchVectorAsync(It.IsAny<float[]>(), It.IsAny<int>(), It.IsAny<double>(), It.IsAny<CancellationToken>()),
+            Times.Never,
+            "the store must not be queried without an embedding");
     }
 
-    [Fact]
+    [Test]
     public async Task VectorBranch_EmbeddingSucceeds_IsNotDegraded()
     {
-        var result = await VectorBranch(new RecordingChunkSearch()).SearchAsync("cau hoi", CancellationToken.None);
+        // Arrange
+        var branch = VectorBranch();
 
+        // Act
+        var result = await branch.SearchAsync("cau hoi", CancellationToken.None);
+
+        // Assert
         result.Degraded.Should().BeFalse();
     }
 
-    [Fact]
+    [Test]
     public async Task TrigramBranch_PassesConfiguredLimitToTheStore()
     {
-        var chunkSearch = new RecordingChunkSearch();
-        var branch = new TrigramSearchBranch(chunkSearch, Rag(trigramCandidates: 15));
+        // Arrange
+        var branch = new TrigramSearchBranch(_chunkSearch.Object, Rag(trigramCandidates: 15));
 
+        // Act
         await branch.SearchAsync("cau hoi", CancellationToken.None);
 
-        chunkSearch.TrigramLimit.Should().Be(15);
+        // Assert
+        _chunkSearch.Verify(
+            search => search.SearchTrigramAsync(It.IsAny<string>(), 15, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
-    private static VectorSearchBranch VectorBranch(IChunkSearch chunkSearch, StubEmbeddingGenerator? embeddings = null)
+    private static SearchBranchResult EmptyResult => new() { Candidates = [], ElapsedMs = 0 };
+
+    private VectorSearchBranch VectorBranch()
     {
         return new VectorSearchBranch(
-            chunkSearch,
-            embeddings ?? new StubEmbeddingGenerator(),
+            _chunkSearch.Object,
+            _embeddings.Object,
             Rag(),
             NullLogger<VectorSearchBranch>.Instance);
     }
@@ -124,68 +203,5 @@ public class RetrievalBranchTests
         {
             Retrieval = new RetrievalOptions { TrigramCandidates = trigramCandidates }
         });
-    }
-
-    private sealed class RecordingChunkSearch : IChunkSearch
-    {
-        public int VectorCalls { get; private set; }
-
-        public int VectorLimit { get; private set; }
-
-        public double VectorMinSimilarity { get; private set; }
-
-        public int TrigramLimit { get; private set; }
-
-        public Task<SearchBranchResult> SearchVectorAsync(float[] queryEmbedding, int limit, double minSimilarity, CancellationToken cancellationToken)
-        {
-            VectorCalls++;
-            VectorLimit = limit;
-            VectorMinSimilarity = minSimilarity;
-
-            return Task.FromResult(Empty());
-        }
-
-        public Task<SearchBranchResult> SearchFullTextAsync(string query, int limit, double minRank, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(Empty());
-        }
-
-        public Task<SearchBranchResult> SearchTrigramAsync(string query, int limit, CancellationToken cancellationToken)
-        {
-            TrigramLimit = limit;
-
-            return Task.FromResult(Empty());
-        }
-
-        private static SearchBranchResult Empty()
-        {
-            return new SearchBranchResult { Candidates = [], ElapsedMs = 0 };
-        }
-    }
-
-    private sealed class StubEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
-    {
-        public bool ShouldFail { get; init; }
-
-        public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
-            IEnumerable<string> values,
-            EmbeddingGenerationOptions? options = null,
-            CancellationToken cancellationToken = default)
-        {
-            if (ShouldFail)
-            {
-                throw new InvalidOperationException("Stub embedding provider failing on purpose.");
-            }
-
-            var embeddings = values.Select(_ => new Embedding<float>(new float[] { 1f, 0f })).ToList();
-
-            return Task.FromResult(new GeneratedEmbeddings<Embedding<float>>(embeddings));
-        }
-
-        public object? GetService(Type serviceType, object? serviceKey = null) => null;
-
-        public void Dispose()
-        {
-        }
     }
 }

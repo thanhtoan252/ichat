@@ -7,126 +7,152 @@ using IChat.Core.Services.Chat;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
-using Xunit;
+using Moq;
+using NUnit.Framework;
 
+[TestFixture]
 public class ChatTurnRecorderTests
 {
     private static readonly Guid ChunkA = Guid.Parse("00000000-0000-0000-0000-0000000000a1");
     private static readonly Guid ChunkB = Guid.Parse("00000000-0000-0000-0000-0000000000b2");
     private static readonly Guid ChunkC = Guid.Parse("00000000-0000-0000-0000-0000000000c3");
 
-    [Fact]
+    private List<Message> _savedMessages = null!;
+    private List<MessageCitation> _savedCitations = null!;
+    private Mock<IApplicationDbContext> _dbContext = null!;
+    private ChatTurnRecorder _recorder = null!;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _savedMessages = [];
+        _savedCitations = [];
+
+        var messageSet = new Mock<DbSet<Message>>();
+        messageSet.Setup(set => set.Add(It.IsAny<Message>())).Callback<Message>(_savedMessages.Add);
+
+        var citationSet = new Mock<DbSet<MessageCitation>>();
+        citationSet.Setup(set => set.Add(It.IsAny<MessageCitation>())).Callback<MessageCitation>(_savedCitations.Add);
+
+        _dbContext = new Mock<IApplicationDbContext>();
+        _dbContext.SetupGet(context => context.Messages).Returns(messageSet.Object);
+        _dbContext.SetupGet(context => context.MessageCitations).Returns(citationSet.Object);
+        _dbContext.Setup(context => context.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+
+        _recorder = new ChatTurnRecorder(_dbContext.Object, TimeProvider.System, NullLogger<ChatTurnRecorder>.Instance);
+    }
+
+    [Test]
     public async Task RecordAnswer_WritesOneCitationPerCitedSource()
     {
-        var recorder = Recorder(out var messages, out var citations);
+        // Arrange
+        var answer = Answer("Theo [1] va [2] thi dung.");
+        var context = Assembled(Source(1, ChunkA), Source(2, ChunkB));
 
-        var done = await recorder.RecordAnswerAsync(
-            Conversation(),
-            Answer("Theo [1] va [2] thi dung."),
-            Assembled(Source(1, ChunkA), Source(2, ChunkB)),
-            Metadata(),
-            CancellationToken.None);
+        // Act
+        var done = await _recorder.RecordAnswerAsync(Conversation(), answer, context, Metadata(), CancellationToken.None);
 
+        // Assert
         done.Citations.Select(citation => citation.ChunkId).Should().Equal(ChunkA, ChunkB);
-        citations.Should().HaveCount(2);
-        messages.Should().ContainSingle();
+        _savedCitations.Should().HaveCount(2);
+        _savedMessages.Should().ContainSingle();
+        _dbContext.Verify(dbContext => dbContext.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     // Không được tin marker model sinh ra: [5] khi context chỉ có 2 nguồn là marker bịa.
-    [Fact]
+    [Test]
     public async Task RecordAnswer_IgnoresMarkersOutsideTheContextRange()
     {
-        var recorder = Recorder(out _, out var citations);
+        // Arrange
+        var answer = Answer("Xem [1] va [5] va [0].");
+        var context = Assembled(Source(1, ChunkA), Source(2, ChunkB));
 
-        var done = await recorder.RecordAnswerAsync(
-            Conversation(),
-            Answer("Xem [1] va [5] va [0]."),
-            Assembled(Source(1, ChunkA), Source(2, ChunkB)),
-            Metadata(),
-            CancellationToken.None);
+        // Act
+        var done = await _recorder.RecordAnswerAsync(Conversation(), answer, context, Metadata(), CancellationToken.None);
 
+        // Assert
         done.Citations.Should().ContainSingle();
         done.Citations[0].MarkerIndex.Should().Be(1);
-        citations.Should().ContainSingle();
+        _savedCitations.Should().ContainSingle();
     }
 
     // Một khối context gộp nhiều chunk neo; hai nguồn có thể chia nhau một chunk.
-    [Fact]
+    [Test]
     public async Task RecordAnswer_DeduplicatesAnchorChunksSharedBetweenSources()
     {
-        var recorder = Recorder(out _, out var citations);
+        // Arrange
+        var answer = Answer("Ca [1] lan [2].");
+        var context = Assembled(Source(1, ChunkA, ChunkB), Source(2, ChunkB, ChunkC));
 
-        var done = await recorder.RecordAnswerAsync(
-            Conversation(),
-            Answer("Ca [1] lan [2]."),
-            Assembled(Source(1, ChunkA, ChunkB), Source(2, ChunkB, ChunkC)),
-            Metadata(),
-            CancellationToken.None);
+        // Act
+        var done = await _recorder.RecordAnswerAsync(Conversation(), answer, context, Metadata(), CancellationToken.None);
 
+        // Assert
         done.Citations.Select(citation => citation.ChunkId).Should().Equal(ChunkA, ChunkB, ChunkC);
-        citations.Should().HaveCount(3);
+        _savedCitations.Should().HaveCount(3);
     }
 
-    [Fact]
+    [Test]
     public async Task RecordAnswer_MultipleAnchorsInOneSource_AllBecomeCitations()
     {
-        var recorder = Recorder(out _, out _);
+        // Arrange
+        var answer = Answer("Chi mot nguon [1].");
+        var context = Assembled(Source(1, ChunkA, ChunkB));
 
-        var done = await recorder.RecordAnswerAsync(
-            Conversation(),
-            Answer("Chi mot nguon [1]."),
-            Assembled(Source(1, ChunkA, ChunkB)),
-            Metadata(),
-            CancellationToken.None);
+        // Act
+        var done = await _recorder.RecordAnswerAsync(Conversation(), answer, context, Metadata(), CancellationToken.None);
 
+        // Assert
         done.Citations.Should().HaveCount(2);
         done.Citations.Should().OnlyContain(citation => citation.MarkerIndex == 1);
     }
 
-    [Fact]
+    [Test]
     public async Task RecordAnswer_AnswerWithoutMarkers_WritesNoCitation()
     {
-        var recorder = Recorder(out var messages, out var citations);
+        // Arrange
+        var answer = Answer("Toi khong biet.");
+        var context = Assembled(Source(1, ChunkA));
 
-        var done = await recorder.RecordAnswerAsync(
-            Conversation(),
-            Answer("Toi khong biet."),
-            Assembled(Source(1, ChunkA)),
-            Metadata(),
-            CancellationToken.None);
+        // Act
+        var done = await _recorder.RecordAnswerAsync(Conversation(), answer, context, Metadata(), CancellationToken.None);
 
+        // Assert
         done.Citations.Should().BeEmpty();
-        citations.Should().BeEmpty();
-        messages.Should().ContainSingle("câu trả lời vẫn phải được lưu dù không trích dẫn gì");
+        _savedCitations.Should().BeEmpty();
+        _savedMessages.Should().ContainSingle("câu trả lời vẫn phải được lưu dù không trích dẫn gì");
     }
 
-    [Fact]
+    [Test]
     public async Task RecordAnswer_FillsEveryFieldOfTheDonePayload()
     {
-        var recorder = Recorder(out var messages, out _);
+        // Arrange
+        var answer = new GeneratedAnswer
+        {
+            Text = "Theo [1].",
+            Interrupted = true,
+            InputTokens = 120,
+            OutputTokens = 45
+        };
+        var metadata = new GenerationMetadata
+        {
+            Provider = "OpenAI",
+            Model = "gpt-4o-mini",
+            LatencyMs = 1234,
+            RetrievalMs = 56,
+            Degraded = true
+        };
 
-        var done = await recorder.RecordAnswerAsync(
+        // Act
+        var done = await _recorder.RecordAnswerAsync(
             Conversation(),
-            new GeneratedAnswer
-            {
-                Text = "Theo [1].",
-                Interrupted = true,
-                InputTokens = 120,
-                OutputTokens = 45
-            },
+            answer,
             Assembled(Source(1, ChunkA)),
-            new GenerationMetadata
-            {
-                Provider = "OpenAI",
-                Model = "gpt-4o-mini",
-                LatencyMs = 1234,
-                RetrievalMs = 56,
-                Degraded = true
-            },
+            metadata,
             CancellationToken.None);
 
-        done.MessageId.Should().Be(messages.Single().Id);
+        // Assert
+        done.MessageId.Should().Be(_savedMessages.Single().Id);
         done.Provider.Should().Be("OpenAI");
         done.Model.Should().Be("gpt-4o-mini");
         done.InputTokens.Should().Be(120);
@@ -138,51 +164,33 @@ public class ChatTurnRecorderTests
     }
 
     // Hội thoại tạo từ nút "New chat" chưa có tên; câu hỏi đầu tiên phải đặt tên cho nó.
-    [Fact]
+    [Test]
     public async Task RecordQuestion_NamesADefaultTitledConversation()
     {
-        var recorder = Recorder(out var messages, out _);
+        // Arrange
         var conversation = Conversation();
 
-        await recorder.RecordQuestionAsync(conversation, "Timeout mac dinh la bao nhieu?", "timeout mac dinh", 42, CancellationToken.None);
+        // Act
+        await _recorder.RecordQuestionAsync(conversation, "Timeout mac dinh la bao nhieu?", "timeout mac dinh", 42, CancellationToken.None);
 
+        // Assert
         conversation.Title.Should().NotBe(ConversationTitle.Default);
-        messages.Single().RewrittenQuery.Should().Be("timeout mac dinh");
-        messages.Single().RetrievalMs.Should().Be(42);
+        _savedMessages.Single().RewrittenQuery.Should().Be("timeout mac dinh");
+        _savedMessages.Single().RetrievalMs.Should().Be(42);
     }
 
-    [Fact]
+    [Test]
     public async Task RecordQuestion_KeepsAnAlreadyNamedConversation()
     {
-        var recorder = Recorder(out _, out _);
+        // Arrange
         var conversation = Conversation();
         conversation.Rename("Ten da dat", DateTimeOffset.UnixEpoch);
 
-        await recorder.RecordQuestionAsync(conversation, "Cau hoi moi", "cau hoi moi", 1, CancellationToken.None);
+        // Act
+        await _recorder.RecordQuestionAsync(conversation, "Cau hoi moi", "cau hoi moi", 1, CancellationToken.None);
 
+        // Assert
         conversation.Title.Should().Be("Ten da dat");
-    }
-
-    private static ChatTurnRecorder Recorder(out List<Message> messages, out List<MessageCitation> citations)
-    {
-        var savedMessages = new List<Message>();
-        var savedCitations = new List<MessageCitation>();
-
-        var messageSet = Substitute.For<DbSet<Message>>();
-        messageSet.When(set => set.Add(Arg.Any<Message>())).Do(call => savedMessages.Add(call.Arg<Message>()));
-
-        var citationSet = Substitute.For<DbSet<MessageCitation>>();
-        citationSet.When(set => set.Add(Arg.Any<MessageCitation>())).Do(call => savedCitations.Add(call.Arg<MessageCitation>()));
-
-        var dbContext = Substitute.For<IApplicationDbContext>();
-        dbContext.Messages.Returns(messageSet);
-        dbContext.MessageCitations.Returns(citationSet);
-        dbContext.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(1);
-
-        messages = savedMessages;
-        citations = savedCitations;
-
-        return new ChatTurnRecorder(dbContext, TimeProvider.System, NullLogger<ChatTurnRecorder>.Instance);
     }
 
     private static Conversation Conversation()

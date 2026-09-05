@@ -5,51 +5,64 @@ using IChat.Infrastructure.Ai.Providers;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using NUnit.Framework;
 
 /// <summary>
 /// Thêm một hãng vào enum mà quên đăng ký factory sẽ chỉ vỡ lúc chạy thật, ngay giữa một
 /// request của người dùng. Test này bắt nó ngay lúc build.
 /// </summary>
+[TestFixture]
 public class ProviderFactoryRegistryTests
 {
-    [Fact]
+    [Test]
     public void EveryChatProvider_HasARegisteredFactory()
     {
+        // Arrange
         using var provider = BuildServiceProvider();
 
+        // Act
         var registered = provider.GetServices<IChatProviderClientFactory>().Select(factory => factory.Provider);
 
+        // Assert
         registered.Should().BeEquivalentTo(Enum.GetValues<ChatProvider>());
     }
 
-    [Fact]
+    [Test]
     public void EveryEmbeddingProvider_HasARegisteredFactory()
     {
+        // Arrange
         using var provider = BuildServiceProvider();
 
+        // Act
         var registered = provider.GetServices<IEmbeddingProviderClientFactory>().Select(factory => factory.Provider);
 
+        // Assert
         registered.Should().BeEquivalentTo(Enum.GetValues<EmbeddingProvider>());
     }
 
-    [Fact]
+    [Test]
     public void ChatProviderFactories_AreRegisteredExactlyOncePerProvider()
     {
+        // Arrange
         using var provider = BuildServiceProvider();
 
+        // Act
         var registered = provider.GetServices<IChatProviderClientFactory>().Select(factory => factory.Provider).ToList();
 
+        // Assert
         registered.Should().OnlyHaveUniqueItems("ChatClientFactory dựng dictionary theo Provider và sẽ ném lỗi nếu trùng khoá");
     }
 
-    [Fact]
+    [Test]
     public void EmbeddingProviderFactories_AreRegisteredExactlyOncePerProvider()
     {
+        // Arrange
         using var provider = BuildServiceProvider();
 
+        // Act
         var registered = provider.GetServices<IEmbeddingProviderClientFactory>().Select(factory => factory.Provider).ToList();
 
+        // Assert
         registered.Should().OnlyHaveUniqueItems();
     }
 

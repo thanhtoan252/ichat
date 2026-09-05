@@ -3,54 +3,73 @@ namespace IChat.Core.UnitTests.Parsing;
 using IChat.Core.Domain.Documents.Parsing;
 using IChat.Infrastructure.Ingestion.Parsing;
 using FluentAssertions;
-using Xunit;
+using NUnit.Framework;
 
+[TestFixture]
 public class PdfDocumentParserTests
 {
-    private static readonly Lazy<ParsedDocument> Parsed = new(() =>
+    private ParsedDocument _parsed = null!;
+    private IReadOnlyList<DocumentBlock> _blocks = null!;
+
+    // Parse một lần cho cả fixture: mọi test dưới đây chỉ đọc, không sửa kết quả parse.
+    [OneTimeSetUp]
+    public async Task ParseTheFixtureOnce()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "fixtures", "sample.pdf");
-        using var stream = File.OpenRead(path);
+        await using var stream = File.OpenRead(path);
 
-        return new PdfDocumentParser().ParseAsync(stream, CancellationToken.None).GetAwaiter().GetResult();
-    });
-
-    private static IReadOnlyList<DocumentBlock> Blocks => Parsed.Value.Blocks;
-
-    [Fact]
-    public void Parse_ExtractsText()
-    {
-        string.Join(" ", Blocks.Select(block => block.Text))
-            .Should().Contain("Timeout mac dinh la 120 giay");
+        _parsed = await new PdfDocumentParser().ParseAsync(stream, CancellationToken.None);
+        _blocks = _parsed.Blocks;
     }
 
-    [Fact]
+    [Test]
+    public void Parse_ExtractsText()
+    {
+        // Arrange & Act
+        var allText = string.Join(" ", _blocks.Select(block => block.Text));
+
+        // Assert
+        allText.Should().Contain("Timeout mac dinh la 120 giay");
+    }
+
+    [Test]
     public void Parse_InfersHeadingsFromLargerFontSize()
     {
-        var headings = Blocks.Where(block => block.Kind == BlockKind.Heading).Select(block => block.Text).ToList();
+        // Arrange & Act
+        var headings = _blocks.Where(block => block.Kind == BlockKind.Heading).Select(block => block.Text).ToList();
 
+        // Assert
         headings.Should().Contain("Cai dat he thong");
         headings.Should().Contain("Cau hinh nang cao");
     }
 
-    [Fact]
+    [Test]
     public void Parse_BodyTextIsNotTreatedAsHeading()
     {
-        Blocks.Where(block => block.Kind == BlockKind.Heading)
-            .Should().NotContain(block => block.Text.Contains("Doan van mo dau"));
+        // Arrange & Act
+        var headings = _blocks.Where(block => block.Kind == BlockKind.Heading);
+
+        // Assert
+        headings.Should().NotContain(block => block.Text.Contains("Doan van mo dau"));
     }
 
-    [Fact]
+    [Test]
     public void Parse_PdfBlocksCarryPageNumber()
     {
+        // Arrange & Act — parsing happened in OneTimeSetUp
+
+        // Assert
         // page CHỈ có ý nghĩa với PDF; docx phải để null.
-        Blocks.Should().OnlyContain(block => block.Metadata != null && block.Metadata.ContainsKey("page"));
-        Blocks[0].Metadata!["page"].Should().Be("1");
+        _blocks.Should().OnlyContain(block => block.Metadata != null && block.Metadata.ContainsKey("page"));
+        _blocks[0].Metadata!["page"].Should().Be("1");
     }
 
-    [Fact]
+    [Test]
     public void Parse_ReportsPdfFormat()
     {
-        Parsed.Value.Metadata["format"].Should().Be("pdf");
+        // Arrange & Act — parsing happened in OneTimeSetUp
+
+        // Assert
+        _parsed.Metadata["format"].Should().Be("pdf");
     }
 }

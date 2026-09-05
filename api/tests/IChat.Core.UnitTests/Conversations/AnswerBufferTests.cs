@@ -4,104 +4,138 @@ using IChat.Core.Contracts.Conversations;
 using IChat.Core.Services.Chat;
 using FluentAssertions;
 using Microsoft.Extensions.AI;
-using Xunit;
+using NUnit.Framework;
 
+[TestFixture]
 public class AnswerBufferTests
 {
-    [Fact]
+    private AnswerBuffer _buffer = null!;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _buffer = new AnswerBuffer();
+    }
+
+    [Test]
     public void ToAnswer_NothingHappened_ReturnsEmptyAndUninterrupted()
     {
-        var answer = new AnswerBuffer().ToAnswer();
+        // Arrange — a buffer nothing was written to
 
+        // Act
+        var answer = _buffer.ToAnswer();
+
+        // Assert
         answer.Text.Should().BeEmpty();
         answer.Interrupted.Should().BeFalse();
         answer.InputTokens.Should().BeNull();
         answer.OutputTokens.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public void AppendText_ConcatenatesEveryChunkInOrder()
     {
-        var buffer = new AnswerBuffer();
+        // Arrange
+        string[] chunks = ["Cau ", "tra ", "loi"];
 
-        buffer.AppendText("Cau ");
-        buffer.AppendText("tra ");
-        buffer.AppendText("loi");
+        // Act
+        foreach (var chunk in chunks)
+        {
+            _buffer.AppendText(chunk);
+        }
 
-        buffer.ToAnswer().Text.Should().Be("Cau tra loi");
+        // Assert
+        _buffer.ToAnswer().Text.Should().Be("Cau tra loi");
     }
 
     // Có provider trả usage ở update cuối, có provider trả rải rác qua nhiều update.
-    [Fact]
+    [Test]
     public void AddUsage_SumsAcrossSeveralUpdates()
     {
-        var buffer = new AnswerBuffer();
+        // Arrange
+        var first = UsageUpdate(inputTokens: 10, outputTokens: 3);
+        var second = UsageUpdate(inputTokens: 5, outputTokens: 7);
 
-        buffer.AddUsage(UsageUpdate(inputTokens: 10, outputTokens: 3));
-        buffer.AddUsage(UsageUpdate(inputTokens: 5, outputTokens: 7));
+        // Act
+        _buffer.AddUsage(first);
+        _buffer.AddUsage(second);
 
-        var answer = buffer.ToAnswer();
-
+        // Assert
+        var answer = _buffer.ToAnswer();
         answer.InputTokens.Should().Be(15);
         answer.OutputTokens.Should().Be(10);
     }
 
-    [Fact]
+    [Test]
     public void AddUsage_UpdateWithoutUsageContent_LeavesTokensUnknown()
     {
-        var buffer = new AnswerBuffer();
+        // Arrange
+        var update = new ChatResponseUpdate(ChatRole.Assistant, "xin chao");
 
-        buffer.AddUsage(new ChatResponseUpdate(ChatRole.Assistant, "xin chao"));
+        // Act
+        _buffer.AddUsage(update);
 
-        buffer.ToAnswer().InputTokens.Should().BeNull();
+        // Assert
+        _buffer.ToAnswer().InputTokens.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public void MarkInterrupted_AppendsTheMarkerOnce()
     {
-        var buffer = new AnswerBuffer();
-        buffer.AppendText("Mot phan cau tra loi");
+        // Arrange
+        _buffer.AppendText("Mot phan cau tra loi");
 
-        buffer.MarkInterrupted();
+        // Act
+        _buffer.MarkInterrupted();
 
-        buffer.ToAnswer().Text.Should().Be("Mot phan cau tra loi\n\n[interrupted]");
+        // Assert
+        _buffer.ToAnswer().Text.Should().Be("Mot phan cau tra loi\n\n[interrupted]");
     }
 
     // ToAnswer có thể được gọi lại, và ngắt hai lần vẫn chỉ là một lần ngắt.
-    [Fact]
+    [Test]
     public void MarkInterrupted_CalledTwice_StillAppendsTheMarkerOnlyOnce()
     {
-        var buffer = new AnswerBuffer();
-        buffer.AppendText("Mot phan");
+        // Arrange
+        _buffer.AppendText("Mot phan");
 
-        buffer.MarkInterrupted();
-        buffer.MarkInterrupted();
-        buffer.ToAnswer();
+        // Act
+        _buffer.MarkInterrupted();
+        _buffer.MarkInterrupted();
+        _buffer.ToAnswer();
 
-        buffer.ToAnswer().Text.Should().Be("Mot phan\n\n[interrupted]");
+        // Assert
+        _buffer.ToAnswer().Text.Should().Be("Mot phan\n\n[interrupted]");
     }
 
-    [Fact]
+    [Test]
     public void MarkFailed_SetsBothTheErrorAndTheInterruptedFlag()
     {
-        var buffer = new AnswerBuffer();
-        buffer.AppendText("Mot phan");
-
+        // Arrange
+        _buffer.AppendText("Mot phan");
         var error = new ErrorPayload { Code = SseErrorCode.External, Message = "The AI provider failed while generating the answer." };
-        buffer.MarkFailed(error);
 
-        buffer.Error.Should().BeSameAs(error);
+        // Act
+        _buffer.MarkFailed(error);
 
-        var answer = buffer.ToAnswer();
+        // Assert
+        _buffer.Error.Should().BeSameAs(error);
 
+        var answer = _buffer.ToAnswer();
         answer.Interrupted.Should().BeTrue();
         answer.Text.Should().EndWith("[interrupted]");
     }
 
-    [Fact]
+    [Test]
     public void Error_IsNull_WhenNothingFailed()
     {
-        new AnswerBuffer().Error.Should().BeNull();
+        // Arrange — a buffer nothing failed on
+
+        // Act
+        var error = _buffer.Error;
+
+        // Assert
+        error.Should().BeNull();
     }
 
     private static ChatResponseUpdate UsageUpdate(int inputTokens, int outputTokens)

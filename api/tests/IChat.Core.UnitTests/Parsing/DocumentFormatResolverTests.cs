@@ -4,8 +4,9 @@ using IChat.Core.Abstractions;
 using IChat.Core.Common;
 using IChat.Infrastructure.Ingestion.Parsing;
 using FluentAssertions;
-using Xunit;
+using NUnit.Framework;
 
+[TestFixture]
 public class DocumentFormatResolverTests
 {
     private static readonly byte[] ZipHeader = [0x50, 0x4B, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00];
@@ -16,94 +17,10 @@ public class DocumentFormatResolverTests
 
     private static readonly byte[] TextHeader = [0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x0A, 0x0A, 0x0A];
 
-    // .doc phải bị chặn TRƯỚC TIÊN kèm hướng dẫn, không bao giờ để nổ thành 500 trong OpenXml.
-    [Fact]
-    public void Resolve_LegacyDocExtension_Returns415WithGuidance()
-    {
-        var result = Resolve("bao-cao.doc", "application/msword", Ole2Header);
+    private DocumentParserResolver _resolver = null!;
 
-        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
-        result.Error.Message.Should().Contain("save it as .docx");
-    }
-
-    [Fact]
-    public void Resolve_Ole2MagicUnderADocxName_IsStillRejectedAsLegacyDoc()
-    {
-        // Đổi đuôi file không đổi được nội dung: magic OLE2 vẫn là Word 97-2003.
-        var result = Resolve("bao-cao.docx", "application/octet-stream", Ole2Header);
-
-        result.Error.Message.Should().Contain("Word 97-2003");
-    }
-
-    [Fact]
-    public void Resolve_DocxExtensionWithoutZipHeader_Returns415()
-    {
-        var result = Resolve("gia-mao.docx", "application/octet-stream", TextHeader);
-
-        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
-        result.Error.Message.Should().Be("The file has a .docx extension but its content is not an Office (zip) container.");
-    }
-
-    [Fact]
-    public void Resolve_DocxExtensionWithZipHeader_ResolvesToDocx()
-    {
-        var result = Resolve("tai-lieu.docx", "application/octet-stream", ZipHeader);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(DocxDocumentParser.DocxContentType);
-    }
-
-    [Fact]
-    public void Resolve_NoExtensionButPdfMagic_ResolvesToPdf()
-    {
-        var result = Resolve("khong-duoi-file", "application/octet-stream", PdfHeader);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().Be(PdfDocumentParser.PdfContentType);
-    }
-
-    [Theory]
-    [InlineData("ghi-chu.md", "text/markdown")]
-    [InlineData("ghi-chu.markdown", "text/markdown")]
-    [InlineData("ghi-chu.txt", "text/plain")]
-    public void Resolve_KnownExtension_ResolvesToItsContentType(string fileName, string expected)
-    {
-        Resolve(fileName, "application/octet-stream", TextHeader).Value.Should().Be(expected);
-    }
-
-    [Fact]
-    public void Resolve_UnknownExtension_Returns415ListingWhatIsAccepted()
-    {
-        var result = Resolve("bang-tinh.xlsx", "application/octet-stream", TextHeader);
-
-        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
-        result.Error.Message.Should().Be("The '.xlsx' format is not supported. Only .docx, .pdf, .md and .txt are accepted.");
-    }
-
-    // Trình duyệt hay gửi sai content type, nên nó chỉ được dùng khi đuôi lẫn magic đều câm.
-    [Fact]
-    public void Resolve_UnknownExtension_FallsBackToTheDeclaredContentType()
-    {
-        var result = Resolve("khong-duoi-file", "text/markdown", TextHeader);
-
-        result.Value.Should().Be(MarkdownDocumentParser.MarkdownContentType);
-    }
-
-    [Fact]
-    public void Resolve_ReturnsTheParserOwningTheResolvedFormat()
-    {
-        var result = Resolver().Resolve("tai-lieu.pdf", "application/octet-stream", PdfHeader);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeOfType<PdfDocumentParser>();
-    }
-
-    private static Result<string> Resolve(string fileName, string declaredContentType, byte[] header)
-    {
-        return Resolver().ResolveContentType(fileName, declaredContentType, header);
-    }
-
-    private static DocumentParserResolver Resolver()
+    [SetUp]
+    public void SetUp()
     {
         // Thứ tự parser khớp với DependencyInjection: nó quyết định danh sách đuôi file
         // trong thông điệp 415.
@@ -115,6 +32,136 @@ public class DocumentFormatResolverTests
             new PlainTextDocumentParser()
         ];
 
-        return new DocumentParserResolver(parsers, [new LegacyDocFormatDetector()]);
+        _resolver = new DocumentParserResolver(parsers, [new LegacyDocFormatDetector()]);
+    }
+
+    // .doc phải bị chặn TRƯỚC TIÊN kèm hướng dẫn, không bao giờ để nổ thành 500 trong OpenXml.
+    [Test]
+    public void Resolve_LegacyDocExtension_Returns415WithGuidance()
+    {
+        // Arrange
+        const string fileName = "bao-cao.doc";
+
+        // Act
+        var result = Resolve(fileName, "application/msword", Ole2Header);
+
+        // Assert
+        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
+        result.Error.Message.Should().Contain("save it as .docx");
+    }
+
+    [Test]
+    public void Resolve_Ole2MagicUnderADocxName_IsStillRejectedAsLegacyDoc()
+    {
+        // Arrange
+        const string fileName = "bao-cao.docx";
+
+        // Act
+        var result = Resolve(fileName, "application/octet-stream", Ole2Header);
+
+        // Assert
+        // Đổi đuôi file không đổi được nội dung: magic OLE2 vẫn là Word 97-2003.
+        result.Error.Message.Should().Contain("Word 97-2003");
+    }
+
+    [Test]
+    public void Resolve_DocxExtensionWithoutZipHeader_Returns415()
+    {
+        // Arrange
+        const string fileName = "gia-mao.docx";
+
+        // Act
+        var result = Resolve(fileName, "application/octet-stream", TextHeader);
+
+        // Assert
+        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
+        result.Error.Message.Should().Be("The file has a .docx extension but its content is not an Office (zip) container.");
+    }
+
+    [Test]
+    public void Resolve_DocxExtensionWithZipHeader_ResolvesToDocx()
+    {
+        // Arrange
+        const string fileName = "tai-lieu.docx";
+
+        // Act
+        var result = Resolve(fileName, "application/octet-stream", ZipHeader);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(DocxDocumentParser.DocxContentType);
+    }
+
+    [Test]
+    public void Resolve_NoExtensionButPdfMagic_ResolvesToPdf()
+    {
+        // Arrange
+        const string fileName = "khong-duoi-file";
+
+        // Act
+        var result = Resolve(fileName, "application/octet-stream", PdfHeader);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(PdfDocumentParser.PdfContentType);
+    }
+
+    [TestCase("ghi-chu.md", "text/markdown")]
+    [TestCase("ghi-chu.markdown", "text/markdown")]
+    [TestCase("ghi-chu.txt", "text/plain")]
+    public void Resolve_KnownExtension_ResolvesToItsContentType(string fileName, string expected)
+    {
+        // Arrange & Act
+        var result = Resolve(fileName, "application/octet-stream", TextHeader);
+
+        // Assert
+        result.Value.Should().Be(expected);
+    }
+
+    [Test]
+    public void Resolve_UnknownExtension_Returns415ListingWhatIsAccepted()
+    {
+        // Arrange
+        const string fileName = "bang-tinh.xlsx";
+
+        // Act
+        var result = Resolve(fileName, "application/octet-stream", TextHeader);
+
+        // Assert
+        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
+        result.Error.Message.Should().Be("The '.xlsx' format is not supported. Only .docx, .pdf, .md and .txt are accepted.");
+    }
+
+    // Trình duyệt hay gửi sai content type, nên nó chỉ được dùng khi đuôi lẫn magic đều câm.
+    [Test]
+    public void Resolve_UnknownExtension_FallsBackToTheDeclaredContentType()
+    {
+        // Arrange
+        const string fileName = "khong-duoi-file";
+
+        // Act
+        var result = Resolve(fileName, "text/markdown", TextHeader);
+
+        // Assert
+        result.Value.Should().Be(MarkdownDocumentParser.MarkdownContentType);
+    }
+
+    [Test]
+    public void Resolve_ReturnsTheParserOwningTheResolvedFormat()
+    {
+        // Arrange
+        const string fileName = "tai-lieu.pdf";
+
+        // Act
+        var result = _resolver.Resolve(fileName, "application/octet-stream", PdfHeader);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeOfType<PdfDocumentParser>();
+    }
+
+    private Result<string> Resolve(string fileName, string declaredContentType, byte[] header)
+    {
+        return _resolver.ResolveContentType(fileName, declaredContentType, header);
     }
 }
