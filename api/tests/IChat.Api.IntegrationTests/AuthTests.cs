@@ -108,6 +108,33 @@ public class AuthTests(IChatApiFactory factory)
             .Should().Be((await BodyAsync(unknownUser)).GetProperty("detail").GetString());
     }
 
+    /// <summary>
+    /// Ghim tên claim, không phải chi tiết cài đặt: đổi ngược về URI dài của ClaimTypes là
+    /// mọi request phình thêm ~160 byte, còn ICurrentUser tìm "sub" sẽ không thấy gì và
+    /// im lặng coi mọi người là ẩn danh.
+    /// </summary>
+    [Fact]
+    public async Task TheAccessToken_UsesShortJwtClaimNames()
+    {
+        await factory.ResetDatabaseAsync();
+        var client = CookielessClient();
+
+        var accessToken = (await BodyAsync(await SignInAsync(client))).GetProperty("accessToken").GetString();
+
+        var payload = accessToken!.Split('.')[1].Replace('-', '+').Replace('_', '/');
+        var claims = JsonDocument
+            .Parse(Convert.FromBase64String(payload.PadRight((payload.Length + 3) / 4 * 4, '=')))
+            .RootElement;
+
+        claims.GetProperty("sub").GetString().Should().NotBeNullOrWhiteSpace();
+        claims.GetProperty("name").GetString().Should().Be("alice");
+        claims.GetProperty("role").GetString().Should().Be("User");
+
+        claims.EnumerateObject().Should().NotContain(
+            claim => claim.Name.StartsWith("http", StringComparison.Ordinal),
+            "claim URI dài đi kèm mọi request");
+    }
+
     [Fact]
     public async Task Me_WithoutToken_ReturnsUnauthorized()
     {

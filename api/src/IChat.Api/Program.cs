@@ -84,9 +84,13 @@ try
                 // Access token chỉ sống 15 phút, cộng thêm 5 phút mặc định của thư viện
                 // là biến hết hạn thành chuyện không kiểm chứng được ở phía client.
                 ClockSkew = TimeSpan.Zero,
-                RoleClaimType = ClaimTypes.Role,
-                NameClaimType = ClaimTypes.Name
+                RoleClaimType = ClaimNames.Role,
+                NameClaimType = ClaimNames.Name
             };
+
+            // Mặc định handler dịch ngược "sub"/"role" thành URI dài của ClaimTypes, khiến
+            // FindFirstValue("sub") không tìm thấy gì. Tắt đi để claim đọc ra đúng tên đã ký.
+            options.MapInboundClaims = false;
         });
 
     builder.Services.AddAuthorization(options =>
@@ -203,7 +207,7 @@ static void EnrichRequestLog(IDiagnosticContext diagnosticContext, HttpContext h
     diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
     diagnosticContext.Set("UserAgent", request.Headers.UserAgent.ToString());
     diagnosticContext.Set("TraceIdentifier", httpContext.TraceIdentifier);
-    diagnosticContext.Set("UserId", httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+    diagnosticContext.Set("UserId", httpContext.User.FindFirstValue(ClaimNames.Sub));
 
     if (request.QueryString.HasValue)
     {

@@ -1,6 +1,5 @@
 namespace IChat.Api.Security;
 
-using System.Security.Claims;
 using System.Text;
 using IChat.Core.Abstractions;
 using IChat.Core.Contracts.Auth;
@@ -39,9 +38,9 @@ public sealed class JwtAccessTokenService(
             SigningCredentials = credentials,
             Claims = new Dictionary<string, object>
             {
-                [ClaimTypes.NameIdentifier] = user.Id.ToString(),
-                [ClaimTypes.Name] = user.UserName,
-                [ClaimTypes.Role] = user.Role.ToString()
+                [ClaimNames.Sub] = user.Id.ToString(),
+                [ClaimNames.Name] = user.UserName,
+                [ClaimNames.Role] = user.Role.ToString()
             }
         };
 

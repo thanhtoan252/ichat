@@ -11,7 +11,7 @@ public sealed class HttpContextCurrentUser(IHttpContextAccessor httpContextAcces
 {
     public Guid? Id =>
         Guid.TryParse(
-            httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier),
+            httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimNames.Sub),
             out var id)
             ? id
             : null;
