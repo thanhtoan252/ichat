@@ -16,6 +16,5 @@ export function toSession(dto: AuthResponseDto): Session {
   return {
     accessToken: dto.accessToken,
     expiresAt: dto.expiresAt,
-    user: toAuthUser(dto.user),
   };
 }

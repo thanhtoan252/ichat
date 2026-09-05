@@ -56,10 +56,12 @@ public class AuthTests(IChatApiFactory factory)
 
         var body = await BodyAsync(response);
         body.GetProperty("accessToken").GetString().Should().NotBeNullOrWhiteSpace();
-        body.GetProperty("user").GetProperty("role").GetString().Should().Be("User");
 
         // Refresh token chỉ được sống trong cookie httpOnly, không bao giờ trong body.
         body.TryGetProperty("refreshToken", out _).Should().BeFalse();
+
+        // Profile không đi kèm phiên: nó có một nguồn duy nhất là GET /auth/me.
+        body.TryGetProperty("user", out _).Should().BeFalse();
 
         var cookie = RefreshCookie(response);
         cookie.Should().NotBeNull();
@@ -106,6 +108,26 @@ public class AuthTests(IChatApiFactory factory)
         // Hai câu trả lời phải không phân biệt được, nếu không thì đây là công cụ dò tài khoản.
         (await BodyAsync(wrongPassword)).GetProperty("detail").GetString()
             .Should().Be((await BodyAsync(unknownUser)).GetProperty("detail").GetString());
+    }
+
+    [Fact]
+    public async Task Me_WithTheLoginToken_ReturnsTheProfileThatLoginNoLongerCarries()
+    {
+        await factory.ResetDatabaseAsync();
+        var client = CookielessClient();
+
+        var accessToken = (await BodyAsync(await SignInAsync(client))).GetProperty("accessToken").GetString();
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/auth/me");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var body = await BodyAsync(response);
+        body.GetProperty("userName").GetString().Should().Be("alice");
+        body.GetProperty("role").GetString().Should().Be("User");
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 /**
- * Wire types for `/auth`. The refresh token is deliberately absent: it only ever
- * travels in an httpOnly cookie, so no code on this side can read it.
+ * Wire types for `/auth`. Two things are deliberately absent from `AuthResponseDto`:
+ * the refresh token, which only ever travels in an httpOnly cookie so no code on this
+ * side can read it, and the user, which now comes from `GET /auth/me`.
  */
 
 export type UserRoleDto = 'User' | 'Admin';
@@ -17,7 +18,6 @@ export interface UserDto {
 export interface AuthResponseDto {
   readonly accessToken: string;
   readonly expiresAt: string;
-  readonly user: UserDto;
 }
 
 export interface LoginRequestDto {

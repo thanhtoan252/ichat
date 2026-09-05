@@ -9,10 +9,10 @@ export interface AuthUser {
   readonly createdAt: string;
 }
 
+/** The secret half of a session. Who it belongs to is read separately, from `/auth/me`. */
 export interface Session {
   readonly accessToken: string;
   readonly expiresAt: string;
-  readonly user: AuthUser;
 }
 
 export interface Credentials {

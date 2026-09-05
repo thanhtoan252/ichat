@@ -27,7 +27,6 @@ public static class AuthMapper
         new()
         {
             AccessToken = result.AccessToken,
-            ExpiresAt = result.AccessTokenExpiresAt,
-            User = result.User.ToResponse()
+            ExpiresAt = result.AccessTokenExpiresAt
         };
 }

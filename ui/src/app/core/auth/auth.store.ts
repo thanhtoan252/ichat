@@ -41,11 +41,26 @@ export class AuthStore {
       return;
     }
 
-    await this.refresh();
+    if (!(await this.refresh())) {
+      return;
+    }
+
+    try {
+      await this.settleProfile();
+    } catch {
+      // settleProfile has already cleared the session. Bootstrap must never reject: the
+      // guards await it without a catch of their own, so throwing here would break route
+      // resolution outright instead of landing the reader on /login.
+    }
   }
 
   public async login(credentials: Credentials): Promise<void> {
-    this.apply(toSession(await this.api.login(credentials)));
+    // A new session means a new identity: the old profile has to go first, or
+    // settleProfile() sees one already there and keeps the previous reader on screen.
+    this.userSignal.set(null);
+    this.applyTokens(toSession(await this.api.login(credentials)));
+
+    await this.settleProfile();
   }
 
   /**
@@ -91,7 +106,7 @@ export class AuthStore {
 
   private async runRefresh(): Promise<string | null> {
     try {
-      this.apply(toSession(await this.api.refresh()));
+      this.applyTokens(toSession(await this.api.refresh()));
 
       return this.accessToken;
     } catch {
@@ -102,11 +117,33 @@ export class AuthStore {
     }
   }
 
-  private apply(session: Session): void {
+  /**
+   * Reads the profile, then — and only then — reports the session as authenticated.
+   *
+   * Both halves of that order are load-bearing. `adminGuard` calls `isAdmin()` the moment
+   * status stops being 'unknown', so flipping it before the role is known sends an
+   * administrator to /chat on every hard reload. And this runs OUTSIDE `runRefresh`:
+   * `me()` goes through the interceptor, which asks for a token, and asking while the
+   * shared refresh promise is still in flight would await the very call it is inside.
+   */
+  private async settleProfile(): Promise<void> {
+    try {
+      if (!this.userSignal()) {
+        this.userSignal.set(toAuthUser(await this.api.me()));
+      }
+    } catch (error) {
+      // A token the profile call will not answer for is not a session worth keeping.
+      this.clear();
+
+      throw error;
+    }
+
+    this.statusSignal.set('authenticated');
+  }
+
+  private applyTokens(session: Session): void {
     this.accessToken = session.accessToken;
     this.expiresAt = new Date(session.expiresAt).getTime();
-    this.userSignal.set(session.user);
-    this.statusSignal.set('authenticated');
   }
 
   private clear(): void {

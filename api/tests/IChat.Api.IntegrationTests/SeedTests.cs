@@ -1,6 +1,7 @@
 namespace IChat.Api.IntegrationTests;
 
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using IChat.Core.Domain.Identity;
@@ -32,8 +33,18 @@ public class SeedTests(IChatApiFactory factory)
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        JsonDocument.Parse(await response.Content.ReadAsStringAsync())
-            .RootElement.GetProperty("user").GetProperty("role").GetString().Should().Be(role);
+        // Login chỉ trả phiên; vai trò đọc ở /auth/me bằng chính token vừa nhận.
+        var accessToken = JsonDocument.Parse(await response.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("accessToken").GetString();
+
+        using var profile = new HttpRequestMessage(HttpMethod.Get, "/api/v1/auth/me");
+        profile.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var me = await client.SendAsync(profile);
+        me.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        JsonDocument.Parse(await me.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("role").GetString().Should().Be(role);
     }
 
     [Fact]
