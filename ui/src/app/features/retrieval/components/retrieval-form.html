@@ -1,0 +1,63 @@
+<form [formGroup]="form" (submit)="onSubmit($event)">
+  <div class="flex flex-col gap-3 sm:flex-row">
+    <input
+      hlmInput
+      formControlName="query"
+      class="flex-1"
+      placeholder="Question to trace through the pipeline…"
+    />
+    <button hlmBtn type="submit" class="gap-2" [disabled]="!canRun()">
+      @if (running()) {
+        <ng-icon name="lucideLoaderCircle" class="animate-spin text-base" />
+      } @else {
+        <ng-icon name="lucideSearch" class="text-base" />
+      }
+      Trace
+    </button>
+  </div>
+
+  <hlm-separator class="my-4" />
+
+  <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
+    <div class="flex items-center gap-1.5">
+      @for (mode of modes; track mode) {
+        <button
+          hlmBtn
+          type="button"
+          size="sm"
+          class="h-7 rounded-full px-3 text-xs"
+          [variant]="criteria().mode === mode ? 'secondary' : 'ghost'"
+          [attr.aria-pressed]="criteria().mode === mode"
+          (click)="patch({ mode })"
+        >
+          {{ mode }}
+        </button>
+      }
+    </div>
+
+    <hlm-separator orientation="vertical" class="hidden h-5 self-center sm:inline-flex" />
+
+    @for (toggle of toggles; track toggle.key) {
+      <label class="flex cursor-pointer items-center gap-2 text-xs" [hlmTooltip]="toggle.hint">
+        <hlm-switch
+          class="scale-90"
+          [checked]="isEnabled(toggle.key)"
+          (checkedChange)="setToggle(toggle.key, $event)"
+        />
+        {{ toggle.label }}
+      </label>
+    }
+
+    <label class="ms-auto flex items-center gap-2 text-xs">
+      top K
+      <input
+        hlmInput
+        type="number"
+        formControlName="topK"
+        min="1"
+        max="50"
+        class="h-8 w-16 text-xs"
+      />
+    </label>
+  </div>
+</form>

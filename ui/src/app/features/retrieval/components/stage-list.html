@@ -1,0 +1,65 @@
+@for (stage of stages(); track stage.name) {
+  <div class="bg-card rounded-xl border">
+    <button
+      type="button"
+      class="hover:bg-muted/40 flex w-full items-center gap-3 rounded-xl px-4 py-3 text-start transition-colors"
+      [attr.aria-expanded]="expanded() === stage.name"
+      (click)="stageToggle.emit(stage.name)"
+    >
+      <ng-icon
+        name="lucideChevronDown"
+        class="text-muted-foreground text-sm transition-transform"
+        [class.rotate-180]="expanded() === stage.name"
+      />
+
+      <span class="min-w-0 flex-1">
+        <span class="text-sm font-medium">{{ stage.name }}</span>
+        @if (stage.tsQuery) {
+          <span
+            class="text-muted-foreground ms-2 font-mono text-[0.6875rem]"
+            [title]="stage.tsQuery"
+          >
+            {{ stage.tsQuery }}
+          </span>
+        }
+      </span>
+
+      <span
+        hlmBadge
+        class="tabular-nums"
+        [variant]="stage.count === 0 ? 'destructive' : 'secondary'"
+      >
+        {{ stage.count | number }}
+      </span>
+      <span class="text-muted-foreground w-16 text-end text-xs tabular-nums">
+        {{ stage.elapsedMs }} ms
+      </span>
+    </button>
+
+    @if (expanded() === stage.name) {
+      <div class="border-t px-4 py-3">
+        @if (stage.top.length === 0) {
+          <p class="text-muted-foreground text-xs">
+            This stage returned nothing — the chunks were lost before it.
+          </p>
+        } @else {
+          <ul class="flex flex-col gap-2">
+            @for (hit of stage.top; track hit.chunkId) {
+              <li class="bg-muted/40 rounded-lg p-2.5">
+                <div class="flex items-start justify-between gap-3">
+                  <p class="text-muted-foreground min-w-0 flex-1 truncate text-[0.6875rem]">
+                    {{ hit.headingPath ?? 'chunk #' + hit.chunkIndex }}
+                  </p>
+                  <span class="shrink-0 text-[0.6875rem] tabular-nums">
+                    {{ hit.score.toFixed(4) }}
+                  </span>
+                </div>
+                <p class="mt-1 line-clamp-3 text-xs leading-relaxed">{{ hit.snippet }}</p>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </div>
+}

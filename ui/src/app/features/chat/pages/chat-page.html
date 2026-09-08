@@ -1,0 +1,71 @@
+<div class="flex min-w-0 flex-1 flex-col">
+  <app-chat-header
+    [title]="store.activeConversation()?.title ?? 'New chat'"
+    [sourceCount]="store.visibleSources().length"
+    [sourcesOpen]="sourcesOpen()"
+    (toggleSources)="toggleSources()"
+  />
+
+  <div
+    appStickToBottom
+    #scroll="stickToBottom"
+    class="min-h-0 flex-1 overflow-y-auto"
+    [follow]="followToken()"
+  >
+    <div class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6">
+      @if (store.isEmptyThread() && !store.loadingMessages()) {
+        <app-chat-empty-state />
+      } @else {
+        <app-chat-thread
+          [messages]="store.messages()"
+          [pending]="store.pending()"
+          [loading]="store.loadingMessages()"
+          (citationSelect)="revealSource($event)"
+          (copyRequest)="copy($event)"
+          (retryFailure)="store.retry()"
+          (dismissFailure)="store.dismissFailure()"
+        />
+      }
+    </div>
+  </div>
+
+  <div class="relative shrink-0 px-4 pb-4 sm:px-6">
+    @if (!scroll.atBottom()) {
+      <button
+        hlmBtn
+        variant="outline"
+        size="icon"
+        class="bg-background absolute -top-12 left-1/2 size-9 -translate-x-1/2 rounded-full shadow-sm"
+        aria-label="Jump to latest"
+        (click)="scroll.scrollToBottom()"
+      >
+        <ng-icon name="lucideArrowDown" class="text-base" />
+      </button>
+    }
+
+    <div class="mx-auto w-full max-w-3xl">
+      <app-chat-composer
+        [streaming]="store.streaming()"
+        (send)="ask($event)"
+        (stop)="store.stop()"
+      />
+    </div>
+  </div>
+</div>
+
+@if (sourcesOpen() && store.visibleSources().length > 0) {
+  <!-- The backdrop only exists while the panel is a drawer; from lg it is docked. -->
+  <button
+    type="button"
+    class="fixed inset-0 z-30 bg-black/20 lg:hidden"
+    aria-label="Close sources"
+    (click)="sourcesOpen.set(false)"
+  ></button>
+
+  <app-sources-panel
+    [sources]="store.visibleSources()"
+    [kind]="store.visibleSourceKind()"
+    [highlighted]="highlightedSource()"
+    (closeRequested)="sourcesOpen.set(false)"
+  />
+}

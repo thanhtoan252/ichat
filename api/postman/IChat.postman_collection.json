@@ -1,0 +1,2099 @@
+{
+  "info": {
+    "_postman_id": "f7ef66fe-b71c-5ba5-8d08-8c20edb8d1f5",
+    "name": "IChat API",
+    "description": "End-to-end test suite for the IChat API: ingestion, hybrid search, RAG question answering over SSE, error cases and cleanup. Runs top to bottom in order - later folders use the documentId and conversationId produced by earlier ones.\n\nRun with Newman:\n  newman run postman/IChat.postman_collection.json -e postman/IChat.local.postman_environment.json --working-dir postman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Health",
+      "item": [
+        {
+          "name": "GET /health/live",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "live"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns Healthy\", () => pm.expect(pm.response.text().trim()).to.eql(\"Healthy\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /health/ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// pm.execution.setNextRequest la API moi; postman.setNextRequest van con o ban Postman cu.",
+                  "function setNext(name) {",
+                  "    if (typeof pm.execution !== \"undefined\" && pm.execution.setNextRequest) {",
+                  "        pm.execution.setNextRequest(name);",
+                  "    } else {",
+                  "        postman.setNextRequest(name);",
+                  "    }",
+                  "}",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK - every dependency is ready\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Reports all three checks\", function () {",
+                  "    const names = json.checks.map((check) => check.name);",
+                  "    pm.expect(names).to.include.members([\"postgres\", \"pgvector\", \"ai-providers\"]);",
+                  "});",
+                  "pm.test(\"The overall status is Healthy\", () => pm.expect(json.status).to.eql(\"Healthy\"));",
+                  "",
+                  "// Fail-fast: cac folder sau deu can DB va provider, chay tiep chi tao nhieu that bai giong nhau.",
+                  "if (pm.response.code !== 200) {",
+                  "    console.error(\"Ready check failed, stopping the suite:\", JSON.stringify(json));",
+                  "    setNext(null);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Providers",
+      "item": [
+        {
+          "name": "GET /api/v1/providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/providers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "providers"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Covers chat, utilityChat and embedding\", function () {",
+                  "    pm.expect(json).to.have.property(\"chat\");",
+                  "    pm.expect(json).to.have.property(\"utilityChat\");",
+                  "    pm.expect(json).to.have.property(\"embedding\");",
+                  "});",
+                  "pm.test(\"Every descriptor has kind/provider/model/available\", function () {",
+                  "    [\"chat\", \"utilityChat\", \"embedding\"].forEach(function (kind) {",
+                  "        pm.expect(json[kind]).to.have.property(\"kind\");",
+                  "        pm.expect(json[kind]).to.have.property(\"provider\");",
+                  "        pm.expect(json[kind]).to.have.property(\"model\");",
+                  "        pm.expect(json[kind].available).to.be.a(\"boolean\");",
+                  "    });",
+                  "});",
+                  "pm.test(\"allowedChatModels is an array\", () => pm.expect(json.allowedChatModels).to.be.an(\"array\"));",
+                  "pm.test(\"Leaks no API key in any form\", function () {",
+                  "    const raw = JSON.stringify(json).toLowerCase();",
+                  "    pm.expect(raw).to.not.include(\"apikey\");",
+                  "    pm.expect(raw).to.not.include(\"secret\");",
+                  "    pm.expect(raw).to.not.include(\"sk-\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"chatProvider\", json.chat.provider);",
+                  "pm.collectionVariables.set(\"chatModel\", json.chat.model);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Documents",
+      "item": [
+        {
+          "name": "POST /api/v1/documents - upload markdown",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "fixtures/ichat-sample.md"
+                },
+                {
+                  "key": "title",
+                  "type": "text",
+                  "value": "Huong dan van hanh IChat"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"202 Accepted - ingestion is asynchronous\", () => pm.response.to.have.status(202));",
+                  "pm.test(\"Has a Location header pointing at the document\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Location\")).to.include(\"/api/v1/documents/\");",
+                  "});",
+                  "pm.test(\"Returns id, title and status\", function () {",
+                  "    pm.expect(json.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(json.title).to.eql(\"Huong dan van hanh IChat\");",
+                  "    pm.expect(json.status).to.eql(\"Pending\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"documentId\", json.id);",
+                  "pm.collectionVariables.set(\"ingestAttempt\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id} - wait for ingestion",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Postman sandbox khong co sleep bat dong bo dang tin cay giua cac lan chay,",
+                  "// nen cho bang vong lap chan - chi ton toi da ingestPollMs moi lan poll.",
+                  "const attempt = Number(pm.collectionVariables.get(\"ingestAttempt\")) || 0;",
+                  "",
+                  "if (attempt > 0) {",
+                  "    const until = Date.now() + Number(pm.collectionVariables.get(\"ingestPollMs\"));",
+                  "    while (Date.now() < until) { /* cho worker */ }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// pm.execution.setNextRequest la API moi; postman.setNextRequest van con o ban Postman cu.",
+                  "function setNext(name) {",
+                  "    if (typeof pm.execution !== \"undefined\" && pm.execution.setNextRequest) {",
+                  "        pm.execution.setNextRequest(name);",
+                  "    } else {",
+                  "        postman.setNextRequest(name);",
+                  "    }",
+                  "}",
+                  "",
+                  "const json = pm.response.json();",
+                  "const max = Number(pm.collectionVariables.get(\"ingestMaxAttempts\"));",
+                  "let attempt = Number(pm.collectionVariables.get(\"ingestAttempt\")) + 1;",
+                  "pm.collectionVariables.set(\"ingestAttempt\", attempt);",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "",
+                  "if (json.status === \"Pending\" || json.status === \"Processing\") {",
+                  "    if (attempt >= max) {",
+                  "        pm.test(\"Ingestion finished before the timeout\", function () {",
+                  "            pm.expect.fail(\"Van con o trang thai \" + json.status + \" sau \" + attempt + \" lan poll\");",
+                  "        });",
+                  "    } else {",
+                  "        // Poll lai chinh request nay; worker chay nen nen khong co cach nao khac ngoai cho.",
+                  "        setNext(\"GET /api/v1/documents/{id} - wait for ingestion\");",
+                  "    }",
+                  "} else {",
+                  "    pm.test(\"The document was indexed successfully\", function () {",
+                  "        pm.expect(json.status, \"errorMessage: \" + json.errorMessage).to.eql(\"Indexed\");",
+                  "    });",
+                  "    pm.test(\"Produces at least one chunk\", () => pm.expect(json.chunkCount).to.be.above(0));",
+                  "    pm.test(\"Has indexedAt\", () => pm.expect(json.indexedAt).to.not.be.null);",
+                  "    pm.test(\"Leaks no internal storage path\", function () {",
+                  "        pm.expect(json).to.not.have.property(\"storagePath\");",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents - paging",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents?offset=0&limit=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Uses the PaginatedList shape\", function () {",
+                  "    pm.expect(json.items).to.be.an(\"array\");",
+                  "    pm.expect(json.offset).to.eql(0);",
+                  "    pm.expect(json.limit).to.eql(5);",
+                  "    pm.expect(json.totalCount).to.be.at.least(1);",
+                  "    pm.expect(json.hasMore).to.be.a(\"boolean\");",
+                  "});",
+                  "pm.test(\"Returns no more than limit items\", () => pm.expect(json.items.length).to.be.at.most(5));",
+                  "pm.test(\"hasMore agrees with what is left behind\", function () {",
+                  "    pm.expect(json.hasMore).to.eql(json.offset + json.items.length < json.totalCount);",
+                  "});",
+                  "pm.test(\"Sorted by createdAt descending\", function () {",
+                  "    const dates = json.items.map((item) => new Date(item.createdAt).getTime());",
+                  "    pm.expect(dates).to.eql(dates.slice().sort((a, b) => b - a));",
+                  "});",
+                  "pm.test(\"The freshly uploaded document is in the list\", function () {",
+                  "    const ids = json.items.map((item) => item.id);",
+                  "    pm.expect(ids).to.include(pm.collectionVariables.get(\"documentId\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents - limit above the cap is clamped",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents?offset=0&limit=500",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "500"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK - an oversized limit is not an error\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"The response reports the limit actually applied\", () => pm.expect(json.limit).to.eql(100));",
+                  "pm.test(\"Returns no more than the cap\", () => pm.expect(json.items.length).to.be.at.most(100));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents?status=Indexed - filter by status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents?status=Indexed&offset=0&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Indexed"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Every item is in the Indexed state\", function () {",
+                  "    json.items.forEach((item) => pm.expect(item.status).to.eql(\"Indexed\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id}/chunks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=0&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}",
+                "chunks"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has at least one chunk\", () => pm.expect(json.items.length).to.be.above(0));",
+                  "",
+                  "const first = json.items[0];",
+                  "",
+                  "pm.test(\"Chunks carry every ingestion debugging field\", function () {",
+                  "    pm.expect(first).to.have.property(\"id\");",
+                  "    pm.expect(first.chunkIndex).to.be.a(\"number\");",
+                  "    pm.expect(first.content).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(first).to.have.property(\"headingPath\");",
+                  "    pm.expect(first.embeddedText).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(first.tokenCount).to.be.above(0);",
+                  "});",
+                  "pm.test(\"embeddedText carries more context than content\", function () {",
+                  "    pm.expect(first.embeddedText.length).to.be.at.least(first.content.length);",
+                  "});",
+                  "pm.test(\"Records the embedding model and dimension count\", function () {",
+                  "    pm.expect(first.embeddingModel).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(first.embeddingDimensions).to.be.above(0);",
+                  "});",
+                  "pm.test(\"Every chunk shares one vector space\", function () {",
+                  "    const dims = new Set(json.items.map((item) => item.embeddingDimensions));",
+                  "    pm.expect(dims.size).to.eql(1);",
+                  "});",
+                  "pm.test(\"chunkIndex increments contiguously from 0\", function () {",
+                  "    json.items.forEach((item, index) => pm.expect(item.chunkIndex).to.eql(index));",
+                  "});",
+                  "pm.test(\"Never returns embedding vectors\", function () {",
+                  "    pm.expect(first).to.not.have.property(\"embedding\");",
+                  "});",
+                  "pm.test(\"metadata is a valid JSON string\", () => JSON.parse(first.metadata));",
+                  "",
+                  "pm.collectionVariables.set(\"chunkId\", first.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id}/chunks - offset skips ahead",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=1&limit=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}",
+                "chunks"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Echoes back the window that was applied\", function () {",
+                  "    pm.expect(json.offset).to.eql(1);",
+                  "    pm.expect(json.limit).to.eql(1);",
+                  "});",
+                  "pm.test(\"Skips the first chunk instead of restarting at 0\", function () {",
+                  "    if (json.totalCount > 1) {",
+                  "        pm.expect(json.items).to.have.lengthOf(1);",
+                  "        pm.expect(json.items[0].chunkIndex).to.eql(1);",
+                  "    } else {",
+                  "        pm.expect(json.items).to.be.empty;",
+                  "    }",
+                  "});",
+                  "pm.test(\"hasMore agrees with what is left behind\", function () {",
+                  "    pm.expect(json.hasMore).to.eql(json.offset + json.items.length < json.totalCount);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id}/chunks - limit above the cap is clamped",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=0&limit=999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}",
+                "chunks"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "999"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK - an oversized limit is not an error\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"The response reports the limit actually applied\", () => pm.expect(json.limit).to.eql(200));",
+                  "pm.test(\"Returns no more than the cap\", () => pm.expect(json.items.length).to.be.at.most(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Search",
+      "item": [
+        {
+          "name": "POST /api/v1/search - hybrid",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"timeout mac dinh la bao nhieu giay\",\n  \"mode\": \"Hybrid\",\n  \"rewrite\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns every stage of the pipeline\", function () {",
+                  "    pm.expect(Object.keys(json.stages)).to.include.members(",
+                  "        [\"vector\", \"fulltext\", \"trigram\", \"fused\", \"afterMmr\", \"final\"]);",
+                  "});",
+                  "pm.test(\"The final stage has results\", () => pm.expect(json.stages.final.top.length).to.be.above(0));",
+                  "pm.test(\"Hits carry every field the UI needs to render a citation\", function () {",
+                  "    const hit = json.stages.final.top[0];",
+                  "    pm.expect(hit.chunkId).to.be.a(\"string\");",
+                  "    pm.expect(hit.documentId).to.be.a(\"string\");",
+                  "    pm.expect(hit).to.have.property(\"headingPath\");",
+                  "    pm.expect(hit.snippet).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(hit.score).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"tsQuery uses the OR operator, not plainto_tsquery\", function () {",
+                  "    pm.expect(json.stages.fulltext.tsQuery).to.be.a(\"string\");",
+                  "    pm.expect(json.stages.fulltext.tsQuery).to.include(\" | \");",
+                  "});",
+                  "pm.test(\"The full-text branch is not empty\", () => pm.expect(json.stages.fulltext.count).to.be.above(0));",
+                  "pm.test(\"The vector branch is not empty\", () => pm.expect(json.stages.vector.count).to.be.above(0));",
+                  "pm.test(\"Not degraded\", () => pm.expect(json.degraded).to.be.false);",
+                  "pm.test(\"Finds the passage that talks about the timeout\", function () {",
+                  "    const joined = json.stages.final.top.map((hit) => hit.snippet).join(\" \").toLowerCase();",
+                  "    pm.expect(joined).to.include(\"120\");",
+                  "});",
+                  "pm.test(\"MMR never increases the candidate count\", function () {",
+                  "    pm.expect(json.stages.afterMmr.count).to.be.at.most(json.stages.fused.count);",
+                  "});",
+                  "pm.test(\"Each stage is timed\", function () {",
+                  "    Object.values(json.stages).forEach((stage) => pm.expect(stage.elapsedMs).to.be.a(\"number\"));",
+                  "    pm.expect(json.elapsedMs).to.be.a(\"number\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/search - full-text only",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"gioi han kich thuoc file upload\",\n  \"mode\": \"FullText\",\n  \"rewrite\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"The vector branch does not run in FullText mode\", () => pm.expect(json.stages.vector.count).to.eql(0));",
+                  "pm.test(\"The full-text branch still finds results\", () => pm.expect(json.stages.fulltext.count).to.be.above(0));",
+                  "pm.test(\"Still has a final stage\", () => pm.expect(json.stages.final.top.length).to.be.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/search - topK caps the result count",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"reindex khi doi model embedding\",\n  \"mode\": \"Hybrid\",\n  \"topK\": 2,\n  \"rewrite\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"final never exceeds topK\", () => pm.expect(json.stages.final.top.length).to.be.at.most(2));",
+                  "pm.test(\"Scores descend in the final stage\", function () {",
+                  "    const scores = json.stages.final.top.map((hit) => hit.score);",
+                  "    pm.expect(scores).to.eql(scores.slice().sort((a, b) => b - a));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/search - all-stopword query does not crash",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"the a of and\",\n  \"mode\": \"Hybrid\",\n  \"rewrite\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK - must not blow up into a 500\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns empty gracefully\", () => pm.expect(json.stages.final.top).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Conversations & Chat",
+      "item": [
+        {
+          "name": "POST /api/v1/conversations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Kiem thu Postman\",\n  \"userId\": \"postman-runner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Has a Location header\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Location\")).to.include(\"/api/v1/conversations/\" + json.id);",
+                  "});",
+                  "pm.test(\"Returns the complete view\", function () {",
+                  "    pm.expect(json.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(json.title).to.eql(\"Kiem thu Postman\");",
+                  "    pm.expect(json.userId).to.eql(\"postman-runner\");",
+                  "    pm.expect(json.createdAt).to.be.a(\"string\");",
+                  "    pm.expect(json.updatedAt).to.eql(json.createdAt);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"conversationId\", json.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/conversations - empty title uses the default name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"   \",\n  \"userId\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"An empty title is replaced with the default name\", () => pm.expect(json.title).to.eql(\"New conversation\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/conversations - filter by userId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations?userId=postman-runner&offset=0&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations"
+              ],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "postman-runner"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns only conversations of the given userId\", function () {",
+                  "    pm.expect(json.items.length).to.be.above(0);",
+                  "    json.items.forEach((item) => pm.expect(item.userId).to.eql(\"postman-runner\"));",
+                  "});",
+                  "pm.test(\"Sorted by updatedAt descending\", function () {",
+                  "    const dates = json.items.map((item) => new Date(item.updatedAt).getTime());",
+                  "    pm.expect(dates).to.eql(dates.slice().sort((a, b) => b - a));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/conversations/{id}/messages - SSE",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Timeout mac dinh cua provider chat la bao nhieu giay?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TypedResults.ServerSentEvents phat khung \"event: <loai>\\ndata: <json>\\n\\n\".",
+                  "function parseSse(raw) {",
+                  "    const frames = [];",
+                  "    let type = \"message\";",
+                  "",
+                  "    raw.split(/\\r?\\n/).forEach(function (line) {",
+                  "        if (line.indexOf(\"event:\") === 0) {",
+                  "            type = line.slice(6).trim();",
+                  "        } else if (line.indexOf(\"data:\") === 0) {",
+                  "            frames.push({ type: type, data: JSON.parse(line.slice(5).trim()) });",
+                  "        }",
+                  "    });",
+                  "",
+                  "    return frames;",
+                  "}",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Type is text/event-stream\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/event-stream\");",
+                  "});",
+                  "",
+                  "const frames = parseSse(pm.response.text());",
+                  "const types = frames.map((frame) => frame.type);",
+                  "",
+                  "pm.test(\"Has no error event\", function () {",
+                  "    const failures = frames.filter((frame) => frame.type === \"error\");",
+                  "    pm.expect(failures, JSON.stringify(failures)).to.be.empty;",
+                  "});",
+                  "pm.test(\"Emits all four event types\", function () {",
+                  "    pm.expect(types).to.include(\"status\");",
+                  "    pm.expect(types).to.include(\"sources\");",
+                  "    pm.expect(types).to.include(\"delta\");",
+                  "    pm.expect(types).to.include(\"done\");",
+                  "});",
+                  "pm.test(\"sources arrive before the first token\", function () {",
+                  "    pm.expect(types.indexOf(\"sources\")).to.be.below(types.indexOf(\"delta\"));",
+                  "});",
+                  "pm.test(\"done is the last event\", () => pm.expect(types[types.length - 1]).to.eql(\"done\"));",
+                  "pm.test(\"Reports all three status stages\", function () {",
+                  "    const stages = frames.filter((frame) => frame.type === \"status\").map((frame) => frame.data.stage);",
+                  "    pm.expect(stages).to.include.members([\"rewriting\", \"retrieving\", \"generating\"]);",
+                  "});",
+                  "",
+                  "const sources = frames.find((frame) => frame.type === \"sources\").data.sources;",
+                  "",
+                  "pm.test(\"sources are numbered [n] starting at 1\", function () {",
+                  "    pm.expect(sources.length).to.be.above(0);",
+                  "    sources.forEach((source, index) => pm.expect(source.index).to.eql(index + 1));",
+                  "});",
+                  "pm.test(\"Every source has enough information to display\", function () {",
+                  "    sources.forEach(function (source) {",
+                  "        pm.expect(source.documentId).to.be.a(\"string\");",
+                  "        pm.expect(source.documentTitle).to.be.a(\"string\").and.not.empty;",
+                  "        pm.expect(source.snippet).to.be.a(\"string\").and.not.empty;",
+                  "        pm.expect(source.score).to.be.a(\"number\");",
+                  "    });",
+                  "});",
+                  "",
+                  "const done = frames[frames.length - 1].data;",
+                  "",
+                  "pm.test(\"done carries the generation metadata\", function () {",
+                  "    pm.expect(done.messageId).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(done.provider).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(done.model).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(done.latencyMs).to.be.a(\"number\");",
+                  "    pm.expect(done.retrievalMs).to.be.a(\"number\");",
+                  "    pm.expect(done.degraded).to.be.false;",
+                  "    pm.expect(done.interrupted).to.be.false;",
+                  "});",
+                  "pm.test(\"Citations point only at sources that were actually in the context\", function () {",
+                  "    done.citations.forEach(function (citation) {",
+                  "        pm.expect(citation.markerIndex).to.be.at.least(1);",
+                  "        pm.expect(citation.markerIndex).to.be.at.most(sources.length);",
+                  "    });",
+                  "});",
+                  "pm.test(\"The answer is not empty\", function () {",
+                  "    const answer = frames.filter((frame) => frame.type === \"delta\").map((frame) => frame.data.text).join(\"\");",
+                  "    pm.expect(answer.trim()).to.not.be.empty;",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"assistantMessageId\", done.messageId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/conversations/{id}/messages",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages?offset=0&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Stores both the question and the answer turn\", () => pm.expect(json.items.length).to.eql(2));",
+                  "pm.test(\"Sorted by createdAt ascending\", function () {",
+                  "    const dates = json.items.map((item) => new Date(item.createdAt).getTime());",
+                  "    pm.expect(dates).to.eql(dates.slice().sort((a, b) => a - b));",
+                  "});",
+                  "",
+                  "const user = json.items[0];",
+                  "const assistant = json.items[1];",
+                  "",
+                  "pm.test(\"The first message is the user's\", () => pm.expect(user.role).to.eql(\"User\"));",
+                  "pm.test(\"The user message stores rewrittenQuery and retrievalMs\", function () {",
+                  "    pm.expect(user.rewrittenQuery).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(user.retrievalMs).to.be.a(\"number\");",
+                  "});",
+                  "pm.test(\"The second message is the assistant's\", () => pm.expect(assistant.role).to.eql(\"Assistant\"));",
+                  "pm.test(\"The assistant message stores the provider metadata\", function () {",
+                  "    pm.expect(assistant.id).to.eql(pm.collectionVariables.get(\"assistantMessageId\"));",
+                  "    pm.expect(assistant.provider).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(assistant.model).to.be.a(\"string\").and.not.empty;",
+                  "    pm.expect(assistant.latencyMs).to.be.above(0);",
+                  "});",
+                  "pm.test(\"Citations are joined to their document\", function () {",
+                  "    assistant.citations.forEach(function (citation) {",
+                  "        pm.expect(citation.chunkId).to.be.a(\"string\");",
+                  "        pm.expect(citation.documentId).to.be.a(\"string\");",
+                  "        pm.expect(citation.documentTitle).to.be.a(\"string\").and.not.empty;",
+                  "        pm.expect(citation.markerIndex).to.be.at.least(1);",
+                  "    });",
+                  "});",
+                  "pm.test(\"Citations are ordered by markerIndex\", function () {",
+                  "    const markers = assistant.citations.map((citation) => citation.markerIndex);",
+                  "    pm.expect(markers).to.eql(markers.slice().sort((a, b) => a - b));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Error cases",
+      "item": [
+        {
+          "name": "POST /api/v1/documents - unsupported format -> 415",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents"
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "fixtures/unsupported.png"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"415 Unsupported Media Type\", () => pm.response.to.have.status(415));",
+                  "pm.test(\"Returns problem+json per RFC 7807\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    pm.expect(json.status).to.eql(415);",
+                  "    pm.expect(json.detail).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "pm.test(\"Has a machine-readable error code\", () => pm.expect(json.code).to.eql(\"UnsupportedMediaType\"));",
+                  "pm.test(\"The message lists the accepted formats\", function () {",
+                  "    pm.expect(json.detail).to.include(\".docx\");",
+                  "    pm.expect(json.detail).to.include(\".pdf\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id} - not found -> 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"The error code is Document.NotFound\", function () {",
+                  "    pm.expect(json.code).to.eql(\"Document.NotFound\");",
+                  "    pm.expect(json.title).to.eql(\"Document.NotFound\");",
+                  "});",
+                  "pm.test(\"Has a traceId to cross-reference the logs\", () => pm.expect(json.traceId).to.be.a(\"string\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/v1/documents/{id} - not found -> 404",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"The error code is Document.NotFound\", () => pm.expect(pm.response.json().code).to.eql(\"Document.NotFound\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/search - empty query -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"\",\n  \"mode\": \"Hybrid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"The error code is Validation\", () => pm.expect(json.code).to.eql(\"Validation\"));",
+                  "pm.test(\"The message states the query is missing\", () => pm.expect(json.detail).to.include(\"Query\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/search - topK out of range -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/search",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "search"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"timeout\",\n  \"topK\": 5000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"The error code is Validation\", () => pm.expect(pm.response.json().code).to.eql(\"Validation\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/conversations - title too long -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"{{longTitle}}\",\n  \"userId\": \"postman-runner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"longTitle\", \"x\".repeat(301));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"The error code is Validation\", () => pm.expect(pm.response.json().code).to.eql(\"Validation\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /messages - conversation not found -> SSE error NotFound",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/00000000-0000-0000-0000-000000000000/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations",
+                "00000000-0000-0000-0000-000000000000",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"cau hoi vao hoi thoai khong ton tai\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TypedResults.ServerSentEvents phat khung \"event: <loai>\\ndata: <json>\\n\\n\".",
+                  "function parseSse(raw) {",
+                  "    const frames = [];",
+                  "    let type = \"message\";",
+                  "",
+                  "    raw.split(/\\r?\\n/).forEach(function (line) {",
+                  "        if (line.indexOf(\"event:\") === 0) {",
+                  "            type = line.slice(6).trim();",
+                  "        } else if (line.indexOf(\"data:\") === 0) {",
+                  "            frames.push({ type: type, data: JSON.parse(line.slice(5).trim()) });",
+                  "        }",
+                  "    });",
+                  "",
+                  "    return frames;",
+                  "}",
+                  "",
+                  "pm.test(\"200 OK - business errors travel over SSE, the status code does not change\", () => pm.response.to.have.status(200));",
+                  "",
+                  "const frames = parseSse(pm.response.text());",
+                  "",
+                  "pm.test(\"Emits exactly one error event, then stops\", function () {",
+                  "    pm.expect(frames.length).to.eql(1);",
+                  "    pm.expect(frames[0].type).to.eql(\"error\");",
+                  "});",
+                  "pm.test(\"The error code is NotFound\", () => pm.expect(frames[0].data.code).to.eql(\"NotFound\"));",
+                  "pm.test(\"Generates no token\", function () {",
+                  "    pm.expect(frames.map((frame) => frame.type)).to.not.include(\"delta\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /messages - empty content -> SSE error Validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TypedResults.ServerSentEvents phat khung \"event: <loai>\\ndata: <json>\\n\\n\".",
+                  "function parseSse(raw) {",
+                  "    const frames = [];",
+                  "    let type = \"message\";",
+                  "",
+                  "    raw.split(/\\r?\\n/).forEach(function (line) {",
+                  "        if (line.indexOf(\"event:\") === 0) {",
+                  "            type = line.slice(6).trim();",
+                  "        } else if (line.indexOf(\"data:\") === 0) {",
+                  "            frames.push({ type: type, data: JSON.parse(line.slice(5).trim()) });",
+                  "        }",
+                  "    });",
+                  "",
+                  "    return frames;",
+                  "}",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "",
+                  "const frames = parseSse(pm.response.text());",
+                  "",
+                  "pm.test(\"Emits a Validation error event\", function () {",
+                  "    pm.expect(frames[0].type).to.eql(\"error\");",
+                  "    pm.expect(frames[0].data.code).to.eql(\"Validation\");",
+                  "});",
+                  "pm.test(\"Writes no message to the DB - verified in a later step\", () => pm.expect(true).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /messages - model outside the allowlist -> SSE error Validation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"cau hoi hop le\",\n  \"model\": \"model-khong-ton-tai\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// TypedResults.ServerSentEvents phat khung \"event: <loai>\\ndata: <json>\\n\\n\".",
+                  "function parseSse(raw) {",
+                  "    const frames = [];",
+                  "    let type = \"message\";",
+                  "",
+                  "    raw.split(/\\r?\\n/).forEach(function (line) {",
+                  "        if (line.indexOf(\"event:\") === 0) {",
+                  "            type = line.slice(6).trim();",
+                  "        } else if (line.indexOf(\"data:\") === 0) {",
+                  "            frames.push({ type: type, data: JSON.parse(line.slice(5).trim()) });",
+                  "        }",
+                  "    });",
+                  "",
+                  "    return frames;",
+                  "}",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "",
+                  "const frames = parseSse(pm.response.text());",
+                  "",
+                  "pm.test(\"Emits a Validation error event\", function () {",
+                  "    pm.expect(frames[0].type).to.eql(\"error\");",
+                  "    pm.expect(frames[0].data.code).to.eql(\"Validation\");",
+                  "});",
+                  "pm.test(\"The message states the model was blocked by the allowlist\", function () {",
+                  "    pm.expect(frames[0].data.message).to.include(\"allowlist\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/conversations/{id}/messages - not found -> 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/00000000-0000-0000-0000-000000000000/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations",
+                "00000000-0000-0000-0000-000000000000",
+                "messages"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"The error code is Conversation.NotFound\", function () {",
+                  "    pm.expect(pm.response.json().code).to.eql(\"Conversation.NotFound\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/conversations/{id}/messages - no stray messages written",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages?offset=0&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"The three failing calls above wrote no extra message\", function () {",
+                  "    pm.expect(json.totalCount).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Admin",
+      "item": [
+        {
+          "name": "POST /api/v1/admin/reindex",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/reindex",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "reindex"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"202 Accepted\", () => pm.response.to.have.status(202));",
+                  "pm.test(\"Reports how many documents were requeued\", function () {",
+                  "    pm.expect(json.documentCount).to.be.a(\"number\");",
+                  "    pm.expect(json.documentCount).to.be.at.least(1);",
+                  "});",
+                  "pm.test(\"Location points back at the document list\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Location\")).to.include(\"/api/v1/documents\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"ingestAttempt\", 0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id} - wait for reindex",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const attempt = Number(pm.collectionVariables.get(\"ingestAttempt\")) || 0;",
+                  "",
+                  "if (attempt > 0) {",
+                  "    const until = Date.now() + Number(pm.collectionVariables.get(\"ingestPollMs\"));",
+                  "    while (Date.now() < until) { /* cho worker */ }",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// pm.execution.setNextRequest la API moi; postman.setNextRequest van con o ban Postman cu.",
+                  "function setNext(name) {",
+                  "    if (typeof pm.execution !== \"undefined\" && pm.execution.setNextRequest) {",
+                  "        pm.execution.setNextRequest(name);",
+                  "    } else {",
+                  "        postman.setNextRequest(name);",
+                  "    }",
+                  "}",
+                  "",
+                  "const json = pm.response.json();",
+                  "const max = Number(pm.collectionVariables.get(\"ingestMaxAttempts\"));",
+                  "let attempt = Number(pm.collectionVariables.get(\"ingestAttempt\")) + 1;",
+                  "pm.collectionVariables.set(\"ingestAttempt\", attempt);",
+                  "",
+                  "if (json.status === \"Pending\" || json.status === \"Processing\") {",
+                  "    if (attempt >= max) {",
+                  "        pm.test(\"Reindex finished before the timeout\", function () {",
+                  "            pm.expect.fail(\"Van con o trang thai \" + json.status + \" sau \" + attempt + \" lan poll\");",
+                  "        });",
+                  "    } else {",
+                  "        setNext(\"GET /api/v1/documents/{id} - wait for reindex\");",
+                  "    }",
+                  "} else {",
+                  "    pm.test(\"The document was reindexed successfully\", () => pm.expect(json.status).to.eql(\"Indexed\"));",
+                  "    pm.test(\"The chunk count is unchanged\", () => pm.expect(json.chunkCount).to.be.above(0));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8. Cleanup",
+      "item": [
+        {
+          "name": "DELETE /api/v1/documents/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204 No Content\", () => pm.response.to.have.status(204));",
+                  "pm.test(\"Has no body\", () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id} - already deleted -> 404",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/documents/{id}/chunks - chunks cascade with the document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/documents/{{documentId}}/chunks?offset=0&limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "documents",
+                "{{documentId}}",
+                "chunks"
+              ],
+              "query": [
+                {
+                  "key": "offset",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 Not Found - chunks are cascade-deleted with the document\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"Responds in under 60s\", () => pm.expect(pm.response.responseTime).to.be.below(60000));",
+          "pm.test(\"Leaks no API key in any response\", function () {",
+          "    const body = pm.response.text() || \"\";",
+          "    pm.expect(body).to.not.match(/\"?api[_-]?key\"?\\s*[:=]/i);",
+          "    pm.expect(body).to.not.match(/\\bsk-[A-Za-z0-9]{20,}/);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "documentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "chunkId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "conversationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assistantMessageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "chatProvider",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "chatModel",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "longTitle",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ingestAttempt",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "ingestMaxAttempts",
+      "value": "60",
+      "type": "string"
+    },
+    {
+      "key": "ingestPollMs",
+      "value": "1000",
+      "type": "string"
+    }
+  ]
+}

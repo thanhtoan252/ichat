@@ -1,0 +1,28 @@
+<button
+  hlmBtn
+  variant="ghost"
+  size="icon"
+  class="size-8 shrink-0"
+  aria-label="Change theme"
+  align="end"
+  side="top"
+  [hlmDropdownMenuTrigger]="menu"
+>
+  <ng-icon [name]="resolved() === 'dark' ? 'lucideMoon' : 'lucideSun'" class="text-base" />
+</button>
+
+<ng-template #menu>
+  <div hlmDropdownMenu class="w-40">
+    @for (option of options; track option.value) {
+      <button
+        hlmDropdownMenuRadio
+        [checked]="preference() === option.value"
+        (triggered)="preferenceChange.emit(option.value)"
+      >
+        <hlm-dropdown-menu-radio-indicator />
+        <ng-icon [name]="option.icon" />
+        <span>{{ option.label }}</span>
+      </button>
+    }
+  </div>
+</ng-template>

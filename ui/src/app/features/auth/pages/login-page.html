@@ -1,0 +1,10 @@
+<app-auth-shell heading="Sign in to iChat" subheading="Ask your knowledge base anything.">
+  <app-auth-form [submitting]="submitting()" [failure]="failure()" (submitted)="signIn($event)" />
+
+  <!-- There is no sign-up: accounts come from the seeder alone, so a fresh clone needs
+       to be told the way in. -->
+  <p class="text-muted-foreground mt-4 text-center text-xs">
+    Showcase accounts: <span class="text-foreground font-mono">admin / admin</span> and
+    <span class="text-foreground font-mono">user / user</span>.
+  </p>
+</app-auth-shell>

@@ -1,0 +1,12 @@
+@for (filter of filters(); track filter) {
+  <button
+    hlmBtn
+    size="sm"
+    class="h-7 rounded-full px-3 text-xs"
+    [variant]="active() === filter ? 'secondary' : 'ghost'"
+    [attr.aria-pressed]="active() === filter"
+    (click)="filterChange.emit(filter)"
+  >
+    {{ filter }}
+  </button>
+}

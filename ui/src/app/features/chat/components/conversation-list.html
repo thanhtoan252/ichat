@@ -1,0 +1,51 @@
+@if (loading() && groups().length === 0) {
+  <hlm-sidebar-group>
+    <div hlmSidebarGroupLabel>Recent</div>
+    <div hlmSidebarGroupContent>
+      <ul hlmSidebarMenu>
+        @for (row of skeletonRows; track row) {
+          <li hlmSidebarMenuItem>
+            <div hlmSidebarMenuSkeleton></div>
+          </li>
+        }
+      </ul>
+    </div>
+  </hlm-sidebar-group>
+} @else if (groups().length === 0) {
+  <hlm-sidebar-group>
+    <div hlmSidebarGroupContent>
+      <p class="text-muted-foreground px-2 py-1.5 text-xs leading-relaxed">
+        {{ emptyMessage() }}
+      </p>
+    </div>
+  </hlm-sidebar-group>
+} @else {
+  @for (group of groups(); track group.label) {
+    <hlm-sidebar-group>
+      <div hlmSidebarGroupLabel>{{ group.label }}</div>
+      <div hlmSidebarGroupContent>
+        <ul hlmSidebarMenu>
+          @for (item of group.items; track item.id) {
+            <li hlmSidebarMenuItem>
+              <a
+                hlmSidebarMenuButton
+                routerLinkActive
+                #link="routerLinkActive"
+                [routerLink]="item.link"
+                [isActive]="link.isActive"
+                [tooltip]="item.title"
+                (click)="conversationSelect.emit(item.id)"
+              >
+                <ng-icon name="lucideMessageSquare" />
+                <span class="min-w-0 flex-1 truncate">{{ item.title }}</span>
+                <span class="text-muted-foreground/70 shrink-0 text-[0.6875rem] tabular-nums">
+                  {{ item.timeLabel }}
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    </hlm-sidebar-group>
+  }
+}

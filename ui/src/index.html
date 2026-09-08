@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>iChat</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Ask questions about your documents and get answers with verifiable citations."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script>
+      // Applies the stored theme before first paint. Without this the app renders light
+      // and then flips, which is the flash every dark-mode user notices.
+      (function () {
+        try {
+          var stored = localStorage.getItem('ichat.theme');
+          var dark =
+            stored === 'dark' ||
+            ((stored === null || stored === 'system') &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          }
+        } catch (error) {
+          /* Storage can be blocked; the app applies the theme again after bootstrap. */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
+</html>

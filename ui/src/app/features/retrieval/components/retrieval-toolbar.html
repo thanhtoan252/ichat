@@ -1,0 +1,22 @@
+<button hlmSidebarTrigger class="size-8"></button>
+<hlm-separator orientation="vertical" class="mx-1 h-5 self-center" />
+<h1 class="flex-1 truncate text-sm font-medium">Retrieval lab</h1>
+
+@if (elapsedMs() !== null) {
+  <span hlmBadge variant="outline" class="gap-1.5 tabular-nums">
+    <ng-icon name="lucideClock" />
+    {{ elapsedMs() }} ms
+  </span>
+}
+
+@if (degraded()) {
+  <span
+    hlmBadge
+    variant="destructive"
+    class="gap-1.5"
+    hlmTooltip="Part of the pipeline was skipped or returned nothing, so these results are not what a healthy run would produce."
+  >
+    <ng-icon name="lucideTriangleAlert" />
+    degraded
+  </span>
+}
