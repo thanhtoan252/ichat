@@ -79,7 +79,7 @@ public sealed class ConversationService(
             .AsNoTracking()
             .Where(item => item.Id == conversationId)
             .Select(item => (Guid?)item.UserId)
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         // Hội thoại của người khác trả 404 chứ không phải 403: 403 sẽ xác nhận rằng
         // id đó có tồn tại, cho phép dò ra ai đang hỏi gì.

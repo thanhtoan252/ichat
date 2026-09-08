@@ -50,7 +50,7 @@ public static class TestHelpers
                 .AsNoTracking()
                 .Where(document => document.Id == documentId)
                 .Select(document => document.Status)
-                .FirstOrDefaultAsync();
+                .SingleOrDefaultAsync();
 
             if (status is Core.Domain.Documents.DocumentStatus.Indexed or Core.Domain.Documents.DocumentStatus.Failed)
             {

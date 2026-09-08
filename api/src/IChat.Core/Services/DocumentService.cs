@@ -109,7 +109,7 @@ public sealed class DocumentService(
             .AsNoTracking()
             .Where(item => item.Id == documentId)
             .Select(ToSummary)
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         return document is null
             ? Result.Failure<DocumentSummary>(Error.NotFound("Document", documentId))
@@ -157,7 +157,7 @@ public sealed class DocumentService(
 
     public async Task<Result> DeleteAsync(Guid documentId, CancellationToken cancellationToken)
     {
-        var document = await dbContext.Documents.FirstOrDefaultAsync(item => item.Id == documentId, cancellationToken);
+        var document = await dbContext.Documents.SingleOrDefaultAsync(item => item.Id == documentId, cancellationToken);
 
         if (document is null)
         {

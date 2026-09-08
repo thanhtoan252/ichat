@@ -37,7 +37,7 @@ public sealed class AuthService(
     public async Task<Result<AuthResult>> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
         var userName = User.Normalize(request.UserName);
-        var user = await dbContext.Users.FirstOrDefaultAsync(item => item.UserName == userName, cancellationToken);
+        var user = await dbContext.Users.SingleOrDefaultAsync(item => item.UserName == userName, cancellationToken);
 
         if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
         {
@@ -63,7 +63,7 @@ public sealed class AuthService(
 
         var stored = await dbContext.RefreshTokens
             .Include(token => token.User)
-            .FirstOrDefaultAsync(token => token.TokenHash == hash, cancellationToken);
+            .SingleOrDefaultAsync(token => token.TokenHash == hash, cancellationToken);
 
         if (stored is null || !stored.IsActiveAt(now) || stored.User is null || !stored.User.IsActive)
         {
@@ -84,7 +84,7 @@ public sealed class AuthService(
         }
 
         var hash = RefreshTokenFactory.Hash(refreshToken);
-        var stored = await dbContext.RefreshTokens.FirstOrDefaultAsync(token => token.TokenHash == hash, cancellationToken);
+        var stored = await dbContext.RefreshTokens.SingleOrDefaultAsync(token => token.TokenHash == hash, cancellationToken);
 
         if (stored is not null && stored.RevokedAt is null)
         {
@@ -101,7 +101,7 @@ public sealed class AuthService(
             .AsNoTracking()
             .Where(item => item.Id == userId)
             .Select(ToViewExpression)
-            .FirstOrDefaultAsync(cancellationToken);
+            .SingleOrDefaultAsync(cancellationToken);
 
         if (user is null)
         {

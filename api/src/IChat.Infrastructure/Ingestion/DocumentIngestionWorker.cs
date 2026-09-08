@@ -44,7 +44,7 @@ public sealed class DocumentIngestionWorker(
         var services = IngestionServices.From(scope.ServiceProvider);
 
         var document = await services.DbContext.Documents
-            .FirstOrDefaultAsync(item => item.Id == documentId, cancellationToken);
+            .SingleOrDefaultAsync(item => item.Id == documentId, cancellationToken);
 
         if (document is null)
         {
@@ -174,7 +174,7 @@ public sealed class DocumentIngestionWorker(
         {
             using var scope = scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<IChatDbContext>();
-            var document = await dbContext.Documents.FirstOrDefaultAsync(item => item.Id == documentId, cancellationToken);
+            var document = await dbContext.Documents.SingleOrDefaultAsync(item => item.Id == documentId, cancellationToken);
 
             if (document is not null)
             {

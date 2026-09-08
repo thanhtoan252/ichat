@@ -37,7 +37,7 @@ public sealed class ChatService(
         }
 
         var conversation = await dbContext.Conversations
-            .FirstOrDefaultAsync(item => item.Id == request.ConversationId, cancellationToken);
+            .SingleOrDefaultAsync(item => item.Id == request.ConversationId, cancellationToken);
 
         // Hội thoại của người khác trả về đúng thông điệp "không tồn tại" như khi id sai:
         // phân biệt hai trường hợp là để lộ rằng id đó có thật.

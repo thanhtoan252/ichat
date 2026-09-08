@@ -102,7 +102,7 @@ public sealed class IChatApiFactory : WebApplicationFactory<Program>, IAsyncLife
         var dbContext = scope.ServiceProvider.GetRequiredService<IChatDbContext>();
         var normalized = User.Normalize(userName);
 
-        var user = await dbContext.Users.FirstOrDefaultAsync(item => item.UserName == normalized);
+        var user = await dbContext.Users.SingleOrDefaultAsync(item => item.UserName == normalized);
 
         if (user is null)
         {
