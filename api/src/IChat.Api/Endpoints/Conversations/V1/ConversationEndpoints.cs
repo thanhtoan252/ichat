@@ -49,7 +49,7 @@ public static class ConversationEndpoints
     private static async Task<IResult> CreateConversationAsync(
         CreateConversationDto dto,
         IValidator<CreateConversationDto> validator,
-        IConversationService conversations,
+        IConversationService conversationService,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(dto, cancellationToken);
@@ -59,7 +59,7 @@ public static class ConversationEndpoints
             return validation.ToValidationProblem();
         }
 
-        var result = await conversations.CreateAsync(dto.ToServiceRequest(), cancellationToken);
+        var result = await conversationService.CreateAsync(dto.ToServiceRequest(), cancellationToken);
 
         if (result.IsFailure)
         {
@@ -73,10 +73,10 @@ public static class ConversationEndpoints
 
     private static async Task<IResult> GetConversationsAsync(
         [AsParameters] GetConversationsQuery query,
-        IConversationService conversations,
+        IConversationService conversationService,
         CancellationToken cancellationToken)
     {
-        var result = await conversations.GetListAsync(query.Offset, query.Limit, cancellationToken);
+        var result = await conversationService.GetListAsync(query.Offset, query.Limit, cancellationToken);
 
         if (result.IsFailure)
         {
@@ -89,10 +89,10 @@ public static class ConversationEndpoints
     private static async Task<IResult> GetConversationMessagesAsync(
         Guid id,
         [AsParameters] GetMessagesQuery query,
-        IConversationService conversations,
+        IConversationService conversationService,
         CancellationToken cancellationToken)
     {
-        var result = await conversations.GetMessagesAsync(id, query.Offset, query.Limit, cancellationToken);
+        var result = await conversationService.GetMessagesAsync(id, query.Offset, query.Limit, cancellationToken);
 
         if (result.IsFailure)
         {
@@ -109,10 +109,10 @@ public static class ConversationEndpoints
     private static IResult SendMessage(
         Guid id,
         SendMessageDto dto,
-        IChatService chat,
+        IChatService chatService,
         CancellationToken cancellationToken)
     {
-        return TypedResults.ServerSentEvents(Stream(chat, dto.ToServiceRequest(id), cancellationToken));
+        return TypedResults.ServerSentEvents(Stream(chatService, dto.ToServiceRequest(id), cancellationToken));
     }
 
     /// <summary>
@@ -120,11 +120,11 @@ public static class ConversationEndpoints
     /// stream và vẫn lưu phần đã sinh kèm ghi chú [interrupted].
     /// </summary>
     private static async IAsyncEnumerable<SseItem<object>> Stream(
-        IChatService chat,
+        IChatService chatService,
         SendMessageRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var sseEvent in chat.StreamAnswerAsync(request, cancellationToken))
+        await foreach (var sseEvent in chatService.StreamAnswerAsync(request, cancellationToken))
         {
             yield return new SseItem<object>(sseEvent.Payload, sseEvent.EventType);
         }

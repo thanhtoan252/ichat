@@ -26,7 +26,7 @@ public static class SearchEndpoints
     private static async Task<IResult> SearchChunksAsync(
         SearchRequestDto dto,
         IValidator<SearchRequestDto> validator,
-        ISearchService search,
+        ISearchService searchService,
         CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(dto, cancellationToken);
@@ -36,7 +36,7 @@ public static class SearchEndpoints
             return validation.ToValidationProblem();
         }
 
-        var result = await search.SearchAsync(dto.ToServiceRequest(), cancellationToken);
+        var result = await searchService.SearchAsync(dto.ToServiceRequest(), cancellationToken);
 
         if (result.IsFailure)
         {

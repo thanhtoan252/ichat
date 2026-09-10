@@ -50,7 +50,7 @@ public static class AuthEndpoints
     private static async Task<IResult> LoginAsync(
         LoginDto dto,
         IValidator<LoginDto> validator,
-        IAuthService auth,
+        IAuthService authService,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -61,7 +61,7 @@ public static class AuthEndpoints
             return validation.ToValidationProblem();
         }
 
-        var result = await auth.LoginAsync(dto.ToServiceRequest(), cancellationToken);
+        var result = await authService.LoginAsync(dto.ToServiceRequest(), cancellationToken);
 
         if (result.IsFailure)
         {
@@ -72,7 +72,7 @@ public static class AuthEndpoints
     }
 
     private static async Task<IResult> RefreshAsync(
-        IAuthService auth,
+        IAuthService authService,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -83,7 +83,7 @@ public static class AuthEndpoints
             return Error.Unauthorized("Không có phiên đăng nhập nào.").ToProblemResult();
         }
 
-        var result = await auth.RefreshAsync(refreshToken, cancellationToken);
+        var result = await authService.RefreshAsync(refreshToken, cancellationToken);
 
         if (result.IsFailure)
         {
@@ -97,18 +97,18 @@ public static class AuthEndpoints
     }
 
     private static async Task<IResult> LogoutAsync(
-        IAuthService auth,
+        IAuthService authService,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        await auth.LogoutAsync(RefreshTokenCookie.Read(httpContext), cancellationToken);
+        await authService.LogoutAsync(RefreshTokenCookie.Read(httpContext), cancellationToken);
         RefreshTokenCookie.Delete(httpContext);
 
         return Results.NoContent();
     }
 
     private static async Task<IResult> GetProfileAsync(
-        IAuthService auth,
+        IAuthService authService,
         ICurrentUser currentUser,
         CancellationToken cancellationToken)
     {
@@ -117,7 +117,7 @@ public static class AuthEndpoints
             return Error.Unauthorized("Không có phiên đăng nhập nào.").ToProblemResult();
         }
 
-        var result = await auth.GetProfileAsync(userId, cancellationToken);
+        var result = await authService.GetProfileAsync(userId, cancellationToken);
 
         if (result.IsFailure)
         {

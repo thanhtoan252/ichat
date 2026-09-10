@@ -60,7 +60,7 @@ public static class DocumentEndpoints
         [FromForm] IFormFile file,
         [FromForm] string? title,
         IValidator<UploadDocumentDto> validator,
-        IDocumentService documents,
+        IDocumentService documentService,
         CancellationToken cancellationToken)
     {
         var dto = new UploadDocumentDto { File = file, Title = title };
@@ -72,7 +72,7 @@ public static class DocumentEndpoints
         }
 
         await using var content = file.OpenReadStream();
-        var result = await documents.UploadAsync(dto.ToServiceRequest(content), cancellationToken);
+        var result = await documentService.UploadAsync(dto.ToServiceRequest(content), cancellationToken);
 
         if (result.IsFailure)
         {
@@ -86,10 +86,10 @@ public static class DocumentEndpoints
 
     private static async Task<IResult> GetDocumentsAsync(
         [AsParameters] GetDocumentsQuery query,
-        IDocumentService documents,
+        IDocumentService documentService,
         CancellationToken cancellationToken)
     {
-        var result = await documents.GetListAsync(query.ToServiceRequest(), cancellationToken);
+        var result = await documentService.GetListAsync(query.ToServiceRequest(), cancellationToken);
 
         if (result.IsFailure)
         {
@@ -101,10 +101,10 @@ public static class DocumentEndpoints
 
     private static async Task<IResult> GetDocumentByIdAsync(
         Guid id,
-        IDocumentService documents,
+        IDocumentService documentService,
         CancellationToken cancellationToken)
     {
-        var result = await documents.GetByIdAsync(id, cancellationToken);
+        var result = await documentService.GetByIdAsync(id, cancellationToken);
 
         if (result.IsFailure)
         {
@@ -117,10 +117,10 @@ public static class DocumentEndpoints
     private static async Task<IResult> GetDocumentChunksAsync(
         Guid id,
         [AsParameters] GetDocumentChunksQuery query,
-        IDocumentService documents,
+        IDocumentService documentService,
         CancellationToken cancellationToken)
     {
-        var result = await documents.GetChunksAsync(query.ToServiceRequest(id), cancellationToken);
+        var result = await documentService.GetChunksAsync(query.ToServiceRequest(id), cancellationToken);
 
         if (result.IsFailure)
         {
@@ -132,10 +132,10 @@ public static class DocumentEndpoints
 
     private static async Task<IResult> DeleteDocumentAsync(
         Guid id,
-        IDocumentService documents,
+        IDocumentService documentService,
         CancellationToken cancellationToken)
     {
-        var result = await documents.DeleteAsync(id, cancellationToken);
+        var result = await documentService.DeleteAsync(id, cancellationToken);
 
         if (result.IsFailure)
         {

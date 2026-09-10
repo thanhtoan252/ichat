@@ -32,9 +32,9 @@ public static class AdminEndpoints
         return Results.Ok(modelCatalog.GetSnapshot().ToResponse());
     }
 
-    private static async Task<IResult> ReindexAsync(IAdminService admin, CancellationToken cancellationToken)
+    private static async Task<IResult> ReindexAsync(IAdminService adminService, CancellationToken cancellationToken)
     {
-        var result = await admin.ReindexAsync(cancellationToken);
+        var result = await adminService.ReindexAsync(cancellationToken);
 
         if (result.IsFailure)
         {
