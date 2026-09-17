@@ -1,8 +1,8 @@
 namespace IChat.Core.Rag;
 
 /// <summary>
-/// Khoá của từng chặng trong response debug của endpoint search. Contract đã công bố:
-/// đổi một giá trị ở đây làm hỏng công cụ debug retrieval đang đọc theo tên chặng.
+/// The key of each stage in the search endpoint's debug response. A published contract:
+/// changing a value here breaks the retrieval debugging tools that read stages by name.
 /// </summary>
 public static class RetrievalStageName
 {

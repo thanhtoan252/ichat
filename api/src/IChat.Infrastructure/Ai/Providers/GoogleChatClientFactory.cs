@@ -8,9 +8,9 @@ public sealed class GoogleChatClientFactory : IChatProviderClientFactory
 
     public IChatClient Create(ResolvedChatSettings settings)
     {
-        // CẢNH BÁO: docker-compose luôn truyền Ai__*__Endpoint xuống container dưới dạng
-        // chuỗi RỖNG chứ không phải null, nên nhánh `?? default` dưới đây KHÔNG chạy khi
-        // chạy bằng docker-compose — file env phải set Endpoint tường minh (.env.gemini.example).
+        // WARNING: docker-compose always passes Ai__*__Endpoint into the container as an EMPTY string rather
+        // than as null, so the `?? default` branch below does NOT run under docker-compose — the env file has
+        // to set Endpoint explicitly (.env.gemini.example).
         var endpoint = settings.Endpoint ?? OpenAICompatibleClientFactory.GoogleOpenAICompatibleEndpoint;
 
         return OpenAICompatibleClientFactory

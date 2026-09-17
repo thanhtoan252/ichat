@@ -1,6 +1,6 @@
 namespace IChat.Core.Abstractions;
 
-/// <summary>Chỉ tìm kiếm ứng viên. Consumer duy nhất là các <see cref="IRetrievalBranch"/>.</summary>
+/// <summary>Candidate search only. Its only consumers are the <see cref="IRetrievalBranch"/> implementations.</summary>
 public interface IChunkSearch
 {
     Task<SearchBranchResult> SearchVectorAsync(float[] queryEmbedding, int limit, double minSimilarity, CancellationToken cancellationToken);

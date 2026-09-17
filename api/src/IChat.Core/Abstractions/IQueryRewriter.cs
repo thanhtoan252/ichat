@@ -4,6 +4,6 @@ using Microsoft.Extensions.AI;
 
 public interface IQueryRewriter
 {
-    /// <summary>Không bao giờ ném lỗi: hỏng thì fallback về câu hỏi gốc.</summary>
+    /// <summary>Never throws: on failure it falls back to the original question.</summary>
     Task<string> RewriteAsync(string originalQuestion, IReadOnlyList<ChatMessage> history, CancellationToken cancellationToken);
 }

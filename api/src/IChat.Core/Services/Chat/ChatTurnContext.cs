@@ -3,7 +3,7 @@ namespace IChat.Core.Services.Chat;
 using IChat.Core.Rag;
 using Microsoft.Extensions.AI;
 
-/// <summary>Mọi thứ cần để sinh câu trả lời, đã dựng xong trước khi gọi model.</summary>
+/// <summary>Everything needed to generate an answer, fully built before the model is called.</summary>
 public sealed record ChatTurnContext
 {
     public required IReadOnlyList<ChatMessage> History { get; init; }

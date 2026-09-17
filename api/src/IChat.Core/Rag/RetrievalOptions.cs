@@ -10,7 +10,7 @@ public sealed class RetrievalOptions
     [Range(0, 500)]
     public int FullTextCandidates { get; set; } = 40;
 
-    /// <summary>0 = tắt nhánh trigram.</summary>
+    /// <summary>0 = the trigram branch is off.</summary>
     [Range(0, 500)]
     public int TrigramCandidates { get; set; }
 
@@ -20,8 +20,8 @@ public sealed class RetrievalOptions
     [Range(0d, 1d)]
     public double FullTextMinRank { get; set; } = 0.01;
 
-    // RrfK = 60 là hằng số trong bài báo gốc về Reciprocal Rank Fusion (Cormack 2009).
-    // Giá trị lớn làm phẳng ảnh hưởng của thứ hạng cao, giá trị nhỏ khuếch đại top-1.
+    // RrfK = 60 is the constant from the original Reciprocal Rank Fusion paper (Cormack 2009).
+    // A larger value flattens the influence of high ranks, a smaller one amplifies the top-1.
     [Range(1, 1000)]
     public int RrfK { get; set; } = 60;
 

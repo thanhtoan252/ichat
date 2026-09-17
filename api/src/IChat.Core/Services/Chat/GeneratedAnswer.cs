@@ -1,6 +1,6 @@
 namespace IChat.Core.Services.Chat;
 
-/// <summary>Câu trả lời đã sinh xong, đủ để lưu và để dựng payload "done".</summary>
+/// <summary>A finished answer, enough to persist it and to build the "done" payload.</summary>
 public sealed record GeneratedAnswer
 {
     public required string Text { get; init; }

@@ -9,9 +9,9 @@ using NUnit.Framework;
 [TestFixture]
 public sealed class ModelCatalogTests
 {
-    // Các model dòng reasoning chỉ chấp nhận temperature mặc định và trả HTTP 400
-    // nếu nhận bất kỳ giá trị nào khác. Không cấu hình Temperature phải nghĩa là
-    // "không gửi tham số này đi", chứ không phải rơi về một giá trị đoán trước.
+    // The reasoning-family models only accept their default temperature and answer with HTTP 400 for any other
+    // value. Leaving Temperature unconfigured has to mean "do not send this parameter", not falling back to
+    // some guessed value.
     [Test]
     public void ChatTemperature_IsNull_WhenNotConfigured()
     {
@@ -38,10 +38,10 @@ public sealed class ModelCatalogTests
         temperature.Should().Be(0.2);
     }
 
-    // docker-compose truyền mọi biến `Ai__*` xuống container kể cả khi không set:
-    // giá trị đến nơi là chuỗi rỗng chứ không phải vắng mặt (xem .env.gemini.example).
-    // Chuỗi rỗng phải bind về null, nếu không thì escape hatch "không gửi temperature"
-    // sẽ không dùng được qua docker-compose.
+    // docker-compose passes every `Ai__*` variable into the container even when it is not set: the value arrives
+    // as an empty string rather than absent (see .env.gemini.example).
+    // An empty string has to bind to null, otherwise the "do not send a temperature" escape hatch is unusable
+    // through docker-compose.
     [TestCase("")]
     [TestCase(null)]
     public void Temperature_BindsToNull_WhenTheEnvironmentVariableIsEmpty(string? configured)

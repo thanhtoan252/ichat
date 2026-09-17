@@ -8,9 +8,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Đổi model embedding rồi restart mà không reindex là bug tệ nhất của một hệ RAG:
-/// vector cũ và mới nằm ở hai không gian khác nhau, search vẫn trả kết quả nhưng sai
-/// hoàn toàn, và không có lỗi nào báo. Guard này biến lỗi im lặng đó thành lỗi ồn ào.
+/// Changing the embedding model and restarting without reindexing is the worst bug a RAG system can have:
+/// the old and the new vectors live in different spaces, search still returns results but they are entirely
+/// wrong, and nothing reports an error. This guard turns that silent failure into a loud one.
 /// </summary>
 public sealed class EmbeddingModelGuard(
     IServiceScopeFactory scopeFactory,
@@ -50,7 +50,7 @@ public sealed class EmbeddingModelGuard(
         {
             var detail = string.Join(", ", mismatchedDimensions.Select(row => $"{row.EmbeddingModel}={row.EmbeddingDimensions}"));
 
-            // Lệch số chiều: dữ liệu không dùng được, chặn khởi động.
+            // Mismatched dimensions: the data is unusable, so block startup.
             throw new InvalidOperationException(
                 $"Embedding dimension mismatch. Config says {_embedding.Dimensions} but the database holds: {detail}. " +
                 "Run POST /api/v1/admin/reindex after migrating the column, or revert the config to the previous dimension count.");
@@ -63,8 +63,8 @@ public sealed class EmbeddingModelGuard(
 
         if (mismatchedModels.Count > 0)
         {
-            // Cùng số chiều nhưng khác model: vector vẫn insert được nhưng nằm khác
-            // không gian ngữ nghĩa. Cảnh báo thật to thay vì chặn khởi động.
+            // Same dimensions but a different model: the vectors still insert, but they sit in a different
+            // semantic space. Warn loudly rather than blocking startup.
             logger.LogWarning(
                 "Embedding model mismatch: config says '{Configured}' but the database still holds chunks from {Existing}. " +
                 "Search results will be silently wrong until a reindex (POST /api/v1/admin/reindex).",

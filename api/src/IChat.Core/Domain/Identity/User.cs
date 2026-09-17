@@ -8,7 +8,7 @@ public sealed class User
 
     public Guid Id { get; private set; }
 
-    /// <summary>Định danh đăng nhập, luôn được chuẩn hoá về chữ thường trước khi lưu.</summary>
+    /// <summary>The login identifier, always normalized to lower case before it is stored.</summary>
     public string UserName { get; private set; } = string.Empty;
 
     public string DisplayName { get; private set; } = string.Empty;
@@ -38,7 +38,7 @@ public sealed class User
         };
     }
 
-    /// <summary>Chuẩn hoá một lần ở đây để nơi tra cứu và nơi ghi không lệch nhau.</summary>
+    /// <summary>Normalized in one place, so the lookup side and the write side cannot drift apart.</summary>
     public static string Normalize(string userName) => userName.Trim().ToLowerInvariant();
 
     public void ChangeRole(UserRole role, DateTimeOffset updatedAt)

@@ -3,8 +3,8 @@ namespace IChat.Infrastructure.Security;
 using IChat.Core.Abstractions;
 
 /// <summary>
-/// BCrypt với work factor 12: đủ chậm để chống dò offline, vẫn dưới ~250ms trên
-/// phần cứng thường nên không cảm nhận được khi đăng nhập.
+/// BCrypt with work factor 12: slow enough to resist offline cracking, still under ~250ms on ordinary
+/// hardware so a login does not feel sluggish.
 /// </summary>
 public sealed class BcryptPasswordHasher : IPasswordHasher
 {
@@ -20,7 +20,7 @@ public sealed class BcryptPasswordHasher : IPasswordHasher
         }
         catch (BCrypt.Net.SaltParseException)
         {
-            // Hash hỏng trong database không được ném ra 500; coi như sai mật khẩu.
+            // A corrupt hash in the database must not throw a 500; treat it as a wrong password.
             return false;
         }
     }

@@ -3,7 +3,7 @@ namespace IChat.Infrastructure.Ai;
 using IChat.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
 
-/// <summary>Fail-fast lúc startup, không để lỗi cấu hình lộ ra ở request đầu tiên của người dùng.</summary>
+/// <summary>Fails fast at startup, so a configuration error never surfaces in a user's first request.</summary>
 public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
 {
     public ValidateOptionsResult Validate(string? name, AiOptions options)
@@ -32,8 +32,8 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
                 "set Ai:Embedding:ApiKey (env var Ai__Embedding__ApiKey, user secrets, or a secret store).");
         }
 
-        // Cột vector(N) cố định số chiều ở cấp schema. Lệch số chiều là breaking change
-        // ở tầng dữ liệu, phải kèm EF migration đổi kiểu cột chứ không chỉ sửa config.
+        // A vector(N) column fixes the dimension count at the schema level. A different dimension count is a
+        // breaking change in the data layer and needs an EF migration changing the column type, not just a config edit.
         if (options.Embedding.Dimensions != EmbeddingDimensions.Default)
         {
             failures.Add(

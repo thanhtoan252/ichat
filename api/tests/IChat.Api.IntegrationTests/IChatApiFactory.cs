@@ -43,7 +43,7 @@ public sealed class IChatApiFactory : WebApplicationFactory<Program>, IAsyncLife
 
         builder.ConfigureServices(services =>
         {
-            // Fake AI tất định: test không phụ thuộc API key hay mạng.
+            // Deterministic fake AI: the tests depend on neither an API key nor the network.
             services.RemoveAll<IEmbeddingGenerator<string, Embedding<float>>>();
             services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(new FakeEmbeddingGenerator());
 
@@ -55,9 +55,9 @@ public sealed class IChatApiFactory : WebApplicationFactory<Program>, IAsyncLife
 
     public async Task InitializeAsync()
     {
-        // API key bind thẳng vào AiOptions qua IConfiguration, nên phải đặt đúng khoá
-        // cấu hình chứ không phải tên biến quy ước của từng hãng. Thiếu key thì
-        // AiOptionsValidator chặn ngay ở ValidateOnStart và host không dựng được.
+        // API keys bind straight into AiOptions through IConfiguration, so they have to be set under the real
+        // configuration keys rather than each vendor's conventional env var name. Without a key,
+        // AiOptionsValidator stops startup at ValidateOnStart and the host never comes up.
         Environment.SetEnvironmentVariable("Ai__Chat__ApiKey", "sk-test-fake");
         Environment.SetEnvironmentVariable("Ai__Embedding__ApiKey", "sk-test-fake");
 
@@ -79,9 +79,9 @@ public sealed class IChatApiFactory : WebApplicationFactory<Program>, IAsyncLife
     }
 
     /// <summary>
-    /// Client đã đăng nhập sẵn. Token được ký thẳng từ DI thay vì gọi /auth/login: test
-    /// nào cũng cần một danh tính, và đi qua HTTP mỗi lần chỉ thêm một điểm hỏng.
-    /// Mọi endpoint giờ mặc định đóng nên đây là cách duy nhất gọi được API.
+    /// An already signed-in client. The token is signed straight from DI instead of calling /auth/login: every
+    /// test needs an identity, and going over HTTP each time only adds another point of failure.
+    /// Every endpoint is now closed by default, so this is the only way to reach the API at all.
     /// </summary>
     public async Task<HttpClient> CreateClientAsync(UserRole role = UserRole.Admin, string userName = "tester")
     {

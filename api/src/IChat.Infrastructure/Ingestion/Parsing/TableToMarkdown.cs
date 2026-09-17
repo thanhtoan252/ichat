@@ -3,8 +3,8 @@ namespace IChat.Infrastructure.Ingestion.Parsing;
 using System.Text;
 
 /// <summary>
-/// Bảng là ĐƠN VỊ NGUYÊN TỬ: nửa bảng không có header cột thì vô nghĩa với cả
-/// embedding lẫn LLM. Dùng chung cho docx và pdf.
+/// A table is an ATOMIC UNIT: half a table without its column headers is meaningless to both the embedding
+/// model and the LLM. Shared by docx and pdf.
 /// </summary>
 public static class TableToMarkdown
 {
@@ -43,7 +43,7 @@ public static class TableToMarkdown
 
         for (var column = 0; column < columnCount; column++)
         {
-            // Ô gộp (merged cell) làm hàng ngắn hơn số cột: đệm rỗng để bảng không lệch.
+            // A merged cell makes a row shorter than the column count: pad with blanks so the table stays aligned.
             var cell = column < row.Count ? Sanitize(row[column]) : string.Empty;
             builder.Append(cell);
             builder.Append(column == columnCount - 1 ? " |" : " | ");

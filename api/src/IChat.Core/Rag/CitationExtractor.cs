@@ -3,8 +3,8 @@ namespace IChat.Core.Rag;
 using System.Text.RegularExpressions;
 
 /// <summary>
-/// Không được tin marker mà model sinh ra. Chỉ marker trỏ vào đúng phạm vi context
-/// mới được ghi vào message_citations.
+/// The markers a model produces cannot be trusted. Only a marker pointing inside the real context
+/// range is written to message_citations.
 /// </summary>
 public static partial class CitationExtractor
 {
@@ -15,8 +15,8 @@ public static partial class CitationExtractor
     private static partial Regex CodeSpanRegex { get; }
 
     /// <summary>
-    /// Trả về các marker hợp lệ theo thứ tự xuất hiện, đã khử trùng lặp.
-    /// <paramref name="sourceCount"/> là số nguồn thực sự có trong context.
+    /// Returns the valid markers in order of appearance, deduplicated.
+    /// <paramref name="sourceCount"/> is how many sources the context actually holds.
     /// </summary>
     public static IReadOnlyList<ExtractedCitation> Extract(string? answerText, int sourceCount, out IReadOnlyList<int> invalidMarkers)
     {
@@ -58,7 +58,7 @@ public static partial class CitationExtractor
         return results;
     }
 
-    /// <summary>Thay code span bằng khoảng trắng cùng độ dài để marker bên trong code không bị tính.</summary>
+    /// <summary>Replaces code spans with spaces of the same length so markers inside code are not counted.</summary>
     private static string MaskCodeSpans(string text)
     {
         return CodeSpanRegex.Replace(text, match => new string(' ', match.Length));

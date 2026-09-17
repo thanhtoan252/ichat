@@ -1,8 +1,8 @@
 namespace IChat.Infrastructure.Ai;
 
 /// <summary>
-/// Cấu hình của một chat provider SAU KHI đã áp dụng fallback UtilityChat -> Chat.
-/// Đủ để dựng client, mô tả trạng thái hoặc validate mà không phải đọc lại AiOptions.
+/// One chat provider's configuration AFTER the UtilityChat -> Chat fallback has been applied.
+/// Enough to build a client, describe a status or validate, without rereading AiOptions.
 /// </summary>
 public sealed record ResolvedChatSettings
 {
@@ -20,12 +20,12 @@ public sealed record ResolvedChatSettings
 
     public ChatProviderCapabilities Capabilities => ChatProviderCapabilities.For(Provider);
 
-    /// <summary>Tên hiển thị trong thông báo lỗi; trùng khớp tên nhánh trong config.</summary>
+    /// <summary>The name shown in error messages; it matches the config section's branch name.</summary>
     public string Label => Provider.ToString();
 
     /// <summary>
-    /// AiOptionsValidator đã chặn thiếu key từ lúc startup; đây là lưới an toàn cho những
-    /// đường chạy không đi qua ValidateOnStart (test, tooling).
+    /// AiOptionsValidator already rejects a missing key at startup; this is the safety net for the paths
+    /// that do not go through ValidateOnStart (tests, tooling).
     /// </summary>
     public string RequireApiKey()
     {

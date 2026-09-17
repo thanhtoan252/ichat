@@ -39,7 +39,7 @@ public sealed class DocumentIngestionWorker(
 
     private async Task ProcessAsync(Guid documentId, CancellationToken cancellationToken)
     {
-        // Mỗi document một scope DI riêng; không capture scoped service ở constructor.
+        // One DI scope per document; never capture a scoped service in the constructor.
         using var scope = scopeFactory.CreateScope();
         var services = IngestionServices.From(scope.ServiceProvider);
 
@@ -86,15 +86,15 @@ public sealed class DocumentIngestionWorker(
     }
 
     /// <summary>
-    /// Trả về null khi định dạng không được hỗ trợ — khi đó trạng thái Failed đã được ghi
-    /// và không còn gì để làm với document này.
+    /// Returns null when the format is unsupported — by then the Failed status has already been written
+    /// and there is nothing left to do with this document.
     /// </summary>
     private static async Task<ParsedDocument?> ParseAsync(
         IngestionServices services,
         Document document,
         CancellationToken cancellationToken)
     {
-        // Dò lại magic bytes ở đây chứ không tin ContentType đã lưu: file trên đĩa mới là sự thật.
+        // Re-check the magic bytes here instead of trusting the stored ContentType: the file on disk is the truth.
         var header = new byte[IDocumentParserResolver.MagicHeaderLength];
 
         await using (var probeStream = await services.FileStorage.OpenReadAsync(document.StoragePath, cancellationToken))
@@ -145,8 +145,8 @@ public sealed class DocumentIngestionWorker(
     }
 
     /// <summary>
-    /// Xoá chunk cũ và ghi chunk mới trong CÙNG một transaction: reindex nửa vời còn tệ hơn
-    /// không reindex, vì document sẽ mất một phần nội dung mà vẫn mang trạng thái Indexed.
+    /// Deletes the old chunks and writes the new ones in the SAME transaction: a half-finished reindex is worse
+    /// than none, because the document would lose part of its content while still being marked Indexed.
     /// </summary>
     private static async Task ReplaceChunksAsync(
         IChatDbContext dbContext,
@@ -189,9 +189,9 @@ public sealed class DocumentIngestionWorker(
     }
 
     /// <summary>
-    /// Các service scoped cần cho một document, phân giải một lần ở đầu scope. Gom lại đây
-    /// để phần còn lại của worker không phải nhìn thấy IServiceProvider nữa — dependency
-    /// của từng bước ingestion đọc được ngay trên chữ ký method.
+    /// The scoped services one document needs, resolved once at the top of the scope. They are grouped here so
+    /// the rest of the worker never has to see an IServiceProvider again — each ingestion step's dependencies
+    /// are readable straight off its method signature.
     /// </summary>
     private sealed record IngestionServices(
         IChatDbContext DbContext,

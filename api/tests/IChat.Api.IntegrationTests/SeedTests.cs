@@ -12,8 +12,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 /// <summary>
-/// Hai tài khoản mặc định là cửa vào duy nhất của một bản clone mới, nên chúng là
-/// contract chứ không phải tiện ích: đổi tên hoặc mật khẩu là làm hỏng phần Quick start.
+/// The two default accounts are the only way into a fresh clone, which makes them a contract rather than a
+/// convenience: renaming one or changing its password breaks the Quick start section.
 /// </summary>
 [Collection(nameof(IChatApiCollection))]
 public class SeedTests(IChatApiFactory factory)
@@ -33,7 +33,7 @@ public class SeedTests(IChatApiFactory factory)
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Login chỉ trả phiên; vai trò đọc ở /auth/me bằng chính token vừa nhận.
+        // Login returns only the session; the role is read from /auth/me with the token just received.
         var accessToken = JsonDocument.Parse(await response.Content.ReadAsStringAsync())
             .RootElement.GetProperty("accessToken").GetString();
 
@@ -61,8 +61,8 @@ public class SeedTests(IChatApiFactory factory)
     }
 
     /// <summary>
-    /// Seeder là hosted service, chạy một lần lúc khởi động; các test khác truncate bảng
-    /// users nên phải gọi lại nó thay vì trông chờ vào lần chạy đầu tiên.
+    /// The seeder is a hosted service and runs once at startup; other tests truncate the users table, so it has
+    /// to be invoked again rather than relied on from that first run.
     /// </summary>
     private async Task SeedAsync()
     {

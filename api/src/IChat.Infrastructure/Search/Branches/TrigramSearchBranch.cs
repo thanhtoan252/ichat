@@ -10,7 +10,7 @@ public sealed class TrigramSearchBranch(IChunkSearch chunkSearch, IOptions<RagOp
 
     public string StageName => RetrievalStageName.Trigram;
 
-    // TrigramCandidates = 0 nghĩa là tắt nhánh 3.
+    // TrigramCandidates = 0 means the third branch is off.
     public bool IsEnabledFor(SearchMode mode)
     {
         return (mode is SearchMode.Hybrid or SearchMode.Trigram) && _retrieval.TrigramCandidates > 0;

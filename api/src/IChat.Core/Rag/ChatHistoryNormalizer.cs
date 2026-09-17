@@ -3,8 +3,8 @@ namespace IChat.Core.Rag;
 using Microsoft.Extensions.AI;
 
 /// <summary>
-/// Anthropic yêu cầu message luân phiên user/assistant và message đầu tiên (sau system)
-/// phải là user. OpenAI dễ tính hơn nên lỗi này chỉ lộ ra khi đổi provider.
+/// Anthropic requires messages to alternate user/assistant and the first message (after system) to be
+/// a user message. OpenAI is more forgiving, so this only surfaces when switching provider.
 /// </summary>
 public static class ChatHistoryNormalizer
 {
@@ -38,7 +38,7 @@ public static class ChatHistoryNormalizer
             cleaned.Add(new ChatMessage(role, text.Trim()));
         }
 
-        // Lịch sử không được mở đầu bằng assistant.
+        // History must not open with an assistant message.
         while (cleaned.Count > 0 && cleaned[0].Role == ChatRole.Assistant)
         {
             cleaned.RemoveAt(0);

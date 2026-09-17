@@ -11,8 +11,8 @@ public sealed class SearchBranchResult
     public string? TsQuery { get; init; }
 
     /// <summary>
-    /// Nhánh tự báo mình chạy trong trạng thái suy giảm (ví dụ embedding hỏng nên không
-    /// tìm được gì), để pipeline không phải biết chi tiết bên trong từng nhánh.
+    /// The branch reports for itself that it ran degraded (for instance the embedding call failed so
+    /// it found nothing), so the pipeline never has to know what goes on inside a branch.
     /// </summary>
     public bool Degraded { get; init; }
 }

@@ -23,7 +23,7 @@ public sealed class LlmQueryRewriter(
             return originalQuestion;
         }
 
-        // Lượt đầu tiên không có đại từ để giải quyết, bỏ qua để tiết kiệm một round-trip.
+        // The first turn has no pronoun to resolve, so skip it and save a round-trip.
         if (history.Count == 0 && _rewriting.SkipOnFirstTurn)
         {
             return originalQuestion;
@@ -63,7 +63,7 @@ public sealed class LlmQueryRewriter(
         }
         catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
-            // Đây là bước phụ: hỏng thì degrade về câu hỏi gốc, không cho request thất bại.
+            // A secondary step: on failure it degrades to the original question rather than failing the request.
             logger.LogWarning(exception, "Query rewriting failed, falling back to the original question.");
 
             return originalQuestion;

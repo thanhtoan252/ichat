@@ -103,8 +103,8 @@ public static class ConversationEndpoints
     }
 
     /// <summary>
-    /// Không validate DTO ở đây: mọi lỗi của lượt chat đi qua kênh SSE dưới dạng
-    /// event "error" với HTTP 200, nên ChatService là nơi duy nhất quyết định lỗi.
+    /// The DTO is not validated here: every error of a chat turn travels over the SSE channel
+    /// as an "error" event with HTTP 200, so ChatService is the only place that decides errors.
     /// </summary>
     private static IResult SendMessage(
         Guid id,
@@ -116,8 +116,8 @@ public static class ConversationEndpoints
     }
 
     /// <summary>
-    /// CancellationToken được truyền xuống tận nơi: client đóng tab thì service dừng
-    /// stream và vẫn lưu phần đã sinh kèm ghi chú [interrupted].
+    /// The CancellationToken is passed all the way down: when the client closes the tab the
+    /// service stops streaming and still persists what was generated, marked [interrupted].
     /// </summary>
     private static async IAsyncEnumerable<SseItem<object>> Stream(
         IChatService chatService,

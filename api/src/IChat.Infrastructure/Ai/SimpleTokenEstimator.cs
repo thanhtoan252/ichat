@@ -3,9 +3,9 @@ namespace IChat.Infrastructure.Ai;
 using IChat.Core.Abstractions;
 
 /// <summary>
-/// Xấp xỉ ~4 ký tự/token cho văn bản latin và ~2 cho tiếng Việt có dấu.
-/// Cố tình KHÔNG dùng tokenizer riêng của một hãng: hệ thống hỗ trợ nhiều hãng
-/// và mỗi hãng tokenize khác nhau, nên một ước lượng chung ổn định hơn.
+/// Approximates ~4 characters per token for Latin text and ~2 for Vietnamese with diacritics.
+/// It deliberately does NOT use any one vendor's tokenizer: the system supports several vendors and each
+/// tokenizes differently, so a shared estimate is more stable.
 /// </summary>
 public sealed class SimpleTokenEstimator : ITokenEstimator
 {

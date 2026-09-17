@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 /// <summary>
-/// Khai báo scheme "Bearer" ở cấp document. Không đặt security requirement toàn cục:
-/// việc gắn requirement cho từng operation do <see cref="AuthorizationOperationTransformer"/>
-/// làm dựa trên metadata thật của endpoint, nên /auth/login vẫn hiện là ẩn danh.
+/// Declares the "Bearer" scheme at the document level. It deliberately sets no global security
+/// requirement: attaching one per operation is <see cref="AuthorizationOperationTransformer"/>'s job,
+/// based on the endpoint's real metadata, so /auth/login still shows up as anonymous.
 /// </summary>
 public sealed class JwtBearerSecuritySchemeTransformer(IAuthenticationSchemeProvider schemeProvider)
     : IOpenApiDocumentTransformer
@@ -32,7 +32,7 @@ public sealed class JwtBearerSecuritySchemeTransformer(IAuthenticationSchemeProv
             Scheme = "bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Access token lấy từ POST /api/v1/auth/login. Dán nguyên token, không kèm tiền tố 'Bearer'."
+            Description = "The access token from POST /api/v1/auth/login. Paste the token itself, without the 'Bearer' prefix."
         };
     }
 }

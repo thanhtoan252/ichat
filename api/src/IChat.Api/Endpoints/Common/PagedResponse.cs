@@ -1,8 +1,8 @@
 namespace IChat.Api.Endpoints.Common;
 
 /// <summary>
-/// Bao phân trang dùng chung cho mọi feature; giữ đúng shape của PaginatedList, kèm
-/// offset/limit thật sự đã dùng để client biết cửa sổ nào vừa được áp.
+/// The paging envelope shared by every feature; it keeps the shape of PaginatedList and
+/// echoes the offset/limit actually applied, so the client knows which window it got.
 /// </summary>
 public sealed class PagedResponse<TItem>
 {

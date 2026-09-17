@@ -3,7 +3,7 @@ namespace IChat.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-/// <summary>Chỉ dùng cho `dotnet ef` lúc design-time, không tham gia DI lúc chạy.</summary>
+/// <summary>Used only by `dotnet ef` at design time; it takes no part in DI at runtime.</summary>
 public sealed class IChatDbContextFactory : IDesignTimeDbContextFactory<IChatDbContext>
 {
     public IChatDbContext CreateDbContext(string[] args)

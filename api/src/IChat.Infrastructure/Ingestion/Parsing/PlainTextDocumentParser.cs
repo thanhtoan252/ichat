@@ -3,7 +3,7 @@ namespace IChat.Infrastructure.Ingestion.Parsing;
 using IChat.Core.Abstractions;
 using IChat.Core.Domain.Documents.Parsing;
 
-/// <summary>TXT không có cấu trúc: toàn bộ là Paragraph, không có heading.</summary>
+/// <summary>TXT has no structure: everything is a Paragraph, and there are no headings.</summary>
 public sealed class PlainTextDocumentParser : IDocumentParser
 {
     public const string PlainTextContentType = "text/plain";

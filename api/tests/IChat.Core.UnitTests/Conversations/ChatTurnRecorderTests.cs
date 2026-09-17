@@ -59,7 +59,7 @@ public class ChatTurnRecorderTests
         _dbContext.Verify(dbContext => dbContext.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
-    // Không được tin marker model sinh ra: [5] khi context chỉ có 2 nguồn là marker bịa.
+    // The markers a model produces cannot be trusted: [5] when the context has only 2 sources is invented.
     [Test]
     public async Task RecordAnswer_IgnoresMarkersOutsideTheContextRange()
     {
@@ -76,7 +76,7 @@ public class ChatTurnRecorderTests
         _savedCitations.Should().ContainSingle();
     }
 
-    // Một khối context gộp nhiều chunk neo; hai nguồn có thể chia nhau một chunk.
+    // One context block merges several anchor chunks; two sources can share a chunk between them.
     [Test]
     public async Task RecordAnswer_DeduplicatesAnchorChunksSharedBetweenSources()
     {
@@ -120,7 +120,7 @@ public class ChatTurnRecorderTests
         // Assert
         done.Citations.Should().BeEmpty();
         _savedCitations.Should().BeEmpty();
-        _savedMessages.Should().ContainSingle("câu trả lời vẫn phải được lưu dù không trích dẫn gì");
+        _savedMessages.Should().ContainSingle("the answer must still be persisted even when it cites nothing");
     }
 
     [Test]
@@ -163,7 +163,7 @@ public class ChatTurnRecorderTests
         done.Interrupted.Should().BeTrue();
     }
 
-    // Hội thoại tạo từ nút "New chat" chưa có tên; câu hỏi đầu tiên phải đặt tên cho nó.
+    // A conversation created from the "New chat" button has no name yet; the first question has to name it.
     [Test]
     public async Task RecordQuestion_NamesADefaultTitledConversation()
     {

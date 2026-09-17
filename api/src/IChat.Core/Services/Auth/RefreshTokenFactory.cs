@@ -3,8 +3,8 @@ namespace IChat.Core.Services.Auth;
 using System.Security.Cryptography;
 
 /// <summary>
-/// Sinh và băm refresh token. Database chỉ giữ bản băm, nên đây là nơi duy nhất
-/// biết token thô — chuỗi trả về đi thẳng vào cookie httpOnly rồi bị quên.
+/// Generates and hashes refresh tokens. The database only keeps the hash, so this is the only place
+/// that ever sees the raw token — the returned string goes straight into an httpOnly cookie and is forgotten.
 /// </summary>
 public static class RefreshTokenFactory
 {

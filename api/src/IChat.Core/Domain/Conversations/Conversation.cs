@@ -10,7 +10,7 @@ public sealed class Conversation
 
     public Guid Id { get; private set; }
 
-    /// <summary>Khoá ngoại sang users; luôn lấy từ access token, không bao giờ từ client.</summary>
+    /// <summary>Foreign key to users; always taken from the access token, never from the client.</summary>
     public Guid UserId { get; private set; }
 
     public string Title { get; private set; } = string.Empty;

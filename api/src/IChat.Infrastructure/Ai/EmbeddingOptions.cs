@@ -24,7 +24,7 @@ public sealed class EmbeddingOptions
 
     public string Qualified => $"{Provider.ToString().ToLowerInvariant()}:{Model}";
 
-    /// <summary>Lưới an toàn giống ResolvedChatSettings.RequireApiKey.</summary>
+    /// <summary>A safety net, like ResolvedChatSettings.RequireApiKey.</summary>
     public string RequireApiKey()
     {
         if (string.IsNullOrWhiteSpace(ApiKey))

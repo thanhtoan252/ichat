@@ -1,8 +1,8 @@
 namespace IChat.Core.Rag;
 
 /// <summary>
-/// mmr = λ · relevance − (1−λ) · max_cosine(candidate, đã_chọn).
-/// Chống lại việc top-K toàn là các mảnh chồng lấn của cùng một trang.
+/// mmr = λ · relevance − (1−λ) · max_cosine(candidate, already_selected).
+/// Stops the top-K from filling up with overlapping fragments of one and the same page.
 /// </summary>
 public static class MaximalMarginalRelevance
 {

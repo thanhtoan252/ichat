@@ -11,14 +11,14 @@ namespace IChat.Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // conversations.user_id từng là chuỗi tự do do client gửi — không có cách nào
-            // ánh xạ nó sang một tài khoản có thật. Ứng dụng chưa phát hành và đây là
-            // project showcase, nên hội thoại cũ bị xoá thay vì đoán chủ sở hữu cho chúng.
-            // messages và message_citations đi theo bằng cascade đã có sẵn.
+            // conversations.user_id used to be a free-form string sent by the client — there is no way to map it
+            // onto a real account. The application has not shipped and this is a showcase project, so old
+            // conversations are deleted rather than guessed an owner for.
+            // messages and message_citations follow through the cascade that already exists.
             migrationBuilder.Sql("DELETE FROM conversations;");
 
-            // Drop rồi add thay vì ALTER TYPE: PostgreSQL không có cast ngầm từ text sang
-            // uuid, nên ALTER COLUMN sẽ hỏng ngay cả khi bảng đã rỗng.
+            // Drop and add rather than ALTER TYPE: PostgreSQL has no implicit cast from text to uuid, so
+            // ALTER COLUMN would fail even on an empty table.
             migrationBuilder.DropColumn(name: "user_id", table: "conversations");
 
             migrationBuilder.AddColumn<Guid>(
@@ -28,13 +28,13 @@ namespace IChat.Infrastructure.Persistence.Migrations
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
-            // Default all-zeros chỉ là thứ AddColumn cần để thêm cột NOT NULL vào bảng đã
-            // rỗng. Giữ nó lại sẽ để một INSERT thô quên user_id âm thầm nhận id rác, nên
-            // bỏ đi: từ giờ mọi hàng buộc phải nói rõ chủ sở hữu.
+            // The all-zeros default is only what AddColumn needs in order to add a NOT NULL column to an already
+            // empty table. Keeping it would let a raw INSERT that forgets user_id silently receive a junk id, so
+            // it is dropped: from here on every row has to state its owner.
             migrationBuilder.Sql("ALTER TABLE conversations ALTER COLUMN user_id DROP DEFAULT;");
 
-            // Dựng lại index mà DropColumn vừa kéo theo: mọi lần liệt kê hội thoại của
-            // một người dùng đều đi qua nó.
+            // Rebuild the index that DropColumn just took with it: every listing of a user's conversations
+            // goes through it.
             migrationBuilder.CreateIndex(
                 name: "ix_conversations_user_id",
                 table: "conversations",

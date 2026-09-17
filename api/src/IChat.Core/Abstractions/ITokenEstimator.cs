@@ -1,8 +1,8 @@
 namespace IChat.Core.Abstractions;
 
 /// <summary>
-/// Ước lượng token không phụ thuộc tokenizer của một hãng, vì hệ thống hỗ trợ nhiều hãng
-/// và mỗi hãng tokenize khác nhau.
+/// Estimates tokens without depending on any one vendor's tokenizer, because the system supports
+/// several vendors and each of them tokenizes differently.
 /// </summary>
 public interface ITokenEstimator
 {

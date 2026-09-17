@@ -42,7 +42,7 @@ public sealed class LocalFileStorage(IOptions<StorageOptions> options) : IFileSt
         return Task.CompletedTask;
     }
 
-    // Chỉ nhận tên file trong thư mục gốc: chặn path traversal từ giá trị lưu trong DB.
+    // Accepts only a file name inside the root directory: this blocks path traversal from a value stored in the DB.
     private string Resolve(string storagePath)
     {
         var name = Path.GetFileName(storagePath);

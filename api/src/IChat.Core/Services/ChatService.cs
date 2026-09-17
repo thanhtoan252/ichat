@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 
 /// <summary>
-/// Facade của một lượt chat: chỉ giữ mạch truyện SSE và thứ tự các event, còn việc nặng
-/// giao cho ba collaborator (dựng ngữ cảnh, sinh câu trả lời, ghi xuống database).
+/// The facade of one chat turn: it only holds the SSE narrative and the order of the events, while the
+/// heavy lifting goes to three collaborators (build the context, generate the answer, write to the database).
 /// </summary>
 public sealed class ChatService(
     IApplicationDbContext dbContext,
@@ -39,8 +39,8 @@ public sealed class ChatService(
         var conversation = await dbContext.Conversations
             .SingleOrDefaultAsync(item => item.Id == request.ConversationId, cancellationToken);
 
-        // Hội thoại của người khác trả về đúng thông điệp "không tồn tại" như khi id sai:
-        // phân biệt hai trường hợp là để lộ rằng id đó có thật.
+        // Someone else's conversation gets the same "does not exist" message as a wrong id:
+        // telling the two apart would reveal that the id is real.
         if (conversation is null || conversation.UserId != currentUser.Id)
         {
             yield return SseEvent.Failure(
@@ -61,7 +61,7 @@ public sealed class ChatService(
 
         var totalStopwatch = Stopwatch.StartNew();
 
-        // Gửi ngay để UI không đứng im trong lúc chờ round-trip viết lại câu hỏi.
+        // Sent immediately so the UI does not sit still during the rewrite round-trip.
         yield return SseEvent.Status(AnswerStage.Rewriting);
 
         var query = await contextBuilder.PrepareQueryAsync(request.ConversationId, request.Content, cancellationToken);
@@ -99,8 +99,8 @@ public sealed class ChatService(
             Degraded = context.Retrieval.Degraded
         };
 
-        // CancellationToken.None là cố ý: client đóng tab thì token của request đã huỷ,
-        // nhưng phần câu trả lời đã sinh vẫn phải được lưu.
+        // CancellationToken.None is deliberate: when the client closes the tab the request's token is already
+        // cancelled, but whatever answer was generated still has to be persisted.
         var done = await turnRecorder.RecordAnswerAsync(
             conversation,
             buffer.ToAnswer(),
@@ -143,8 +143,8 @@ public sealed class ChatService(
 
     private IReadOnlyList<ChatMessage> BuildAnswerPrompt(ChatTurnContext context, string originalUserQuestion)
     {
-        // Câu hỏi GỐC mới là thứ đưa vào prompt sinh câu trả lời; bản viết lại chỉ
-        // phục vụ retrieval, dùng nhầm sẽ khiến câu trả lời lệch khỏi điều người dùng hỏi.
+        // The ORIGINAL question is what goes into the answer prompt; the rewrite only serves retrieval,
+        // and using it here would steer the answer away from what the user asked.
         return PromptBuilder.BuildAnswerPrompt(
             context.Assembled,
             ChatHistoryNormalizer.Normalize(context.History),

@@ -8,9 +8,9 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Dựng toàn bộ ngữ cảnh của một lượt chat: history, câu hỏi viết lại, retrieval, context.
-/// Tách làm hai bước vì luồng SSE phải phát status("retrieving") vào đúng khe giữa chúng,
-/// mà một iterator thì không yield được từ bên trong một await.
+/// Builds the whole context of one chat turn: history, rewritten question, retrieval, context.
+/// It is split in two steps because the SSE flow has to emit status("retrieving") exactly between them,
+/// and an iterator cannot yield from inside an await.
 /// </summary>
 public sealed class ChatTurnContextBuilder(
     IApplicationDbContext dbContext,
@@ -21,7 +21,7 @@ public sealed class ChatTurnContextBuilder(
 {
     private readonly RagOptions _rag = ragOptions.Value;
 
-    /// <summary>Nạp history rồi viết lại câu hỏi trên nền history đó.</summary>
+    /// <summary>Loads the history, then rewrites the question against that history.</summary>
     public async Task<ChatTurnQuery> PrepareQueryAsync(Guid conversationId, string question, CancellationToken cancellationToken)
     {
         var history = await LoadHistoryAsync(conversationId, cancellationToken);
@@ -30,7 +30,7 @@ public sealed class ChatTurnContextBuilder(
         return new ChatTurnQuery { History = history, RewrittenQuery = rewrittenQuery };
     }
 
-    /// <summary>Chạy retrieval trên câu hỏi đã viết lại rồi ghép context theo ngân sách token.</summary>
+    /// <summary>Runs retrieval on the rewritten question, then assembles the context within the token budget.</summary>
     public async Task<ChatTurnContext> BuildAsync(ChatTurnQuery query, CancellationToken cancellationToken)
     {
         var retrieval = await RetrieveAsync(query, cancellationToken);
@@ -57,7 +57,7 @@ public sealed class ChatTurnContextBuilder(
 
     private Task<PipelineOutcome> RetrieveAsync(ChatTurnQuery query, CancellationToken cancellationToken)
     {
-        // Retrieval chạy trên bản viết lại; Rewrite=false vì đã viết lại ở trên.
+        // Retrieval runs on the rewrite; Rewrite=false because it was already rewritten above.
         return pipeline.ExecuteAsync(
             new RetrievalRequest
             {

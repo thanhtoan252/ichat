@@ -4,8 +4,7 @@ using IChat.Core.Abstractions;
 using IChat.Core.Rag;
 
 /// <summary>
-/// Luôn tồn tại một implementation no-op để pipeline ở Core không phải rẽ nhánh `if`
-/// theo Reranking.Mode.
+/// A no-op implementation always exists so the pipeline in Core never needs an `if` on Reranking.Mode.
 /// </summary>
 public sealed class NoOpReranker : IReranker
 {

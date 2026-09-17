@@ -15,9 +15,9 @@ public sealed class DocumentService(
     TimeProvider timeProvider) : IDocumentService
 {
     /// <summary>
-    /// Một định nghĩa duy nhất cho shape của DocumentSummary. Là Expression chứ không phải
-    /// method vì EF phải dịch được nó thành SELECT chỉ những cột cần — nếu tách thành method
-    /// thường thì truy vấn sẽ nạp cả entity về rồi mới map trong bộ nhớ.
+    /// A single definition of the DocumentSummary shape. It is an Expression rather than a method because EF
+    /// has to translate it into a SELECT of only the needed columns — as an ordinary method the query would
+    /// load whole entities and map them in memory.
     /// </summary>
     private static readonly Expression<Func<Document, DocumentSummary>> ToSummary = document => new DocumentSummary
     {
@@ -35,7 +35,7 @@ public sealed class DocumentService(
 
     public async Task<Result<UploadDocumentResult>> UploadAsync(UploadDocumentRequest request, CancellationToken cancellationToken)
     {
-        // Đọc vài byte đầu để kiểm magic bytes: content type do client khai báo không đáng tin.
+        // Read the first few bytes to check the magic bytes: the content type the client declared is not trustworthy.
         var header = new byte[IDocumentParserResolver.MagicHeaderLength];
         var headerLength = await ReadHeaderAsync(request.Content, header, cancellationToken);
 
@@ -166,7 +166,7 @@ public sealed class DocumentService(
 
         var storagePath = document.StoragePath;
 
-        // Chunk và citation cascade ở tầng DB theo cấu hình FK.
+        // Chunks and citations cascade at the database level, per the FK configuration.
         dbContext.Documents.Remove(document);
         await dbContext.SaveChangesAsync(cancellationToken);
         await fileStorage.DeleteAsync(storagePath, cancellationToken);

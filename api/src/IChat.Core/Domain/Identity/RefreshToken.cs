@@ -1,8 +1,8 @@
 namespace IChat.Core.Domain.Identity;
 
 /// <summary>
-/// Chỉ lưu SHA-256 của token: rò rỉ database không cho phép ai đó dựng lại phiên đăng nhập.
-/// Mỗi lần refresh, bản ghi cũ bị thu hồi và trỏ sang bản ghi thay thế (rotation).
+/// Only the SHA-256 of the token is stored: a database leak does not let anyone rebuild a session.
+/// On every refresh the old record is revoked and points at its replacement (rotation).
 /// </summary>
 public sealed class RefreshToken
 {

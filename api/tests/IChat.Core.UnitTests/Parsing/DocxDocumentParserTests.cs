@@ -11,7 +11,7 @@ public class DocxDocumentParserTests
     private IReadOnlyList<DocumentBlock> _blocks = null!;
     private string _allText = null!;
 
-    // Parse một lần cho cả fixture: mọi test dưới đây chỉ đọc, không sửa kết quả parse.
+    // Parse the fixture once for the whole suite: every test below only reads the parse result, never changes it.
     [OneTimeSetUp]
     public async Task ParseTheFixtureOnce()
     {
@@ -39,7 +39,7 @@ public class DocxDocumentParserTests
         // Arrange & Act — parsing happened in OneTimeSetUp
 
         // Assert
-        // "TieuDeChuong" không khớp regex ^Heading[1-9]$ — chỉ nhận ra được qua w:outlineLvl.
+        // "TieuDeChuong" does not match ^Heading[1-9]$ — it can only be recognized through w:outlineLvl.
         _blocks.Should().Contain(
             block => block.Kind == BlockKind.Heading && block.Text == "Cau hinh he thong" && block.HeadingLevel == 1,
             "enterprise templates often use custom style names, so it must fall back to w:outlineLvl");
@@ -191,8 +191,8 @@ public class DocxDocumentParserTests
         var parser = new DocxDocumentParser();
 
         // Act
-        // Resolver phải chặn .doc trước khi tới đây; test này chốt rằng nếu lọt tới
-        // parser thì nó vẫn ném lỗi rõ ràng chứ không trả nội dung rác.
+        // The resolver has to stop .doc before it gets here; this test pins that if one does reach the parser,
+        // it still throws a clear error rather than returning garbage content.
         var act = () => parser.ParseAsync(stream, CancellationToken.None).GetAwaiter().GetResult();
 
         // Assert

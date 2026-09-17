@@ -5,7 +5,7 @@ using FluentValidation;
 
 public sealed class UploadDocumentDtoValidator : AbstractValidator<UploadDocumentDto>
 {
-    public const long MaxSizeInBytes = 20 * 1024 * 1024;
+    public const long MaxSizeInBytes = 50 * 1024 * 1024;
 
     public UploadDocumentDtoValidator()
     {
@@ -15,7 +15,7 @@ public sealed class UploadDocumentDtoValidator : AbstractValidator<UploadDocumen
 
         RuleFor(dto => dto.File.Length)
             .GreaterThan(0).WithMessage("The file is empty.")
-            .LessThanOrEqualTo(MaxSizeInBytes).WithMessage("The file exceeds the 20MB limit.")
+            .LessThanOrEqualTo(MaxSizeInBytes).WithMessage("The file exceeds the 50MB limit.")
             .WithName("file").OverridePropertyName("file");
 
         RuleFor(dto => dto.Title)

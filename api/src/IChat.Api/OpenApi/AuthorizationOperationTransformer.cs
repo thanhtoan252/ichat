@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
 /// <summary>
-/// Đọc metadata thật của endpoint thay vì đoán theo đường dẫn: endpoint nào có
-/// <see cref="IAuthorizeData"/> mà không bị <see cref="IAllowAnonymousMetadata"/> ghi đè thì
-/// được gắn security requirement + 401/403. Nhờ vậy AllowAnonymous trên /auth/login tự động
-/// phản ánh vào document, không phải bảo trì hai nơi.
+/// Reads the endpoint's real metadata instead of guessing from the path: an endpoint that carries
+/// <see cref="IAuthorizeData"/> without being overridden by <see cref="IAllowAnonymousMetadata"/> gets
+/// a security requirement plus 401/403. That way AllowAnonymous on /auth/login is reflected in the
+/// document automatically, with nothing to maintain in two places.
 /// </summary>
 public sealed class AuthorizationOperationTransformer : IOpenApiOperationTransformer
 {
@@ -28,13 +28,13 @@ public sealed class AuthorizationOperationTransformer : IOpenApiOperationTransfo
         });
 
         operation.Responses ??= new OpenApiResponses();
-        AddResponseIfMissing(operation.Responses, StatusCodes.Status401Unauthorized, "Thiếu access token hoặc token không hợp lệ.");
+        AddResponseIfMissing(operation.Responses, StatusCodes.Status401Unauthorized, "The access token is missing or invalid.");
 
         var requiresPolicy = metadata.OfType<IAuthorizeData>().Any(data => !string.IsNullOrEmpty(data.Policy) || !string.IsNullOrEmpty(data.Roles));
 
         if (requiresPolicy)
         {
-            AddResponseIfMissing(operation.Responses, StatusCodes.Status403Forbidden, "Token hợp lệ nhưng không đủ quyền.");
+            AddResponseIfMissing(operation.Responses, StatusCodes.Status403Forbidden, "The token is valid but lacks the required permission.");
         }
 
         return Task.CompletedTask;

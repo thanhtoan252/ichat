@@ -10,8 +10,8 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using DrawingWp = DocumentFormat.OpenXml.Drawing.Wordprocessing;
 
 /// <summary>
-/// DOCX là format tốt nhất trong bốn format được hỗ trợ: cấp heading là metadata thật
-/// nằm sẵn trong file chứ không phải suy đoán từ font size như PDF.
+/// DOCX is the best of the four supported formats: heading levels are real metadata already present in the
+/// file, rather than something inferred from font size as in PDF.
 /// </summary>
 public sealed partial class DocxDocumentParser : IDocumentParser
 {
@@ -21,8 +21,8 @@ public sealed partial class DocxDocumentParser : IDocumentParser
     {
         ContentType = DocxContentType,
 
-        // Mọi file Office hiện đại đều là zip; đuôi .docx mà không phải zip là file giả,
-        // từ chối chứ không đưa cho OpenXml đoán.
+        // Every modern Office file is a zip; a .docx that is not a zip is a fake,
+        // so reject it instead of handing it to OpenXml to guess at.
         Extensions = [".docx"],
         MagicBytes = [[0x50, 0x4B, 0x03, 0x04]],
         RejectOnMagicMismatch = true
@@ -56,16 +56,16 @@ public sealed partial class DocxDocumentParser : IDocumentParser
         var blocks = new List<DocumentBlock>();
         var order = 0;
 
-        // Header/footer nằm ở part riêng nên duyệt body sẽ không chạm tới chúng —
-        // đúng như mong muốn, vì chúng lặp trên mọi trang và chỉ tạo nhiễu cho index.
+        // Headers and footers live in their own parts, so walking the body never touches them —
+        // which is what we want, since they repeat on every page and only add noise to the index.
         foreach (var element in body.ChildElements)
         {
             cancellationToken.ThrowIfCancellationRequested();
             AppendElement(element, blocks, ref order, styleOutlineLevels, numberingFormats, footnotes, insideTextBox: false);
         }
 
-        // Text box nằm NGOÀI luồng paragraph chính; duyệt body theo cách thông thường
-        // sẽ bỏ sót hoàn toàn, nên phải duyệt riêng.
+        // Text boxes sit OUTSIDE the main paragraph flow; walking the body the usual way would miss them
+        // entirely, so they get their own pass.
         foreach (var textBox in body.Descendants<TextBoxContent>())
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -120,8 +120,8 @@ public sealed partial class DocxDocumentParser : IDocumentParser
 
             case SdtBlock sdtBlock:
             {
-                // Mục lục tự động là danh sách heading lặp lại; nó sẽ tạo ra một chunk
-                // khớp với mọi truy vấn về tên mục và chiếm chỗ của chunk nội dung thật.
+                // An automatic table of contents is just a repeated list of headings; it would produce a chunk
+                // that matches every question about a section name and crowd out the real content chunk.
                 if (IsTableOfContents(sdtBlock))
                 {
                     break;
@@ -252,7 +252,7 @@ public sealed partial class DocxDocumentParser : IDocumentParser
 
                 cells.Add(cellText);
 
-                // Ô gộp ngang: lặp lại độ rộng để số cột của markdown không lệch.
+                // A horizontally merged cell: repeat the width so the markdown column count stays aligned.
                 var span = cell.TableCellProperties?.GridSpan?.Val?.Value ?? 1;
                 for (var i = 1; i < span; i++)
                 {
@@ -288,8 +288,8 @@ public sealed partial class DocxDocumentParser : IDocumentParser
     }
 
     /// <summary>
-    /// Word hay cắt một câu thành nhiều w:r liền nhau (đổi màu, spell-check, lịch sử sửa).
-    /// Ghép hết w:t trong cùng paragraph, nếu không sẽ ra những block dài vài ký tự.
+    /// Word often splits one sentence across several adjacent w:r elements (a colour change, spell-check, an
+    /// edit history). Join every w:t within the same paragraph, or the result is blocks a few characters long.
     /// </summary>
     private static string ExtractText(Paragraph paragraph)
     {
@@ -302,18 +302,18 @@ public sealed partial class DocxDocumentParser : IDocumentParser
 
         foreach (var text in paragraph.Descendants<Text>())
         {
-            // Nội dung trong w:del là phần ĐÃ BỊ XÓA nhưng còn lưu vết của tracked changes.
-            // Đưa nó vào index nghĩa là ichat sẽ trích dẫn một điều khoản đã bị gạch bỏ
-            // như thể nó còn hiệu lực. Lỗi này im lặng hoàn toàn nên phải chặn tường minh,
-            // không dựa vào việc SDK dùng w:delText cho văn bản đã xóa.
+            // Content inside w:del is text that HAS BEEN DELETED but is still kept as a tracked change.
+            // Indexing it means ichat would cite a clause that was struck out as though it still applied.
+            // That failure is completely silent, so it has to be blocked explicitly rather than relying on
+            // the SDK using w:delText for deleted text.
             if (HasAncestor<DeletedRun>(text) || HasAncestor<Deleted>(text))
             {
                 continue;
             }
 
-            // Text box được duyệt riêng ở một vòng khác, nên khi đang xử lý paragraph của
-            // luồng chính thì bỏ qua để không nhân đôi. Nhưng lúc duyệt chính text box đó,
-            // cờ này phải tắt, nếu không paragraph của nó sẽ ra rỗng và bị loại.
+            // Text boxes get their own pass, so while walking a paragraph of the main flow they are skipped to
+            // avoid duplicates. But during that dedicated pass this flag must be off, otherwise the text box's
+            // own paragraphs would come out empty and be dropped.
             if (excludeTextBoxDescendants && HasAncestor<TextBoxContent>(text))
             {
                 continue;
@@ -338,7 +338,7 @@ public sealed partial class DocxDocumentParser : IDocumentParser
         return false;
     }
 
-    /// <summary>Chỉ lấy alt text từ wp:docPr/@descr; phiên bản này không OCR.</summary>
+    /// <summary>Takes alt text from wp:docPr/@descr only; this version does no OCR.</summary>
     private static string ExtractImageAltText(Paragraph paragraph)
     {
         var descriptions = paragraph.Descendants<DrawingWp.DocProperties>()
@@ -367,9 +367,9 @@ public sealed partial class DocxDocumentParser : IDocumentParser
     }
 
     /// <summary>
-    /// Ưu tiên tên style Heading1..Heading9; nếu không khớp thì tra w:outlineLvl.
-    /// Fallback này là bắt buộc: template doanh nghiệp thường định nghĩa style riêng
-    /// ("Muc1", "TieuDeChuong") mà vẫn gán outline level đúng.
+    /// Prefers the Heading1..Heading9 style names; falls back to w:outlineLvl when none matches.
+    /// That fallback is essential: corporate templates routinely define their own styles
+    /// ("Muc1", "TieuDeChuong") while still setting the correct outline level.
     /// </summary>
     private static int? ResolveHeadingLevel(Paragraph paragraph, string? styleId, IReadOnlyDictionary<string, int> styleOutlineLevels)
     {
@@ -428,7 +428,7 @@ public sealed partial class DocxDocumentParser : IDocumentParser
         return result;
     }
 
-    /// <summary>Map "numId:level" -> có phải bullet hay không, để flatten thành "- " hoặc "1. ".</summary>
+    /// <summary>Maps "numId:level" -> whether it is a bullet, so it can be flattened into "- " or "1. ".</summary>
     private static Dictionary<string, bool> BuildNumberingFormats(MainDocumentPart mainPart)
     {
         var result = new Dictionary<string, bool>(StringComparer.Ordinal);

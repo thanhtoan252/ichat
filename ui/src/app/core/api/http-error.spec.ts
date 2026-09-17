@@ -39,10 +39,10 @@ describe('describeHttpError', () => {
 
   it('unwraps the first validation message', () => {
     const message = describeHttpError(
-      response({ status: 400, error: { errors: { file: ['The file exceeds the 20MB limit.'] } } }),
+      response({ status: 400, error: { errors: { file: ['The file exceeds the 50MB limit.'] } } }),
     );
 
-    expect(message).toBe('The file exceeds the 20MB limit.');
+    expect(message).toBe('The file exceeds the 50MB limit.');
   });
 
   it('falls back to the status text', () => {

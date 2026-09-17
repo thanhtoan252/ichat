@@ -1,6 +1,6 @@
 namespace IChat.Api.Endpoints.Documents.V1.DTOs;
 
-/// <summary>Bản sao ở tầng API để shape của v1 không trôi theo enum domain.</summary>
+/// <summary>An API-layer copy, so the v1 shape does not drift with the domain enum.</summary>
 public enum DocumentStatusFilter
 {
     Pending = 0,

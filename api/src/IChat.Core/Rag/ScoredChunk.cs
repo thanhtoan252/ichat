@@ -18,7 +18,7 @@ public sealed class ScoredChunk
 
     public float[]? Embedding { get; init; }
 
-    /// <summary>Bản sao chỉ khác điểm — dùng khi fusion hoặc rerank ghi đè score.</summary>
+    /// <summary>A copy differing only in score — used when fusion or reranking overwrites it.</summary>
     public ScoredChunk WithScore(double score)
     {
         return new ScoredChunk

@@ -1,8 +1,8 @@
 namespace IChat.Core.Contracts.Conversations;
 
 /// <summary>
-/// Tên event của kênh SSE. Đây là contract đã công bố cho client — client phân nhánh
-/// trên đúng các chuỗi này, nên đổi một giá trị ở đây là breaking change.
+/// The event names of the SSE channel. This is a published contract — clients branch on exactly
+/// these strings, so changing one value here is a breaking change.
 /// </summary>
 public static class SseEventType
 {

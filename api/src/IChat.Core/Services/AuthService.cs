@@ -15,11 +15,11 @@ public sealed class AuthService(
     TimeProvider timeProvider) : IAuthService
 {
     /// <summary>
-    /// Một thông điệp duy nhất cho mọi lý do đăng nhập hỏng: phân biệt "không có tài khoản"
-    /// với "sai mật khẩu" là cho người ngoài dò xem username nào đã tồn tại.
+    /// One single message for every reason a login can fail: telling "no such account" apart from
+    /// "wrong password" hands an outsider a way to enumerate which usernames exist.
     /// </summary>
     private static readonly Error InvalidCredentials =
-        Error.Unauthorized("Tên đăng nhập hoặc mật khẩu không đúng.");
+        Error.Unauthorized("The user name or password is incorrect.");
 
     private static readonly Expression<Func<User, UserView>> ToViewExpression =
         user => new UserView
@@ -46,15 +46,15 @@ public sealed class AuthService(
 
         if (!user.IsActive)
         {
-            return Result.Failure<AuthResult>(Error.Unauthorized("Tài khoản này đã bị vô hiệu hoá."));
+            return Result.Failure<AuthResult>(Error.Unauthorized("This account has been disabled."));
         }
 
         return Result.Success(await IssueAsync(user, timeProvider.GetUtcNow(), cancellationToken));
     }
 
     /// <summary>
-    /// Rotation: token vừa dùng bị thu hồi ngay và trỏ sang bản thay thế, nên một token
-    /// bị đánh cắp chỉ dùng được một lần và lần thứ hai sẽ lộ ra là đã hỏng.
+    /// Rotation: the token just used is revoked immediately and points at its replacement, so a stolen
+    /// token works exactly once and the second use gives it away.
     /// </summary>
     public async Task<Result<AuthResult>> RefreshAsync(string refreshToken, CancellationToken cancellationToken)
     {
@@ -67,7 +67,7 @@ public sealed class AuthService(
 
         if (stored is null || !stored.IsActiveAt(now) || stored.User is null || !stored.User.IsActive)
         {
-            return Result.Failure<AuthResult>(Error.Unauthorized("Phiên đăng nhập không còn hiệu lực."));
+            return Result.Failure<AuthResult>(Error.Unauthorized("The session is no longer valid."));
         }
 
         var issued = await IssueAsync(stored.User, now, cancellationToken, previous: stored);
@@ -79,7 +79,7 @@ public sealed class AuthService(
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            // Đăng xuất khi không còn cookie vẫn là thành công: client chỉ cần trạng thái cuối.
+            // Logging out without a cookie still counts as success: the client only cares about the end state.
             return Result.Success();
         }
 

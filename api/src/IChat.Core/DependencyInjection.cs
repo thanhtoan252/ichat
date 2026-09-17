@@ -11,20 +11,20 @@ using Microsoft.Extensions.DependencyInjection;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Không MediatR, không CQRS: mỗi nhóm nghiệp vụ là một service sau interface,
-    /// đăng ký scoped, endpoint inject interface và gọi method trực tiếp.
+    /// No MediatR, no CQRS: each group of business logic is one service behind an interface,
+    /// registered scoped, and endpoints inject the interface and call its methods directly.
     /// </summary>
     public static IServiceCollection AddIChatCore(this IServiceCollection services)
     {
-        // Chỉ còn validator của luồng SSE: mọi lỗi của lượt chat phải đi qua kênh SSE nên
-        // ChatService là nơi duy nhất được quyết định lỗi. Các luồng HTTP thường validate
-        // DTO ngay ở tầng API để trả về ValidationProblemDetails có lỗi theo từng field.
+        // Only the SSE flow's validator is left: every error of a chat turn has to travel over the SSE
+        // channel, so ChatService is the only place allowed to decide errors. The plain HTTP flows
+        // validate their DTOs at the API layer to return ValidationProblemDetails with per-field errors.
         services.AddValidatorsFromAssemblyContaining<SendMessageRequestValidator>(ServiceLifetime.Scoped);
 
         services.AddScoped<RetrievalPipeline>();
 
-        // Collaborator nội bộ của ChatService: đăng ký bằng kiểu cụ thể theo đúng tiền lệ
-        // RetrievalPipeline / ContextAssembler, không đẻ thêm interface chỉ để tiêm.
+        // ChatService's internal collaborators: registered by concrete type, following the precedent set
+        // by RetrievalPipeline / ContextAssembler, rather than growing an interface just to inject them.
         services.AddScoped<ChatTurnContextBuilder>();
         services.AddScoped<AnswerGenerator>();
         services.AddScoped<ChatTurnRecorder>();

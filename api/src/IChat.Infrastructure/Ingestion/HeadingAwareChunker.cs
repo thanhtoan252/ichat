@@ -7,9 +7,9 @@ using IChat.Core.Rag;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Cắt mù theo dấu câu là nguyên nhân phổ biến nhất khiến retrieval trả về chunk vô nghĩa:
-/// chunk thứ 47 đứng một mình thì không ai biết nó nói về cái gì. Chunker này cắt theo
-/// cây heading trước, và không bao giờ cắt ngang qua ranh giới heading.
+/// Splitting blindly on punctuation is the most common reason retrieval returns meaningless chunks: chunk
+/// number 47 on its own tells nobody what it is about. This chunker splits along the heading tree first,
+/// and never splits across a heading boundary.
 /// </summary>
 public sealed class HeadingAwareChunker(IOptions<RagOptions> options, ITokenEstimator tokenEstimator) : IStructuredChunker
 {
@@ -47,8 +47,8 @@ public sealed class HeadingAwareChunker(IOptions<RagOptions> options, ITokenEsti
     }
 
     /// <summary>
-    /// Thêm tiền tố "title > heading path" trước khi embed là thay đổi rẻ nhất và
-    /// hiệu quả nhất trong toàn bộ pipeline này.
+    /// Prefixing "title > heading path" before embedding is the cheapest and most effective change in this
+    /// entire pipeline.
     /// </summary>
     private string BuildEmbeddedText(string documentTitle, string? headingPath, string content)
     {
@@ -125,7 +125,7 @@ public sealed class HeadingAwareChunker(IOptions<RagOptions> options, ITokenEsti
         {
             var blockTokens = tokenEstimator.Estimate(block.Text);
 
-            // Bảng là đơn vị nguyên tử: không bao giờ split, kể cả khi vượt TargetTokens.
+            // A table is atomic: never split, even when it exceeds TargetTokens.
             if (block.Kind == BlockKind.Table)
             {
                 Flush();
@@ -160,7 +160,7 @@ public sealed class HeadingAwareChunker(IOptions<RagOptions> options, ITokenEsti
         return MergeUndersizedPieces(pieces);
     }
 
-    /// <summary>Chunk nhỏ hơn MinTokens thì gộp vào chunk kề, trong cùng một section.</summary>
+    /// <summary>A chunk below MinTokens is merged into an adjacent chunk, within the same section.</summary>
     private List<Piece> MergeUndersizedPieces(List<Piece> pieces)
     {
         if (pieces.Count <= 1)
@@ -185,7 +185,7 @@ public sealed class HeadingAwareChunker(IOptions<RagOptions> options, ITokenEsti
             merged.Add(piece);
         }
 
-        // Chunk đầu tiên vẫn có thể quá nhỏ nếu section chỉ có một mẩu ngắn.
+        // The first chunk can still be too small if the section holds only one short piece.
         if (merged.Count > 1 &&
             tokenEstimator.Estimate(merged[0].Content) < _chunking.MinTokens &&
             !merged[0].ContainsTable &&
@@ -213,8 +213,8 @@ public sealed class HeadingAwareChunker(IOptions<RagOptions> options, ITokenEsti
             {
                 results.Add(string.Concat(buffer).Trim());
 
-                // Giữ lại phần đuôi làm overlap để câu trả lời nằm vắt qua ranh giới
-                // vẫn còn nguyên trong ít nhất một chunk.
+                // Keep the tail as overlap so an answer straddling the boundary survives intact
+                // in at least one chunk.
                 var overlap = new List<string>();
                 var overlapTokens = 0;
 
@@ -297,8 +297,8 @@ public sealed class HeadingAwareChunker(IOptions<RagOptions> options, ITokenEsti
             ["containsTable"] = containsTable
         };
 
-        // page chỉ có ý nghĩa với PDF. DOCX không có trang cố định khi chưa render,
-        // nên tuyệt đối không bịa số trang cho docx — định vị bằng startBlockIndex.
+        // page only means something for PDFs. A DOCX has no fixed pages until it is rendered, so never invent
+        // a page number for docx — locate it by startBlockIndex instead.
         var page = blocks
             .Select(block => block.Metadata is not null && block.Metadata.TryGetValue("page", out var value) ? value : null)
             .FirstOrDefault(value => value is not null);

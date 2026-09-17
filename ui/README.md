@@ -57,9 +57,23 @@ The image is a two-stage build — `npm ci && npm run build`, then nginx serving
 `/api` and `/health` are proxied to the `api` service, so the browser sees a single origin
 and the API still needs no CORS configuration.
 
-`proxy_buffering off` in [`nginx-proxy.inc`](nginx-proxy.inc) is load-bearing. With buffering
-on, nginx holds the SSE frames until the response finishes, and the answer lands in one lump
-instead of streaming.
+`proxy_buffering off` in [`templates/ichat-proxy.inc.template`](templates/ichat-proxy.inc.template)
+is load-bearing. With buffering on, nginx holds the SSE frames until the response finishes, and
+the answer lands in one lump instead of streaming.
+
+### Docker UI against a locally debugged API
+
+`templates/` is rendered by the nginx entrypoint, and `ICHAT_API_UPSTREAM` (default `api:8080`)
+decides where `/api` and `/health` go. To keep the UI in Docker while the API runs on the host
+under Rider or `dotnet run`:
+
+```bash
+cd ..
+ICHAT_API_UPSTREAM=host.docker.internal:8080 docker compose up -d --no-deps ui
+```
+
+`--no-deps` matters: without it compose starts the `api` container too, and you end up with two
+APIs racing for :8080.
 
 ## Component structure
 

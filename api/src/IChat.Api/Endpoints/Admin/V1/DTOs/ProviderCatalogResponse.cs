@@ -1,6 +1,6 @@
 namespace IChat.Api.Endpoints.Admin.V1.DTOs;
 
-/// <summary>Không bao giờ chứa API key, kể cả đã mask.</summary>
+/// <summary>Never carries an API key, not even a masked one.</summary>
 public sealed class ProviderCatalogResponse
 {
     public required ProviderResponse Chat { get; init; }

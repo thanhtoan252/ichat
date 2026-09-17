@@ -48,7 +48,7 @@ public class AnswerBufferTests
         _buffer.ToAnswer().Text.Should().Be("Cau tra loi");
     }
 
-    // Có provider trả usage ở update cuối, có provider trả rải rác qua nhiều update.
+    // Some providers report usage on the final update, others spread it across several updates.
     [Test]
     public void AddUsage_SumsAcrossSeveralUpdates()
     {
@@ -92,7 +92,7 @@ public class AnswerBufferTests
         _buffer.ToAnswer().Text.Should().Be("Mot phan cau tra loi\n\n[interrupted]");
     }
 
-    // ToAnswer có thể được gọi lại, và ngắt hai lần vẫn chỉ là một lần ngắt.
+    // ToAnswer may be called again, and interrupting twice is still only one interruption.
     [Test]
     public void MarkInterrupted_CalledTwice_StillAppendsTheMarkerOnlyOnce()
     {

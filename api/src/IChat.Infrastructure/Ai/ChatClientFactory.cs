@@ -5,8 +5,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// CỬA VÀO: đọc config, chọn hãng, rồi uỷ quyền xuống đúng một
-/// <see cref="IChatProviderClientFactory"/>. Bản thân nó không biết hãng nào tồn tại.
+/// THE ENTRY POINT: reads config, picks the vendor, then delegates to exactly one
+/// <see cref="IChatProviderClientFactory"/>. It does not itself know which vendors exist.
 /// </summary>
 public sealed class ChatClientFactory(
     IOptions<AiOptions> options,

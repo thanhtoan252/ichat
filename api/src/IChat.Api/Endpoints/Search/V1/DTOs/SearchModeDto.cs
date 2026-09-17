@@ -1,6 +1,6 @@
 namespace IChat.Api.Endpoints.Search.V1.DTOs;
 
-/// <summary>Bản sao ở tầng API để shape của v1 không trôi theo enum của pipeline.</summary>
+/// <summary>An API-layer copy, so the v1 shape does not drift with the pipeline enum.</summary>
 public enum SearchModeDto
 {
     Hybrid,

@@ -1,6 +1,6 @@
 namespace IChat.Core.Rag;
 
-/// <summary>Một chunk lân cận dùng để làm giàu context. Không bao giờ trở thành citation.</summary>
+/// <summary>A neighbouring chunk used to enrich the context. It never becomes a citation.</summary>
 public sealed class NeighborChunk
 {
     public required Guid DocumentId { get; init; }

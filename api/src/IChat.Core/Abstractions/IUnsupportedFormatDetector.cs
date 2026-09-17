@@ -3,11 +3,11 @@ namespace IChat.Core.Abstractions;
 using IChat.Core.Common;
 
 /// <summary>
-/// Chạy trước mọi bước nhận diện: một định dạng bị từ chối CÓ CHỦ ĐÍCH phải trả về thông
-/// điệp hướng dẫn, chứ không rơi vào parser rồi nổ thành 500.
+/// Runs ahead of any format detection: a format that is rejected ON PURPOSE must come back with a
+/// message telling the user what to do, instead of reaching a parser and blowing up as a 500.
 /// </summary>
 public interface IUnsupportedFormatDetector
 {
-    /// <summary>Trả về Error khi định dạng bị từ chối có chủ đích, null khi không có ý kiến.</summary>
+    /// <summary>Returns an Error when the format is rejected on purpose, null when it has no opinion.</summary>
     Error? Detect(string fileName, ReadOnlySpan<byte> header);
 }

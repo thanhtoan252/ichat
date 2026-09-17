@@ -1,12 +1,12 @@
 namespace IChat.Core.Abstractions;
 
 /// <summary>
-/// Danh tính của request hiện tại, đọc từ access token đã được xác thực. Service layer
-/// chỉ được lấy chủ sở hữu từ đây — không bao giờ từ body hay query.
+/// The identity of the current request, read from the validated access token. The service layer
+/// may only take the owner from here — never from a body or a query string.
 ///
-/// Cố tình chỉ có Id: việc phân vai trò do policy ở tầng endpoint quyết định
-/// (<c>RequireAuthorization(AuthPolicies.Admin)</c>), nên nghiệp vụ không cần hỏi
-/// "người này có phải admin không" và cũng không nên có chỗ để hỏi.
+/// Deliberately only an Id: role decisions belong to the policy at the endpoint layer
+/// (<c>RequireAuthorization(AuthPolicies.Admin)</c>), so business code never has to ask
+/// "is this an admin?" and should not even have a place to ask it.
 /// </summary>
 public interface ICurrentUser
 {

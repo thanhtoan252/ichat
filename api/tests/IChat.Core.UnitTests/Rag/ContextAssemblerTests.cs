@@ -15,7 +15,7 @@ public class ContextAssemblerTests
     [SetUp]
     public void SetUp()
     {
-        // Một ký tự = một token: budget trong test đọc thẳng ra độ dài chuỗi.
+        // One character = one token: the budgets in these tests read straight as string lengths.
         var tokenEstimator = new Mock<ITokenEstimator>();
         tokenEstimator.Setup(estimator => estimator.Estimate(It.IsAny<string?>())).Returns((string? text) => text?.Length ?? 0);
 

@@ -13,8 +13,12 @@ RUN npm run build
 
 FROM nginx:1.29-alpine AS runtime
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY nginx-proxy.inc /etc/nginx/conf.d/ichat-proxy.inc
+COPY templates/ /etc/nginx/templates/
+# nginx resolves the upstream name once at startup, so this is the whole knob for
+# where /api goes. See ui/templates/default.conf.template.
+ENV ICHAT_API_UPSTREAM=api:8080
+# Without the filter envsubst would eat $host, $uri and every other nginx variable.
+ENV NGINX_ENVSUBST_FILTER=^ICHAT_
 COPY --from=build /src/dist/ui/browser /usr/share/nginx/html
 
 EXPOSE 80

@@ -47,8 +47,8 @@ public class RetrievalTests(IChatApiFactory factory)
     [Fact]
     public async Task FullTextBranch_WithLongQuestion_ReturnsNonEmpty()
     {
-        // REGRESSION TEST cho lỗi plainto_tsquery: nó AND mọi lexeme nên câu hỏi dài
-        // sẽ trả rỗng gần như luôn luôn, và hybrid search âm thầm chỉ còn nhánh vector.
+        // A REGRESSION TEST for the plainto_tsquery bug: it ANDs every lexeme, so a long question comes back
+        // empty almost every time and hybrid search silently degrades to the vector branch alone.
         var client = await factory.CreateClientAsync();
         await SeedAsync(client);
 

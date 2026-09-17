@@ -6,8 +6,8 @@ using FluentValidation.Results;
 public static class ValidationExtensions
 {
     /// <summary>
-    /// Giữ nguyên extension "code": "Validation" như lỗi nghiệp vụ để client chỉ phải
-    /// phân nhánh trên một trường duy nhất, dù thân response là ValidationProblemDetails.
+    /// Keeps the same "code": "Validation" extension as a business error so the client only branches
+    /// on a single field, even though the response body is a ValidationProblemDetails.
     /// </summary>
     public static IResult ToValidationProblem(this ValidationResult validationResult)
     {

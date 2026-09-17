@@ -6,6 +6,6 @@ public interface IAccessTokenService
 {
     AccessToken Create(UserView user);
 
-    /// <summary>Hạn sống của refresh token, do cùng một nơi cấu hình JWT quyết định.</summary>
+    /// <summary>Refresh token lifetime, decided by the same place that configures JWT.</summary>
     TimeSpan RefreshTokenLifetime { get; }
 }

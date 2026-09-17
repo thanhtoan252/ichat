@@ -5,8 +5,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// CỬA VÀO: đọc config, quyết định có gửi Dimensions xuống hay không, rồi uỷ quyền
-/// xuống đúng một <see cref="IEmbeddingProviderClientFactory"/>.
+/// THE ENTRY POINT: reads config, decides whether to pass Dimensions down, then delegates to exactly one
+/// <see cref="IEmbeddingProviderClientFactory"/>.
 /// </summary>
 public sealed class EmbeddingGeneratorFactory(
     IOptions<AiOptions> options,
@@ -21,8 +21,8 @@ public sealed class EmbeddingGeneratorFactory(
 
     public IEmbeddingGenerator<string, Embedding<float>> Create()
     {
-        // Khi provider hỗ trợ giảm chiều đầu ra, LUÔN truyền Dimensions xuống để
-        // vector khớp với cột vector(N) đã cố định ở schema.
+        // When the provider supports reducing the output dimensionality, ALWAYS pass Dimensions down so the
+        // vectors match the vector(N) column the schema fixed.
         var dimensions = Capabilities.SupportsEmbeddingDimensions ? _embedding.Dimensions : (int?)null;
 
         if (!_providers.TryGetValue(_embedding.Provider, out var factory))

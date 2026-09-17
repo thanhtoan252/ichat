@@ -18,10 +18,10 @@ namespace IChat.Infrastructure.Persistence.Migrations
                 .Annotation("Npgsql:PostgresExtension:unaccent", ",,")
                 .Annotation("Npgsql:PostgresExtension:vector", ",,");
 
-            // unaccent() gốc chỉ là STABLE, mà generated column bắt buộc biểu thức IMMUTABLE.
-            // Không có wrapper này, CREATE TABLE bên dưới sẽ fail với
-            // "generation expression is not immutable". Chỉ định rõ dictionary
-            // ('public.unaccent') để hàm không phụ thuộc search_path.
+            // The built-in unaccent() is only STABLE, while a generated column requires an IMMUTABLE expression.
+            // Without this wrapper the CREATE TABLE below fails with
+            // "generation expression is not immutable". The dictionary is named explicitly
+            // ('public.unaccent') so the function does not depend on search_path.
             migrationBuilder.Sql("""
                 CREATE OR REPLACE FUNCTION immutable_unaccent(text)
                 RETURNS text

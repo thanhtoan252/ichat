@@ -4,8 +4,8 @@ using IChat.Core.Abstractions;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Nguồn sự thật cho Core và endpoint admin về "đang chạy model nào, đã đủ credential chưa".
-/// Không bao giờ trả API key, kể cả đã mask — chỉ trả trạng thái có/không.
+/// The source of truth for Core and the admin endpoint on "which model is running, are the credentials there".
+/// It never returns an API key, not even masked — only a yes/no status.
 /// </summary>
 public sealed class ModelCatalog : IModelCatalog
 {
@@ -16,8 +16,8 @@ public sealed class ModelCatalog : IModelCatalog
     private readonly AiOptions _options;
     private readonly ChatProviderCapabilities _chatCapabilities;
 
-    // AiOptions là singleton và đã validate lúc startup, nên allowlist tính một lần;
-    // IsChatModelAllowed chạy trên mỗi request nên không dựng lại danh sách mỗi lần.
+    // AiOptions is a singleton and was validated at startup, so the allowlist is computed once;
+    // IsChatModelAllowed runs on every request and must not rebuild the list each time.
     private readonly IReadOnlyList<string> _allowedChatModels;
     private readonly HashSet<string> _allowedChatModelLookup;
 
@@ -108,7 +108,7 @@ public sealed class ModelCatalog : IModelCatalog
         };
     }
 
-    /// <summary>Trả về null nghĩa là provider dùng được; ngược lại là lý do hiển thị cho admin.</summary>
+    /// <summary>Returning null means the provider is usable; anything else is the reason shown to an admin.</summary>
     private static string? FindUnavailableReason(ProviderEntry entry)
     {
         if (entry.RequiresApiKey && string.IsNullOrWhiteSpace(entry.ApiKey))
@@ -124,7 +124,7 @@ public sealed class ModelCatalog : IModelCatalog
         return null;
     }
 
-    // Model đang cấu hình luôn nằm trong allowlist, kể cả khi AllowedChatModels để trống.
+    // The configured model is always part of the allowlist, even when AllowedChatModels is empty.
     private static IReadOnlyList<string> ResolveAllowedChatModels(AiOptions options)
     {
         return new[] { options.Chat.Model }
@@ -134,7 +134,7 @@ public sealed class ModelCatalog : IModelCatalog
             .ToList();
     }
 
-    /// <summary>Cấu hình của một provider đã giải quyết xong fallback — đủ để mô tả mà không đọc lại AiOptions.</summary>
+    /// <summary>One provider's configuration with the fallback already resolved — enough to describe it without rereading AiOptions.</summary>
     private sealed record ProviderEntry
     {
         public required string Kind { get; init; }
@@ -147,8 +147,8 @@ public sealed class ModelCatalog : IModelCatalog
 
         public required bool RequiresEndpoint { get; init; }
 
-        /// <summary>Chỉ dùng để trả lời "có key hay chưa". TUYỆT ĐỐI không map ra ProviderDescriptor
-        /// hay bất kỳ DTO nào — endpoint /api/v1/providers không bao giờ trả key, kể cả đã mask.</summary>
+        /// <summary>Used only to answer "is there a key or not". NEVER map it into a ProviderDescriptor
+        /// or any other DTO — /api/v1/providers never returns a key, not even a masked one.</summary>
         public string? ApiKey { get; init; }
 
         public string? Endpoint { get; init; }

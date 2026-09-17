@@ -10,9 +10,9 @@ using NpgsqlTypes;
 using Pgvector;
 
 /// <summary>
-/// Toàn bộ SQL của tầng chunk: ba nhánh tìm kiếm (vector, full-text, trigram) và hai
-/// đường nạp nội dung. Không tách thành hai class vì OpenConnectionAsync và
-/// ReadCandidatesAsync dùng chung — tách chỉ đẻ ra trùng lặp mới.
+/// All of the SQL of the chunk layer: the three search branches (vector, full-text, trigram) and the two
+/// content-loading paths. It is not split into two classes because OpenConnectionAsync and
+/// ReadCandidatesAsync are shared — splitting would only create new duplication.
 /// </summary>
 public sealed class PostgresChunkStore(IDbContextFactory<IChatDbContext> dbContextFactory) : IChunkSearch, IChunkLoader
 {
@@ -25,12 +25,12 @@ public sealed class PostgresChunkStore(IDbContextFactory<IChatDbContext> dbConte
 
         var stopwatch = Stopwatch.StartNew();
 
-        // Mỗi nhánh một DbContext riêng vì DbContext không thread-safe và ba nhánh
-        // chạy song song bằng Task.WhenAll.
+        // One DbContext per branch, because a DbContext is not thread-safe and the three branches
+        // run in parallel under Task.WhenAll.
         await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using var connection = await OpenConnectionAsync(dbContext, cancellationToken);
 
-        // Tăng recall của HNSW cho phiên truy vấn này.
+        // Raises HNSW recall for this query session.
         await using (var tuning = connection.CreateCommand())
         {
             tuning.CommandText = "SET hnsw.ef_search = 100;";
@@ -62,7 +62,7 @@ public sealed class PostgresChunkStore(IDbContextFactory<IChatDbContext> dbConte
 
         if (limit <= 0 || tsQuery is null)
         {
-            // Không còn lexeme nào sau khi lọc: trả rỗng chứ đừng ép ''::tsquery.
+            // No lexemes survived the filter: return empty rather than forcing ''::tsquery.
             return new SearchBranchResult { Candidates = [], ElapsedMs = 0, TsQuery = tsQuery };
         }
 
@@ -167,8 +167,8 @@ public sealed class PostgresChunkStore(IDbContextFactory<IChatDbContext> dbConte
     }
 
     /// <summary>
-    /// MỘT truy vấn gộp cho toàn bộ tập cặp (document_id, chunk_index).
-    /// Lặp N+1 query ở đây là lỗi hiệu năng kinh điển của bước mở rộng lân cận.
+    /// ONE batched query for the whole set of (document_id, chunk_index) pairs.
+    /// An N+1 loop here is the classic performance bug of the neighbour expansion step.
     /// </summary>
     public async Task<IReadOnlyList<NeighborChunk>> LoadNeighborsAsync(
         IReadOnlyList<(Guid DocumentId, int ChunkIndex)> keys,

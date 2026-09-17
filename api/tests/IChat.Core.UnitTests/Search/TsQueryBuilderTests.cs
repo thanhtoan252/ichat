@@ -5,8 +5,8 @@ using FluentAssertions;
 using NUnit.Framework;
 
 /// <summary>
-/// Bốn test cuối là bắt buộc theo spec: chúng chặn đúng lỗi khiến nhánh full-text
-/// im lặng trả rỗng gần như mọi lúc.
+/// The last four tests are required by the spec: they block exactly the bug that makes the full-text branch
+/// come back empty almost every time, silently.
 /// </summary>
 [TestFixture]
 public class TsQueryBuilderTests

@@ -1,12 +1,12 @@
 namespace IChat.Infrastructure.Ai;
 
 /// <summary>
-/// Khác biệt giữa các hãng ở phía embedding. Tách khỏi chat vì hai bên gần như không
-/// chung câu hỏi nào: chat quan tâm khối system, embedding quan tâm số chiều đầu ra.
+/// The differences between vendors on the embedding side. Kept apart from chat because the two share
+/// almost no questions: chat cares about system blocks, embedding cares about output dimensionality.
 /// </summary>
 public sealed record EmbeddingProviderCapabilities
 {
-    /// <summary>Hãng cho phép ép số chiều đầu ra để khớp cột vector(N) của schema.</summary>
+    /// <summary>The vendor allows forcing the output dimensionality to match the schema's vector(N) column.</summary>
     public required bool SupportsEmbeddingDimensions { get; init; }
 
     public required bool RequiresEndpoint { get; init; }

@@ -5,8 +5,8 @@ using IChat.Core.Contracts.Conversations;
 public interface IChatService
 {
     /// <summary>
-    /// Sinh câu trả lời RAG và phát ra chuỗi SSE event: status, sources, delta, done.
-    /// Huỷ cancellationToken giữa chừng vẫn lưu phần đã sinh kèm ghi chú [interrupted].
+    /// Generates a RAG answer and emits the SSE event stream: status, sources, delta, done.
+    /// Cancelling midway still persists what was generated, marked [interrupted].
     /// </summary>
     IAsyncEnumerable<SseEvent> StreamAnswerAsync(SendMessageRequest request, CancellationToken cancellationToken);
 }

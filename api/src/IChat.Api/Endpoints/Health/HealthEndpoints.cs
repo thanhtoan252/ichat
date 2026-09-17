@@ -3,7 +3,7 @@ namespace IChat.Api.Endpoints.Health;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-/// <summary>Health check là hạ tầng, không version theo /api/v{n} như endpoint nghiệp vụ.</summary>
+/// <summary>Health checks are infrastructure; they are not versioned under /api/v{n} like business endpoints.</summary>
 public static class HealthEndpoints
 {
     public static IEndpointRouteBuilder MapHealthEndpoints(this IEndpointRouteBuilder app)

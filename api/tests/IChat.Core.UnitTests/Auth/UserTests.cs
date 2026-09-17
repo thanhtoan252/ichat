@@ -19,8 +19,8 @@ public class UserTests
         var normalized = User.Normalize(input);
 
         // Assert
-        // Chuẩn hoá một chỗ duy nhất: nếu nơi ghi và nơi tra cứu lệch nhau thì unique
-        // index vẫn cho phép "Alice" và "alice" cùng tồn tại.
+        // Normalized in exactly one place: if the write side and the lookup side drift apart, the unique index
+        // still lets "Alice" and "alice" coexist.
         user.UserName.Should().Be(expected);
         normalized.Should().Be(expected);
     }

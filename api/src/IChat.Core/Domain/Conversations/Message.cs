@@ -18,7 +18,7 @@ public sealed class Message
 
     public string Content { get; private set; } = string.Empty;
 
-    /// <summary>Câu hỏi sau khi viết lại. Cột được nhìn nhiều nhất khi debug retrieval.</summary>
+    /// <summary>The question after rewriting. The single most-consulted column when debugging retrieval.</summary>
     public string? RewrittenQuery { get; private set; }
 
     public string? Provider { get; private set; }

@@ -11,15 +11,15 @@ public sealed class RetrievalPipeline(
     IReranker reranker,
     IOptions<RagOptions> ragOptions)
 {
-    /// <summary>Span riêng cho từng chặng retrieval, để nhìn được chunk rơi rụng ở đâu.</summary>
+    /// <summary>A separate span per retrieval stage, so it is visible where chunks were dropped.</summary>
     public static ActivitySource ActivitySource { get; } = new("IChat.Rag");
 
     private static readonly SearchBranchResult EmptyBranch = new() { Candidates = [], ElapsedMs = 0 };
 
     private readonly RagOptions _rag = ragOptions.Value;
 
-    // Thứ tự của IEnumerable<T> là thứ tự đăng ký DI, và đó chính là thứ tự stage mà
-    // Retrieval Lab đang đọc: materialise một lần để không phụ thuộc vào lazy enumeration.
+    // The order of IEnumerable<T> is the DI registration order, and that is exactly the stage order the
+    // Retrieval Lab reads: materialize once so nothing depends on lazy enumeration.
     private readonly IReadOnlyList<IRetrievalBranch> _branches = [.. branches];
 
     public async Task<PipelineOutcome> ExecuteAsync(RetrievalRequest request, CancellationToken cancellationToken)
@@ -34,7 +34,7 @@ public sealed class RetrievalPipeline(
 
         var retrievalStopwatch = Stopwatch.StartNew();
 
-        // Toàn bộ retrieval chạy trên câu hỏi ĐÃ VIẾT LẠI, không phải câu gốc.
+        // All of retrieval runs on the REWRITTEN question, not the original one.
         List<IReadOnlyList<Guid>> branchResults;
         bool degraded;
 
@@ -91,8 +91,8 @@ public sealed class RetrievalPipeline(
     }
 
     /// <summary>
-    /// Trộn các nhánh bằng RRF rồi nạp lại nội dung chunk theo đúng thứ tự đã trộn.
-    /// Chunk không nạp được (đã bị xoá giữa chừng) bị loại bỏ chứ không làm hỏng request.
+    /// Fuses the branches with RRF, then reloads chunk content in the fused order.
+    /// A chunk that cannot be loaded (deleted in the meantime) is dropped rather than failing the request.
     /// </summary>
     private async Task<List<ScoredChunk>> FuseAndLoadAsync(
         List<IReadOnlyList<Guid>> branches,
@@ -128,8 +128,9 @@ public sealed class RetrievalPipeline(
     }
 
     /// <summary>
-    /// Chạy song song các nhánh mà mode hiện tại bật, nhưng ghi stage cho MỌI nhánh đã đăng ký:
-    /// Retrieval Lab đọc kết quả theo tên chặng, và một chặng biến mất khác hẳn một chặng rỗng.
+    /// Runs the branches the current mode enables in parallel, but records a stage for EVERY registered
+    /// branch: the Retrieval Lab reads results by stage name, and a missing stage reads very differently
+    /// from an empty one.
     /// </summary>
     private async Task<(List<IReadOnlyList<Guid>> Branches, bool Degraded)> RunBranchesAsync(
         RetrievalRequest request,
@@ -220,8 +221,8 @@ public sealed class RetrievalPipeline(
     }
 
     /// <summary>
-    /// Nhật ký từng chặng. Endpoint search trả nguyên nó ra ngoài, vì phần lớn thời gian
-    /// debug RAG là nhìn xem chunk rơi rụng ở chặng nào chứ không phải sửa prompt.
+    /// The per-stage log. The search endpoint returns it verbatim, because most of the time spent
+    /// debugging RAG goes into seeing which stage dropped the chunks, not into editing prompts.
     /// </summary>
     private sealed class StageLog
     {

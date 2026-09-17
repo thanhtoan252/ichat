@@ -2,8 +2,8 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-// Đo chất lượng retrieval. Không có bước này thì mọi con số trong RagOptions chỉ là
-// phỏng đoán, và không có cách nào biết một thay đổi làm hệ thống tốt lên hay tệ đi.
+// Measures retrieval quality. Without this step every number in RagOptions is guesswork, and there is no way
+// to tell whether a change made the system better or worse.
 
 var baseUrl = Environment.GetEnvironmentVariable("ICHAT_URL") ?? "http://localhost:8080";
 var command = args.Length > 0 ? args[0] : "eval";
@@ -57,8 +57,8 @@ async Task SeedAsync()
 
 async Task CompareAsync()
 {
-    // So sánh trực tiếp hai cấu hình. Nhóm "followup" là thứ chứng minh query rewriting
-    // có tác dụng: tắt rewriting thì recall của nhóm này sụt hẳn.
+    // A direct comparison of two configurations. The "followup" group is what proves query rewriting earns its
+    // keep: turn rewriting off and that group's recall drops sharply.
     var withRewriting = await RunAndPrintAsync("QueryRewriting ON", rewrite: true, prependNote: null);
     var withoutRewriting = await RunAndPrintAsync("QueryRewriting OFF", rewrite: false, prependNote: null);
 

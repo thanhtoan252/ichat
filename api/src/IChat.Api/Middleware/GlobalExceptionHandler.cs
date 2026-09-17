@@ -22,7 +22,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             httpContext.Request.Path.Value,
             traceId);
 
-        // Không bao giờ để message gốc của SDK lọt ra client: có thể lộ chi tiết cấu hình.
+        // The SDK's own message never reaches the client: it can leak configuration details.
         var problemDetails = new ProblemDetails
         {
             Status = StatusCodes.Status500InternalServerError,

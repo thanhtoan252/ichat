@@ -1,3 +1,12 @@
+# Rendered by the nginx image's entrypoint: every file under /etc/nginx/templates is
+# run through envsubst into /etc/nginx/conf.d with the .template suffix dropped.
+# NGINX_ENVSUBST_FILTER limits substitution to ICHAT_* so nginx's own $host,
+# $remote_addr and friends survive untouched.
+#
+# ICHAT_API_UPSTREAM is host:port, not a URL. It defaults to the compose service
+# (api:8080); point it at host.docker.internal:8080 to serve the UI from Docker
+# while the API runs on the host under a debugger.
+
 server {
     listen 80;
     server_name _;
@@ -5,9 +14,9 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # The API's own validator rejects anything over 20MB with a readable message;
+    # The API's own validator rejects anything over 50MB with a readable message;
     # leaving headroom here keeps nginx from answering with a bare 413 first.
-    client_max_body_size 25m;
+    client_max_body_size 55m;
 
     gzip on;
     gzip_vary on;
@@ -17,12 +26,12 @@ server {
     # `^~` stops nginx from testing the regex location below, so an API path that
     # happens to end in .json or .svg is still proxied instead of looked up on disk.
     location ^~ /api/ {
-        proxy_pass http://api:8080;
+        proxy_pass http://${ICHAT_API_UPSTREAM};
         include /etc/nginx/conf.d/ichat-proxy.inc;
     }
 
     location ^~ /health/ {
-        proxy_pass http://api:8080;
+        proxy_pass http://${ICHAT_API_UPSTREAM};
         include /etc/nginx/conf.d/ichat-proxy.inc;
     }
 

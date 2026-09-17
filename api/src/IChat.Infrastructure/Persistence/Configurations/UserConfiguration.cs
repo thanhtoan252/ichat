@@ -16,14 +16,14 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.DisplayName).IsRequired().HasMaxLength(200);
         builder.Property(user => user.PasswordHash).IsRequired().HasMaxLength(200);
 
-        // Lưu tên vai trò thay vì số thứ tự: đọc thẳng trong psql là thấy ngay ai là admin.
+        // Store the role name rather than its ordinal: reading it straight in psql shows at once who is an admin.
         builder.Property(user => user.Role).IsRequired().HasConversion<string>().HasMaxLength(20);
 
         builder.Property(user => user.IsActive).IsRequired();
         builder.Property(user => user.CreatedAt).IsRequired();
         builder.Property(user => user.UpdatedAt).IsRequired();
 
-        // Chống hai tài khoản trùng tên ngay cả khi hai request đăng ký chạy song song.
+        // Prevents two accounts with the same name even when two registration requests run concurrently.
         builder.HasIndex(user => user.UserName).IsUnique();
     }
 }

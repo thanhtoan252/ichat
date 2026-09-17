@@ -2,7 +2,7 @@ namespace IChat.Core.Abstractions;
 
 using IChat.Core.Rag;
 
-/// <summary>Chỉ nạp nội dung chunk đã biết id. Consumer duy nhất là RetrievalPipeline.</summary>
+/// <summary>Loads chunk content for already-known ids. Its only consumer is RetrievalPipeline.</summary>
 public interface IChunkLoader
 {
     Task<IReadOnlyList<ScoredChunk>> LoadChunksAsync(IReadOnlyList<Guid> chunkIds, CancellationToken cancellationToken);

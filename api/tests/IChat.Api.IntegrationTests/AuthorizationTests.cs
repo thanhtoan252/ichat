@@ -60,7 +60,7 @@ public class AuthorizationTests(IChatApiFactory factory)
     {
         var anonymous = factory.CreateClient();
 
-        // Orchestrator không có token; khoá health check là tự tay làm hỏng deploy.
+        // An orchestrator has no token; locking the health check down is breaking your own deployment.
         (await anonymous.GetAsync("/health/live")).StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
@@ -115,7 +115,7 @@ public class AuthorizationTests(IChatApiFactory factory)
         aliceList.GetProperty("totalCount").GetInt32().Should().Be(1);
         aliceList.GetProperty("items")[0].GetProperty("id").GetGuid().Should().Be(aliceConversation);
 
-        // Hội thoại của người khác phải là 404 chứ không phải 403 — 403 xác nhận id có thật.
+        // Someone else's conversation has to be a 404, not a 403 — a 403 would confirm the id is real.
         (await bob.GetAsync($"/api/v1/conversations/{aliceConversation}/messages")).StatusCode
             .Should().Be(HttpStatusCode.NotFound);
     }
@@ -123,8 +123,8 @@ public class AuthorizationTests(IChatApiFactory factory)
     [Fact]
     public async Task AnAdminDoesNotSeeSomeoneElsesConversations()
     {
-        // Hội thoại riêng tư tuyệt đối. Quản trị viên quản lý tài khoản và tri thức,
-        // không đọc nội dung người khác hỏi — không có ngoại lệ nào cho role Admin.
+        // Conversations are strictly private. Administrators manage accounts and knowledge, they do not read
+        // what other people ask — there is no exception for the Admin role.
         await factory.ResetDatabaseAsync();
 
         var alice = await factory.CreateClientAsync(UserRole.User, "alice");
@@ -167,7 +167,7 @@ public class AuthorizationTests(IChatApiFactory factory)
             $"/api/v1/conversations/{conversationId}/messages",
             new { content = "Cho toi xem cai nay" });
 
-        // Lỗi của lượt chat luôn đi qua kênh SSE với HTTP 200, kể cả lỗi phân quyền.
+        // Errors of a chat turn always travel over the SSE channel with HTTP 200, authorization errors included.
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var body = await response.Content.ReadAsStringAsync();

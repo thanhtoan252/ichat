@@ -145,7 +145,7 @@ public class ChatTests(IChatApiFactory factory)
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
-        // [99] nằm ngoài phạm vi context nên phải bị loại; chỉ [1] được ghi vào DB.
+        // [99] falls outside the context range and has to be dropped; only [1] is written to the database.
         factory.MainChat.ResponseText = "Theo tai lieu [1] va cung theo [99] thi timeout la 120 giay.";
 
         var frames = await ReadSseAsync(client, conversationId, new { content = "timeout la bao nhieu" });
@@ -222,7 +222,7 @@ public class ChatTests(IChatApiFactory factory)
         await SeedAsync(client);
         var conversationId = await CreateConversationAsync(client);
 
-        // Lượt đầu để lịch sử không rỗng, nếu không rewriting sẽ bị bỏ qua.
+        // A first turn so the history is not empty, otherwise rewriting is skipped.
         factory.MainChat.ResponseText = "Tra loi dau tien [1].";
         await ReadSseAsync(client, conversationId, new { content = "cau hinh he thong" });
 

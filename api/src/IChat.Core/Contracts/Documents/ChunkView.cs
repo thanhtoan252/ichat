@@ -1,8 +1,8 @@
 namespace IChat.Core.Contracts.Documents;
 
 /// <summary>
-/// Công cụ debug ingestion: nhìn heading_path và embedded_text thật sự sinh ra
-/// là cách nhanh nhất để biết chunker có hỏng không.
+/// An ingestion debugging tool: looking at the heading_path and embedded_text that were actually
+/// produced is the fastest way to tell whether the chunker is broken.
 /// </summary>
 public sealed class ChunkView
 {

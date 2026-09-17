@@ -10,8 +10,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Rerank bằng LLM chấm điểm. Khác với RRF (fusion, chỉ dựa trên thứ hạng),
-/// bước này thực sự đọc lại nội dung để chấm độ liên quan.
+/// Reranking by having an LLM score the candidates. Unlike RRF (fusion, which only looks at rank),
+/// this step really reads the content again to judge relevance.
 /// </summary>
 public sealed class LlmReranker(
     [FromKeyedServices(AiServiceKeys.UtilityChat)] IChatClient utilityChatClient,
@@ -68,14 +68,14 @@ public sealed class LlmReranker(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // Rerank là bước phụ: hỏng thì degrade về thứ tự sẵn có.
+            // Reranking is a secondary step: on failure it degrades to the order it already had.
             logger.LogWarning(exception, "LlmReranker failed, keeping the pre-rerank order.");
 
             return candidates;
         }
     }
 
-    /// <summary>Parse phòng thủ: model hay bọc JSON trong markdown fence hoặc thêm lời dẫn.</summary>
+    /// <summary>Defensive parsing: models like to wrap JSON in a markdown fence or add a preamble.</summary>
     private static Dictionary<int, double> ParseScores(string? text, int candidateCount)
     {
         var result = new Dictionary<int, double>();

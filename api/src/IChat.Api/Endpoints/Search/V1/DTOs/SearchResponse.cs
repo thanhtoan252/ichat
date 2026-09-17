@@ -1,8 +1,8 @@
 namespace IChat.Api.Endpoints.Search.V1.DTOs;
 
 /// <summary>
-/// Trả kết quả TỪNG CHẶNG và tsquery đã dựng là điểm mấu chốt: đa số thời gian debug RAG
-/// là nhìn xem chunk rơi rụng ở chặng nào, chứ không phải sửa prompt.
+/// Returning PER-STAGE results and the tsquery that was built is the whole point: most of the time
+/// spent debugging RAG goes into seeing which stage dropped the chunks, not into editing prompts.
 /// </summary>
 public sealed class SearchResponse
 {

@@ -1,8 +1,8 @@
 namespace IChat.Core.Contracts.Auth;
 
 /// <summary>
-/// RefreshToken ở đây là token THÔ, chỉ dành cho tầng API đặt vào cookie httpOnly.
-/// Nó không bao giờ được serialize vào body response.
+/// RefreshToken here is the RAW token, meant only for the API layer to put into an httpOnly cookie.
+/// It is never serialized into a response body.
 /// </summary>
 public sealed class AuthResult
 {

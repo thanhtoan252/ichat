@@ -8,8 +8,8 @@ public sealed class GoogleEmbeddingClientFactory : IEmbeddingProviderClientFacto
 
     public IEmbeddingGenerator<string, Embedding<float>> Create(EmbeddingOptions options, int? dimensions)
     {
-        // Cùng cảnh báo như GoogleChatClientFactory: docker-compose truyền endpoint dưới
-        // dạng chuỗi RỖNG chứ không phải null, nên nhánh `??` không chạy khi chạy compose.
+        // Same warning as in GoogleChatClientFactory: docker-compose passes the endpoint as an EMPTY string
+        // rather than as null, so the `??` branch does not run under compose.
         var endpoint = options.Endpoint ?? OpenAICompatibleClientFactory.GoogleOpenAICompatibleEndpoint;
 
         return OpenAICompatibleClientFactory

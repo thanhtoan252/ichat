@@ -1,8 +1,8 @@
 namespace IChat.Core.Abstractions;
 
 /// <summary>
-/// Kiến thức về một định dạng nằm ngay tại parser của định dạng đó, nên thêm format mới
-/// chỉ phải sửa một chỗ: viết parser và khai báo Format của nó.
+/// Everything known about a format lives next to that format's parser, so adding a new one means
+/// touching a single place: write the parser and declare its Format.
 /// </summary>
 public sealed record DocumentFormat
 {
@@ -12,6 +12,6 @@ public sealed record DocumentFormat
 
     public IReadOnlyList<byte[]> MagicBytes { get; init; } = [];
 
-    /// <summary>Đuôi file khớp nhưng magic bytes không khớp => từ chối, đừng đoán bừa (ca .docx giả).</summary>
+    /// <summary>Extension matches but the magic bytes do not => reject, do not guess (the fake .docx case).</summary>
     public bool RejectOnMagicMismatch { get; init; }
 }

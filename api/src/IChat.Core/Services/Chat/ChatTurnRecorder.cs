@@ -7,15 +7,15 @@ using IChat.Core.Rag;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Ghi một lượt chat xuống database: câu hỏi trước khi stream, câu trả lời và citation sau
-/// khi stream xong.
+/// Writes one chat turn to the database: the question before streaming starts, the answer and its
+/// citations once streaming is done.
 /// </summary>
 public sealed class ChatTurnRecorder(
     IApplicationDbContext dbContext,
     TimeProvider timeProvider,
     ILogger<ChatTurnRecorder> logger)
 {
-    /// <summary>Lưu TRƯỚC khi stream, kèm rewritten_query và retrieval_ms.</summary>
+    /// <summary>Saved BEFORE streaming, together with rewritten_query and retrieval_ms.</summary>
     public async Task RecordQuestionAsync(
         Conversation conversation,
         string content,
@@ -30,8 +30,8 @@ public sealed class ChatTurnRecorder(
             (int)retrievalMs,
             timeProvider.GetUtcNow()));
 
-        // Cuộc trò chuyện tạo từ nút "New chat" chưa có tên; câu hỏi đầu tiên đặt tên cho nó,
-        // nếu không danh sách conversation sẽ toàn "New conversation".
+        // A conversation created from the "New chat" button has no name yet; the first question names it,
+        // otherwise the conversation list would be nothing but "New conversation".
         if (ConversationTitle.IsDefault(conversation.Title))
         {
             conversation.Rename(ConversationTitle.FromQuestion(content), timeProvider.GetUtcNow());
@@ -85,8 +85,8 @@ public sealed class ChatTurnRecorder(
     }
 
     /// <summary>
-    /// Không được tin marker model sinh ra: chỉ ghi citation cho marker nằm đúng
-    /// phạm vi context. Bước này vẫn chạy trên phần text đã có kể cả khi bị ngắt.
+    /// The markers a model produces cannot be trusted: a citation is only recorded for a marker that falls
+    /// inside the context range. This step still runs over whatever text exists, even after an interruption.
     /// </summary>
     private List<CitationPayload> RecordCitations(Message assistantMessage, string answerText, AssembledContext assembled)
     {
@@ -107,8 +107,8 @@ public sealed class ChatTurnRecorder(
         {
             var source = assembled.Sources[citation.SourceOrdinal];
 
-            // Một khối context có thể gộp nhiều chunk gốc; citation trỏ về chunk gốc,
-            // chunk lân cận chỉ làm giàu context chứ không trở thành citation độc lập.
+            // One context block can merge several original chunks; a citation points at the original chunk,
+            // while neighbouring chunks only enrich the context and never become a citation of their own.
             foreach (var chunkId in source.AnchorChunkIds)
             {
                 if (!seenChunks.Add(chunkId))

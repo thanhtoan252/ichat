@@ -9,8 +9,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Gọi model và phát ra từng mẩu text. Mọi thứ liên quan tới việc "nói chuyện với provider"
-/// nằm ở đây: ChatOptions, timeout, span telemetry, và cách quy mọi kiểu kết thúc về một mối.
+/// Calls the model and emits each piece of text. Everything about "talking to a provider" lives here:
+/// ChatOptions, timeout, the telemetry span, and how every kind of ending is funnelled into one path.
 /// </summary>
 public sealed class AnswerGenerator(
     IChatClient chatClient,
@@ -18,9 +18,9 @@ public sealed class AnswerGenerator(
     ILogger<AnswerGenerator> logger)
 {
     /// <summary>
-    /// Phát ra từng mẩu text mà provider trả về, và ở cuối là event "error" nếu provider hỏng.
-    /// Tách riêng vì C# không cho `yield return` bên trong try/catch: vòng lặp phải tự gọi
-    /// MoveNextAsync và bắt lỗi thủ công, và đó là đoạn rối nhất của cả luồng chat.
+    /// Emits each piece of text the provider returns, and at the end an "error" event if the provider failed.
+    /// It is split out because C# does not allow `yield return` inside try/catch: the loop has to call
+    /// MoveNextAsync and catch errors by hand, and that is the knottiest part of the whole chat flow.
     /// </summary>
     public async IAsyncEnumerable<SseEvent> StreamAsync(
         IReadOnlyList<ChatMessage> prompt,
@@ -32,9 +32,9 @@ public sealed class AnswerGenerator(
 
         using var generationActivity = StartGenerationActivity(options);
 
-        // Timeout phải được thực thi ở đây: SDK của từng hãng được factory dựng trực tiếp
-        // nên không đi qua HttpClient pipeline của chúng ta, và một provider treo sẽ
-        // giữ kết nối SSE mở vô hạn.
+        // The timeout has to be enforced here: each vendor's SDK is constructed directly by a factory, so it
+        // never passes through our HttpClient pipeline, and a hung provider would hold the SSE connection
+        // open forever.
         using var generationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         generationCts.CancelAfter(TimeSpan.FromSeconds(modelCatalog.ChatTimeoutSeconds));
         var generationToken = generationCts.Token;
@@ -90,11 +90,11 @@ public sealed class AnswerGenerator(
         {
             ModelId = requestedModel,
 
-            // Không cấu hình thì không gửi: các model dòng reasoning từ chối mọi
-            // temperature khác giá trị mặc định của hãng bằng HTTP 400.
+            // Not configured means not sent: the reasoning-family models reject any temperature other than
+            // the vendor's default with an HTTP 400.
             Temperature = (float?)modelCatalog.ChatTemperature,
 
-            // Anthropic bắt buộc phải có max_tokens; luôn set cho mọi provider.
+            // Anthropic requires max_tokens; always set it, for every provider.
             MaxOutputTokens = modelCatalog.ChatMaxOutputTokens
         };
     }
@@ -112,8 +112,8 @@ public sealed class AnswerGenerator(
     }
 
     /// <summary>
-    /// Đọc một update, quy mọi cách kết thúc về cùng một kiểu trả về: hết stream,
-    /// client ngắt giữa chừng, hoặc provider hỏng.
+    /// Reads one update and funnels every way of ending into the same return type: the stream ran out,
+    /// the client disconnected midway, or the provider failed.
     /// </summary>
     private async Task<StreamStep> ReadNextUpdateAsync(IAsyncEnumerator<ChatResponseUpdate> stream)
     {
@@ -125,12 +125,12 @@ public sealed class AnswerGenerator(
         }
         catch (OperationCanceledException)
         {
-            // Client đóng tab giữa chừng: vẫn lưu phần đã sinh với ghi chú [interrupted].
+            // The client closed the tab midway: what was generated is still persisted, marked [interrupted].
             return new StreamStep { Interrupted = true };
         }
         catch (Exception exception)
         {
-            // Không để message lỗi gốc của SDK lọt ra client: có thể lộ chi tiết cấu hình.
+            // The SDK's own error message never reaches the client: it can leak configuration details.
             logger.LogError(exception, "The provider failed while streaming the answer.");
 
             return new StreamStep
@@ -144,7 +144,7 @@ public sealed class AnswerGenerator(
         }
     }
 
-    /// <summary>Một lần đọc stream: Update là null nghĩa là đã kết thúc, vì lý do nào đó.</summary>
+    /// <summary>One read from the stream: a null Update means it ended, for one reason or another.</summary>
     private readonly record struct StreamStep
     {
         public ChatResponseUpdate? Update { get; init; }

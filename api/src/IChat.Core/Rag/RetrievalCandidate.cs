@@ -15,8 +15,8 @@ public sealed class RetrievalCandidate
     public required double Score { get; init; }
 
     /// <summary>
-    /// Chỉ có nghĩa ở chặng nhánh. Sau fusion một chunk có thể đến từ nhiều nhánh cùng lúc
-    /// nên một giá trị Source là vô nghĩa: các chặng fused/afterMmr/reranked/final để null.
+    /// Only meaningful at the branch stages. After fusion a chunk can come from several branches at once,
+    /// so a single Source value would be meaningless: fused/afterMmr/reranked/final leave it null.
     /// </summary>
     public RetrievalSource? Source { get; init; }
 

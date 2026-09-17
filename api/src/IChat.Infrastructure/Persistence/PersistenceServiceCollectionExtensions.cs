@@ -9,7 +9,7 @@ public static class PersistenceServiceCollectionExtensions
 {
     public static IServiceCollection AddIChatPersistence(this IServiceCollection services, string connectionString)
     {
-        // UseVector() trên data source là bắt buộc, thiếu nó sẽ lỗi map kiểu vector lúc runtime.
+        // UseVector() on the data source is mandatory; without it the vector type fails to map at runtime.
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
         dataSourceBuilder.UseVector();
         var dataSource = dataSourceBuilder.Build();
@@ -23,8 +23,8 @@ public static class PersistenceServiceCollectionExtensions
                 .UseSnakeCaseNamingConvention();
         });
 
-        // Các nhánh retrieval chạy song song nên mỗi nhánh cần DbContext riêng —
-        // DbContext không thread-safe.
+        // The retrieval branches run in parallel, so each one needs its own DbContext —
+        // a DbContext is not thread-safe.
         services.AddDbContextFactory<IChatDbContext>((serviceProvider, options) =>
         {
             options

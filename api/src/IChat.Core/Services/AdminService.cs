@@ -6,9 +6,9 @@ using IChat.Core.Contracts.Admin;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
-/// Đường thoát bắt buộc khi đổi model embedding: đặt toàn bộ document về Pending
-/// và đẩy lại vào ingestion queue. Không có bước này thì vector cũ và mới nằm ở hai
-/// không gian khác nhau và search sai một cách im lặng.
+/// The mandatory escape hatch when the embedding model changes: it puts every document back to Pending
+/// and pushes them through the ingestion queue again. Without this step the old and the new vectors live
+/// in different spaces and search goes wrong silently.
 /// </summary>
 public sealed class AdminService(IApplicationDbContext dbContext, IDocumentIngestionQueue ingestionQueue) : IAdminService
 {

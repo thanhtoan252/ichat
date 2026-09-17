@@ -5,7 +5,7 @@ using Microsoft.Extensions.AI;
 
 public sealed class FakeChatClient : IChatClient
 {
-    /// <summary>State theo từng instance: client chính và client "utility" phải độc lập.</summary>
+    /// <summary>Per-instance state: the main client and the "utility" client have to stay independent.</summary>
     public volatile string ResponseText = "This is a sample answer [1].";
 
     public volatile bool ShouldTimeout;
@@ -36,7 +36,7 @@ public sealed class FakeChatClient : IChatClient
             await Task.Delay(Timeout.Infinite, cancellationToken);
         }
 
-        // Chia thành nhiều update để test SSE thấy được nhiều delta.
+        // Split into several updates so the SSE tests can observe more than one delta.
         foreach (var word in ResponseText.Split(' '))
         {
             cancellationToken.ThrowIfCancellationRequested();

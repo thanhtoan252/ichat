@@ -78,7 +78,7 @@ public class ConversationTitleTests
     public void FromQuestion_DoesNotCutASurrogatePairInHalf()
     {
         // Arrange
-        // Ký tự thứ 57-58 là một emoji: cắt giữa cặp surrogate sẽ tạo ra ký tự hỏng.
+        // Characters 57-58 are one emoji: cutting between the surrogate pair produces a broken character.
         var question = $"{new string('a', 56)}😀{new string('b', 60)}";
 
         // Act

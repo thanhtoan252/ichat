@@ -26,8 +26,8 @@ public class BcryptPasswordHasherTests
         var second = _hasher.Hash(password);
 
         // Assert
-        // Salt ngẫu nhiên: hai hash khác nhau nhưng cùng verify được. Nếu chúng bằng nhau
-        // thì bảng users đã lộ ra ai đang dùng chung mật khẩu.
+        // Random salt: two different hashes that both verify. If they were equal, the users table would reveal
+        // who shares a password with whom.
         first.Should().NotBe(second);
         _hasher.Verify(password, first).Should().BeTrue();
         _hasher.Verify(password, second).Should().BeTrue();
@@ -56,7 +56,7 @@ public class BcryptPasswordHasherTests
         var verified = _hasher.Verify("admin", corruptedHash);
 
         // Assert
-        // Hash hỏng trong database phải ra "sai mật khẩu", không phải 500.
+        // A corrupt hash in the database has to come out as "wrong password", not as a 500.
         verified.Should().BeFalse();
     }
 }

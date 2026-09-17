@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// Gọi embedding theo batch. Gọi từng chunk một sẽ chậm và tốn tiền gấp nhiều lần.
+/// Calls the embedding API in batches. One call per chunk would be many times slower and more expensive.
 /// </summary>
 public sealed class BatchingEmbeddingService(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
@@ -60,7 +60,7 @@ public sealed class BatchingEmbeddingService(
 
     private EmbeddingGenerationOptions? BuildGenerationOptions()
     {
-        // Chỉ truyền Dimensions khi provider thật sự hỗ trợ giảm chiều đầu ra.
+        // Only pass Dimensions when the provider really supports reducing the output dimensionality.
         if (!embeddingGeneratorFactory.Capabilities.SupportsEmbeddingDimensions)
         {
             return null;

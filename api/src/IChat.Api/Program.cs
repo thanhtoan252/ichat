@@ -1,5 +1,6 @@
 using IChat.Api.Authorization;
 using IChat.Api.Endpoints;
+using IChat.Api.Endpoints.Documents.V1.Validators;
 using IChat.Api.HealthChecks;
 using IChat.Api.Middleware;
 using IChat.Api.OpenApi;
@@ -25,8 +26,8 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 
-// Bootstrap logger: mọi thứ log ra trước khi host build xong (config sai, DI hỏng) vẫn
-// ra JSON thay vì biến mất. Sẽ bị thay bằng logger đọc từ appsettings sau khi Build().
+// Bootstrap logger: anything logged before the host finishes building (bad config, broken DI)
+// still comes out as JSON instead of vanishing. Replaced by the appsettings logger after Build().
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console(new CompactJsonFormatter())
@@ -36,8 +37,15 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // Sink/enricher/định dạng đều nằm trong section "Serilog" của appsettings: đổi giữa
-    // JSON và text chỉ là sửa config, không phải sửa code rồi build lại.
+    // Kestrel caps the request body at 30MB by default, which is before the validator even runs: an
+    // oversized file would get a bare 413 instead of a readable message. Take the validator's own
+    // ceiling and leave room for the multipart envelope (boundary plus each part's headers) so the
+    // two numbers cannot drift apart when the limit changes.
+    builder.WebHost.ConfigureKestrel(options =>
+        options.Limits.MaxRequestBodySize = UploadDocumentDtoValidator.MaxSizeInBytes + 1024 * 1024);
+
+    // Sinks, enrichers and formatting all live in the "Serilog" section of appsettings: switching
+    // between JSON and text is a config change, not a code change plus a rebuild.
     builder.Services.AddSerilog((services, configuration) => configuration
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services)
@@ -45,8 +53,8 @@ try
 
     builder.Services.AddSingleton(TimeProvider.System);
     builder.Services.AddIChatCore();
-    // Validator của DTO tầng API (Endpoints/<Feature>/V1/Validators); validator của
-    // service model nằm trong Core và được AddIChatCore đăng ký riêng.
+    // Validators for the API-layer DTOs (Endpoints/<Feature>/V1/Validators); validators for service
+    // models live in Core and are registered separately by AddIChatCore.
     builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
     builder.Services.AddIChatInfrastructure(builder.Configuration);
 
@@ -59,8 +67,8 @@ try
     builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
     builder.Services.AddSingleton<IAccessTokenService, JwtAccessTokenService>();
 
-    // Đọc sớm để dựng TokenValidationParameters; ValidateOnStart ở trên chỉ chạy sau
-    // khi host build xong nên khoá rỗng phải bị chặn ngay tại đây với thông điệp rõ ràng.
+    // Read early to build TokenValidationParameters; ValidateOnStart above only runs once the host
+    // is built, so an empty key has to be rejected right here with a clear message.
     var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
         ?? throw new InvalidOperationException($"Missing configuration section '{JwtOptions.SectionName}'.");
 
@@ -82,22 +90,22 @@ try
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
                 ValidateLifetime = true,
-                // Access token chỉ sống 15 phút, cộng thêm 5 phút mặc định của thư viện
-                // là biến hết hạn thành chuyện không kiểm chứng được ở phía client.
+                // The access token only lives 15 minutes, and the library's default 5-minute skew on top
+                // of that would make expiry something the client cannot reason about.
                 ClockSkew = TimeSpan.Zero,
                 RoleClaimType = ClaimNames.Role,
                 NameClaimType = ClaimNames.Name
             };
 
-            // Mặc định handler dịch ngược "sub"/"role" thành URI dài của ClaimTypes, khiến
-            // FindFirstValue("sub") không tìm thấy gì. Tắt đi để claim đọc ra đúng tên đã ký.
+            // By default the handler translates "sub"/"role" back into the long ClaimTypes URIs, so
+            // FindFirstValue("sub") finds nothing. Turn it off to read claims under the names they were signed with.
             options.MapInboundClaims = false;
         });
 
     builder.Services.AddAuthorization(options =>
         options.AddPolicy(AuthPolicies.Admin, policy => policy.RequireRole(nameof(UserRole.Admin))));
 
-    // Enum đi/về dưới dạng chuỗi ("Hybrid", "FullText") thay vì số thứ tự.
+    // Enums travel as strings ("Hybrid", "FullText") rather than ordinals.
     builder.Services.ConfigureHttpJsonOptions(options =>
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -141,7 +149,7 @@ try
 
     app.UseExceptionHandler();
 
-    // Một dòng tổng kết cho mỗi request thay vì 3-4 dòng của logger mặc định ASP.NET Core.
+    // One summary line per request instead of the three or four ASP.NET Core's default logger writes.
     app.UseSerilogRequestLogging(options =>
     {
         options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
@@ -157,18 +165,18 @@ try
     if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        // UI đọc trực tiếp document ở /openapi/v1.json, chỉ bật ở Development.
+        // The UI reads the document straight from /openapi/v1.json; only enabled in Development.
         app.MapScalarApiReference("/docs", options => options
             .WithTitle("IChat API")
-            // Chọn sẵn ô Bearer và giữ token qua các lần F5 để thử endpoint cần đăng nhập
-            // không phải dán lại token sau mỗi lần reload.
+            // Preselect the Bearer box and keep the token across reloads, so trying an authenticated
+            // endpoint does not mean pasting the token again after every F5.
             .AddPreferredSecuritySchemes(JwtBearerSecuritySchemeTransformer.SchemeName)
             .EnablePersistentAuthentication());
     }
 
     app.MapIChatEndpoints();
 
-    // Migration tự chạy lúc startup CHỈ ở Development; production dùng `dotnet ef database update`.
+    // Migrations run at startup ONLY in Development; production uses `dotnet ef database update`.
     if (app.Configuration.GetValue<bool>("Database:AutoMigrate"))
     {
         using var scope = app.Services.CreateScope();
@@ -191,7 +199,7 @@ finally
 
 return 0;
 
-// Health check bị poll liên tục bởi orchestrator; giữ ở Information sẽ nhấn chìm log thật.
+// Health checks are polled constantly by the orchestrator; leaving them at Information would drown the real logs.
 static LogEventLevel GetRequestLogLevel(HttpContext httpContext, double elapsedMs, Exception? exception)
 {
     if (exception is not null || httpContext.Response.StatusCode >= StatusCodes.Status500InternalServerError)

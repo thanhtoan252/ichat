@@ -22,8 +22,8 @@ public class DocumentFormatResolverTests
     [SetUp]
     public void SetUp()
     {
-        // Thứ tự parser khớp với DependencyInjection: nó quyết định danh sách đuôi file
-        // trong thông điệp 415.
+        // The parser order matches DependencyInjection: it decides the list of extensions
+        // in the 415 message.
         IDocumentParser[] parsers =
         [
             new DocxDocumentParser(),
@@ -35,7 +35,7 @@ public class DocumentFormatResolverTests
         _resolver = new DocumentParserResolver(parsers, [new LegacyDocFormatDetector()]);
     }
 
-    // .doc phải bị chặn TRƯỚC TIÊN kèm hướng dẫn, không bao giờ để nổ thành 500 trong OpenXml.
+    // .doc has to be stopped FIRST with guidance, never left to blow up as a 500 inside OpenXml.
     [Test]
     public void Resolve_LegacyDocExtension_Returns415WithGuidance()
     {
@@ -60,7 +60,7 @@ public class DocumentFormatResolverTests
         var result = Resolve(fileName, "application/octet-stream", Ole2Header);
 
         // Assert
-        // Đổi đuôi file không đổi được nội dung: magic OLE2 vẫn là Word 97-2003.
+        // Renaming the extension does not change the content: the OLE2 magic is still Word 97-2003.
         result.Error.Message.Should().Contain("Word 97-2003");
     }
 
@@ -132,7 +132,7 @@ public class DocumentFormatResolverTests
         result.Error.Message.Should().Be("The '.xlsx' format is not supported. Only .docx, .pdf, .md and .txt are accepted.");
     }
 
-    // Trình duyệt hay gửi sai content type, nên nó chỉ được dùng khi đuôi lẫn magic đều câm.
+    // Browsers often send the wrong content type, so it is only consulted when extension and magic are both silent.
     [Test]
     public void Resolve_UnknownExtension_FallsBackToTheDeclaredContentType()
     {

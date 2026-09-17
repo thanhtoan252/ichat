@@ -9,10 +9,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 /// <summary>
-/// [AsParameters] đòi mỗi tham số constructor có một public property cùng tên và
-/// <b>cùng kiểu</b>; lệch kiểu chỉ vỡ lúc dựng endpoint chứ compiler không bắt được.
-/// Những test này bind thật từ query string để giữ ràng buộc đó, cùng với giá trị
-/// mặc định và trần limit của từng endpoint.
+/// [AsParameters] requires every constructor parameter to have a public property of the same name and
+/// <b>the same type</b>; a type mismatch only breaks when the endpoint is built, and the compiler cannot
+/// catch it. These tests bind for real from a query string to hold that constraint in place, together with
+/// each endpoint's default values and limit ceiling.
 /// </summary>
 public class QueryBindingTests
 {
@@ -33,7 +33,7 @@ public class QueryBindingTests
 
         context.Response.StatusCode.Should().Be(
             StatusCodes.Status200OK,
-            $"{typeof(TQuery).Name} phải bind được từ '{queryString}'");
+            $"{typeof(TQuery).Name} must bind from '{queryString}'");
 
         return bound!;
     }

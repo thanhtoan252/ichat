@@ -7,8 +7,8 @@ public sealed class LoginDtoValidator : AbstractValidator<LoginDto>
 {
     public LoginDtoValidator()
     {
-        // Cố tình không áp quy tắc độ dài/ký tự như lúc đăng ký: tài khoản seed là
-        // "admin"/"admin", và ràng buộc ở đây chỉ tổ lộ định dạng mật khẩu hợp lệ.
+        // Deliberately no length/character rules like the ones used at registration: the seeded
+        // account is "admin"/"admin", and rules here would only advertise what a valid password looks like.
         RuleFor(dto => dto.UserName).NotEmpty().MaximumLength(64).WithName("userName");
         RuleFor(dto => dto.Password).NotEmpty().MaximumLength(128).WithName("password");
     }

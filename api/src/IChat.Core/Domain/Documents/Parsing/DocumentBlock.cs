@@ -1,8 +1,8 @@
 namespace IChat.Core.Domain.Documents.Parsing;
 
 /// <summary>
-/// Mô hình khối chung cho MỌI format. Chunker chỉ biết tới mô hình này,
-/// không biết tài liệu gốc là docx, pdf, markdown hay txt.
+/// The common block model for EVERY format. The chunker only knows this model,
+/// never whether the original document was docx, pdf, markdown or txt.
 /// </summary>
 public sealed class DocumentBlock
 {

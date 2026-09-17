@@ -1,9 +1,9 @@
 namespace IChat.Core.Rag;
 
 /// <summary>
-/// Đoạn trích ngắn để hiển thị nguồn và để debug retrieval. Cắt cùng một độ dài ở mọi
-/// nơi, nếu không thì snippet trong event "sources" và snippet trong response search sẽ
-/// dài ngắn khác nhau cho cùng một chunk.
+/// A short excerpt for displaying a source and for debugging retrieval. It is cut to the same length
+/// everywhere; otherwise the snippet in the "sources" event and the snippet in the search response
+/// would differ in length for one and the same chunk.
 /// </summary>
 public static class TextSnippet
 {

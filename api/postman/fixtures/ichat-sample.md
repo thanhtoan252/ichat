@@ -18,5 +18,5 @@ vector cu va vector moi nam o hai khong gian khac nhau va ket qua search sai am 
 
 ## Gioi han upload
 
-Kich thuoc file toi da la 20MB. Chi nhan bon dinh dang: .docx, .pdf, .md va .txt.
+Kich thuoc file toi da la 50MB. Chi nhan bon dinh dang: .docx, .pdf, .md va .txt.
 File .doc cua Word 97-2003 khong duoc ho tro, phai luu lai thanh .docx.

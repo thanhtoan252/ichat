@@ -64,7 +64,7 @@ public sealed class MarkdownDocumentParser : IDocumentParser
                 break;
             }
 
-            // Bảng markdown giữ nguyên nguyên khối, không bao giờ tách.
+            // A markdown table is kept whole and never split.
             case Table table:
             {
                 var text = Slice(source, table).Trim();
@@ -157,7 +157,7 @@ public sealed class MarkdownDocumentParser : IDocumentParser
         }
     }
 
-    /// <summary>Cắt theo span của AST để giữ nguyên markdown gốc (quan trọng với bảng và code).</summary>
+    /// <summary>Slices by the AST span to preserve the original markdown (which matters for tables and code).</summary>
     private static string Slice(string source, Block block)
     {
         var start = Math.Clamp(block.Span.Start, 0, source.Length);

@@ -31,25 +31,25 @@ public sealed class DocumentChunkConfiguration : IEntityTypeConfiguration<Docume
             .IsRequired()
             .HasDefaultValueSql("'{}'::jsonb");
 
-        // Core giữ float[] để không phải reference Pgvector; converter lo phần map sang vector(N).
+        // Core keeps float[] so it never has to reference Pgvector; the converter handles the mapping to vector(N).
         builder.Property(chunk => chunk.Embedding)
             .HasColumnType(EmbeddingDimensions.ColumnType)
             .HasConversion(
                 new ValueConverter<float[], Vector>(
                     value => new Vector(value),
                     value => value.ToArray()),
-                // Không có comparer, EF coi float[] là tham chiếu và bỏ sót thay đổi nội dung mảng.
+                // Without a comparer EF treats float[] by reference and misses changes to the array's contents.
                 new ValueComparer<float[]>(
                     (left, right) => left != null && right != null && left.SequenceEqual(right),
                     value => value.Aggregate(0, (hash, item) => HashCode.Combine(hash, item.GetHashCode())),
                     value => value.ToArray()))
             .IsRequired();
 
-        // content_tsv là cột sinh sẵn trong DB, không phải property của domain entity.
-        // Dùng 'simple' chứ không phải 'english' vì nội dung có thể là tiếng Việt và
-        // PostgreSQL không có text search config cho tiếng Việt.
-        // immutable_unaccent (tạo trong migration) là bắt buộc: unaccent() gốc chỉ STABLE,
-        // mà generated column yêu cầu biểu thức IMMUTABLE.
+        // content_tsv is a generated column in the database, not a property of the domain entity.
+        // It uses 'simple' rather than 'english' because the content may be Vietnamese and PostgreSQL has no
+        // text search configuration for Vietnamese.
+        // immutable_unaccent (created in a migration) is mandatory: the built-in unaccent() is only STABLE,
+        // while a generated column requires an IMMUTABLE expression.
         builder.Property<NpgsqlTsVector>(ContentTsVector)
             .HasColumnName(ContentTsVector)
             .HasComputedColumnSql(

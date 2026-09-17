@@ -1,8 +1,8 @@
 namespace IChat.Infrastructure.Ai;
 
 /// <summary>
-/// IChatClient che được phần lớn khác biệt giữa các hãng nhưng không phải tất cả.
-/// Những khác biệt còn lại nằm ở đây, không được rò rỉ lên Core.
+/// IChatClient hides most of the differences between vendors, but not all of them.
+/// What is left lives here, and must not leak up into Core.
 /// </summary>
 public sealed record ChatProviderCapabilities
 {
@@ -16,9 +16,9 @@ public sealed record ChatProviderCapabilities
     {
         return provider switch
         {
-            // Anthropic gộp mọi khối system vào một tham số `system` riêng; message phải
-            // luân phiên user/assistant. Hãng này còn bắt buộc max_tokens, nhưng ta luôn
-            // gửi MaxOutputTokens cho MỌI provider nên không cần một cờ riêng cho nó.
+            // Anthropic merges every system block into one separate `system` parameter, and messages have to
+            // alternate user/assistant. It also requires max_tokens, but we always send MaxOutputTokens for
+            // EVERY provider, so that needs no flag of its own.
             ChatProvider.Anthropic => new ChatProviderCapabilities
             {
                 SupportsMultipleSystemMessages = false,
@@ -40,7 +40,7 @@ public sealed record ChatProviderCapabilities
                 RequiresApiKey = true
             },
 
-            // Gemini qua endpoint OpenAI-compatible: chỉ nhận một khối system.
+            // Gemini through the OpenAI-compatible endpoint: it accepts only one system block.
             ChatProvider.Google => new ChatProviderCapabilities
             {
                 SupportsMultipleSystemMessages = false,

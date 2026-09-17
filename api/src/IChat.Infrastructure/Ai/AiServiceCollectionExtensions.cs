@@ -12,9 +12,9 @@ using Microsoft.Extensions.Options;
 public static class AiServiceCollectionExtensions
 {
     /// <summary>
-    /// Nơi wiring toàn bộ AI. Tên hãng chỉ xuất hiện trong thư mục Ai/Providers — mỗi hãng
-    /// một file — nên thêm hãng mới là thêm một file và một dòng đăng ký ở đây.
-    /// Core và Api không có một dòng nào biết tới OpenAI/Anthropic/Google.
+    /// Where all of the AI wiring happens. Vendor names appear only under Ai/Providers — one file per vendor —
+    /// so adding a vendor means one new file and one registration line here.
+    /// Not a single line in Core or Api knows about OpenAI/Anthropic/Google.
     /// </summary>
     public static IServiceCollection AddIChatAi(this IServiceCollection services, IConfiguration configuration)
     {
@@ -30,8 +30,8 @@ public static class AiServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        // Một hãng một implementation; ChatClientFactory / EmbeddingGeneratorFactory chỉ tra
-        // bảng theo enum provider. Quên đăng ký một hãng sẽ fail ProviderFactoryRegistryTests.
+        // One implementation per vendor; ChatClientFactory / EmbeddingGeneratorFactory only look the provider up
+        // by enum. Forgetting to register a vendor fails ProviderFactoryRegistryTests.
         services.AddSingleton<IChatProviderClientFactory, OpenAIChatClientFactory>();
         services.AddSingleton<IChatProviderClientFactory, AzureOpenAIChatClientFactory>();
         services.AddSingleton<IChatProviderClientFactory, AnthropicChatClientFactory>();
@@ -46,7 +46,7 @@ public static class AiServiceCollectionExtensions
         services.AddSingleton<IModelCatalog, ModelCatalog>();
         services.AddSingleton<ITokenEstimator, SimpleTokenEstimator>();
 
-        // UseDistributedCache cần một IDistributedCache; in-memory là đủ cho một node.
+        // UseDistributedCache needs an IDistributedCache; in-memory is enough for a single node.
         services.AddDistributedMemoryCache();
 
         var pipeline = configuration.GetSection($"{AiOptions.SectionName}:Pipeline").Get<PipelineOptions>() ?? new PipelineOptions();
@@ -56,7 +56,7 @@ public static class AiServiceCollectionExtensions
 
         ApplyPipeline(chatBuilder, pipeline, "IChat.Chat");
 
-        // Client phụ, model rẻ, cho tác vụ nội bộ: viết lại câu hỏi, đặt tên hội thoại, rerank.
+        // The secondary client, on a cheap model, for internal work: query rewriting, conversation titles, reranking.
         var utilityBuilder = services.AddKeyedChatClient(
             AiServiceKeys.UtilityChat,
             serviceProvider => serviceProvider.GetRequiredService<IChatClientFactory>().CreateUtility());
@@ -83,8 +83,8 @@ public static class AiServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Middleware gắn một lần ở đây thay vì nhét vào từng nhánh của factory, nên caching,
-    /// telemetry và logging hoạt động y hệt nhau bất kể đang chạy provider nào.
+    /// The middleware is attached once here rather than inside each branch of the factory, so caching,
+    /// telemetry and logging behave identically no matter which provider is running.
     /// </summary>
     private static void ApplyPipeline(ChatClientBuilder builder, PipelineOptions pipeline, string telemetrySourceName)
     {
@@ -114,8 +114,8 @@ public static class AiServiceCollectionExtensions
         {
             RerankMode.Llm => ActivatorUtilities.CreateInstance<LlmReranker>(serviceProvider),
 
-            // Cohere/Voyage cần thêm một nhà cung cấp vào hệ thống; chưa bật ở phiên bản này
-            // nên degrade về no-op thay vì ném lỗi lúc chạy.
+            // Cohere/Voyage would mean adding another vendor to the system; not enabled in this version,
+            // so it degrades to a no-op instead of throwing at runtime.
             _ => new NoOpReranker()
         };
     }

@@ -28,8 +28,8 @@ public sealed class VectorSearchBranch(
 
         if (embedding is null)
         {
-            // Embedding hỏng là bước phụ có thể degrade: chạy tiếp bằng full-text
-            // và trigram thay vì làm hỏng cả request.
+            // A failing embedding call is a secondary step that may degrade: carry on with full-text
+            // and trigram instead of failing the whole request.
             logger.LogWarning("The embedding provider failed; retrieval degrades to full-text and trigram.");
 
             return new SearchBranchResult { Candidates = [], ElapsedMs = 0, Degraded = true };

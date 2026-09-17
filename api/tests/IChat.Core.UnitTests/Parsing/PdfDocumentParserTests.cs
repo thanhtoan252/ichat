@@ -11,7 +11,7 @@ public class PdfDocumentParserTests
     private ParsedDocument _parsed = null!;
     private IReadOnlyList<DocumentBlock> _blocks = null!;
 
-    // Parse một lần cho cả fixture: mọi test dưới đây chỉ đọc, không sửa kết quả parse.
+    // Parse the fixture once for the whole suite: every test below only reads the parse result, never changes it.
     [OneTimeSetUp]
     public async Task ParseTheFixtureOnce()
     {
@@ -59,7 +59,7 @@ public class PdfDocumentParserTests
         // Arrange & Act — parsing happened in OneTimeSetUp
 
         // Assert
-        // page CHỈ có ý nghĩa với PDF; docx phải để null.
+        // page is ONLY meaningful for PDFs; docx has to leave it null.
         _blocks.Should().OnlyContain(block => block.Metadata != null && block.Metadata.ContainsKey("page"));
         _blocks[0].Metadata!["page"].Should().Be("1");
     }

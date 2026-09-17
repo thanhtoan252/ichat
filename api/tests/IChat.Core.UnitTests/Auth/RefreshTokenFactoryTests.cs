@@ -18,7 +18,7 @@ public class RefreshTokenFactoryTests
 
         // Assert
         tokens.Should().OnlyHaveUniqueItems();
-        // Token đi trong cookie nên không được chứa ký tự phải escape.
+        // The token travels in a cookie, so it must not contain characters that need escaping.
         tokens.Should().OnlyContain(token => token.All(character =>
             char.IsAsciiLetterOrDigit(character) || character == '-' || character == '_'));
     }

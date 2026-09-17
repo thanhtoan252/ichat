@@ -8,18 +8,18 @@ using IChat.Api.Endpoints.Health;
 using IChat.Api.Endpoints.Search.V1;
 
 /// <summary>
-/// Nơi duy nhất gắn prefix version: thêm V2 chỉ cần một group mới ở đây,
-/// endpoint của từng feature không biết gì về đường dẫn phía trên nó.
+/// The only place the version prefix is applied: adding a V2 means one new group here, and
+/// each feature's endpoints stay unaware of the path above them.
 /// </summary>
 public static class EndpointRouteBuilderExtensions
 {
     public static IEndpointRouteBuilder MapIChatEndpoints(this IEndpointRouteBuilder app)
     {
-        // Health check nằm ngoài group v1 nên vẫn ẩn danh: orchestrator không có token.
+        // Health checks sit outside the v1 group and stay anonymous: an orchestrator has no token.
         app.MapHealthEndpoints();
 
-        // Mặc định là ĐÓNG. Endpoint nào cần mở phải nói rõ bằng AllowAnonymous, nên
-        // thêm một route mới mà quên nghĩ về quyền sẽ ra 401 chứ không ra lỗ hổng.
+        // Closed by DEFAULT. An endpoint that needs to be open must say so with AllowAnonymous, so
+        // adding a route without thinking about authorization yields a 401 rather than a hole.
         var v1 = app.MapGroup("/api/v1").RequireAuthorization();
 
         v1.MapAuthV1Endpoints();

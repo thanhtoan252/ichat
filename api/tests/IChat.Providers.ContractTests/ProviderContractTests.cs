@@ -9,8 +9,8 @@ using Xunit;
 using Xunit.Abstractions;
 
 /// <summary>
-/// Một bộ test dùng chung, chạy lặp qua từng provider. Tự skip khi thiếu biến môi trường
-/// nên CI mặc định bỏ qua; chạy thật bằng cách đặt API key tương ứng.
+/// One shared test suite, run against each provider in turn. It skips itself when the environment variables
+/// are missing, so CI ignores it by default; set the matching API key to run it for real.
 /// </summary>
 [Trait("Category", "RequiresApiKey")]
 public class ProviderContractTests(ITestOutputHelper output)
@@ -127,7 +127,7 @@ public class ProviderContractTests(ITestOutputHelper output)
             [new ChatMessage(ChatRole.User, "Write a very long paragraph about the history of computing.")],
             new ChatOptions { MaxOutputTokens = 16 });
 
-        // Ước lượng thô: 16 token không thể vượt quá vài trăm ký tự ở bất kỳ hãng nào.
+        // A rough estimate: 16 tokens cannot exceed a few hundred characters at any vendor.
         response.Text.Should().NotBeNull();
         response.Text!.Length.Should().BeLessThan(600);
     }
@@ -147,7 +147,7 @@ public class ProviderContractTests(ITestOutputHelper output)
             [new ChatMessage(ChatRole.User, "hello")],
             new ChatOptions { MaxOutputTokens = 32 });
 
-        // Không được nổ khi provider không trả usage.
+        // Must not blow up when the provider reports no usage.
         var act = () => _ = response.Usage?.InputTokenCount;
 
         act.Should().NotThrow();

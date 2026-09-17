@@ -5,8 +5,8 @@ using IChat.Core.Abstractions;
 
 public sealed class DocumentIngestionQueue : IDocumentIngestionQueue
 {
-    // Bounded để một đợt upload lớn không thổi bay bộ nhớ; FullMode.Wait khiến
-    // endpoint upload chờ thay vì âm thầm vứt tài liệu đi.
+    // Bounded so a large upload burst cannot blow up memory; FullMode.Wait makes the upload endpoint
+    // wait rather than silently dropping a document.
     private readonly Channel<Guid> _channel = Channel.CreateBounded<Guid>(
         new BoundedChannelOptions(100)
         {

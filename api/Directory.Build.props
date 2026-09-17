@@ -9,9 +9,9 @@
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <!-- KHÔNG bật InvariantGlobalization: nó tắt ICU và biến String.Normalize thành
-         no-op im lặng, khiến TsQueryBuilder không bỏ được dấu tiếng Việt và nhánh
-         full-text sẽ không khớp gì với cột đã unaccent. -->
+    <!-- Do NOT turn on InvariantGlobalization: it disables ICU and silently turns
+         String.Normalize into a no-op, so TsQueryBuilder can no longer strip Vietnamese
+         diacritics and the full-text branch matches nothing against the unaccented column. -->
     <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 

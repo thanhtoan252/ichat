@@ -8,8 +8,8 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
 /// <summary>
-/// Nằm ở tầng Api cùng chỗ với <c>AddJwtBearer</c>: tham số ký và tham số kiểm tra
-/// đọc từ đúng một <see cref="JwtOptions"/>, không thể lệch nhau.
+/// Lives in the Api layer next to <c>AddJwtBearer</c>: the signing parameters and the validation
+/// parameters read from one and the same <see cref="JwtOptions"/>, so they cannot drift apart.
 /// </summary>
 public sealed class JwtAccessTokenService(
     IOptions<JwtOptions> options,

@@ -26,14 +26,14 @@ services:
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=ichat;Username=ichat;Password=ichat
       - Database__AutoMigrate=${Database__AutoMigrate:-true}
       - Storage__RootPath=/data/documents
-      # Khoá ký JWT: tối thiểu 32 ký tự, host từ chối khởi động nếu thiếu. Giá trị mặc
-      # định dưới đây chỉ để `docker compose up` chạy được ngay — đặt Jwt__SigningKey
-      # trong .env trước khi đưa ra ngoài máy của bạn.
+      # The JWT signing key: at least 32 characters, and the host refuses to start without it. The default
+      # below only exists so `docker compose up` runs out of the box — set Jwt__SigningKey in .env before
+      # this leaves your own machine.
       - Jwt__SigningKey=${Jwt__SigningKey:-ichat-compose-signing-key-change-me-please}
       - Ai__Chat__Provider=${Ai__Chat__Provider:-OpenAI}
       - Ai__Chat__Model=${Ai__Chat__Model:-gpt-4o-mini}
       - Ai__Chat__Endpoint=${Ai__Chat__Endpoint:-}
-      # Bỏ trống = không gửi temperature đi; model dòng reasoning trả 400 nếu nhận giá trị khác mặc định.
+      # Empty = do not send a temperature; reasoning-family models answer 400 for anything but their default.
       - Ai__Chat__Temperature=${Ai__Chat__Temperature:-}
       - Ai__Chat__ApiKey=${Ai__Chat__ApiKey:-}
       - Ai__UtilityChat__Provider=${Ai__UtilityChat__Provider:-}
@@ -55,6 +55,14 @@ services:
       # Start order only: nginx resolves the "api" name at startup, so the container
       # has to exist. It does not need to be ready — an early request just 502s.
       - api
+    environment:
+      # Where nginx forwards /api and /health. To run the UI in Docker while the API is debugged on the host
+      # (Rider), set ICHAT_API_UPSTREAM=host.docker.internal:8080 and then
+      # `docker compose up -d --no-deps ui` so the api container is not built.
+      - ICHAT_API_UPSTREAM=${ICHAT_API_UPSTREAM:-api:8080}
+    extra_hosts:
+      # Docker Desktop provides this name already; the line below makes it work on Linux too.
+      - "host.docker.internal:host-gateway"
     ports:
       - "4200:80"
     healthcheck:

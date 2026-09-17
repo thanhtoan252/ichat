@@ -1,8 +1,8 @@
 namespace IChat.Core.Domain.Identity;
 
 /// <summary>
-/// Hai vai trò duy nhất của hệ thống. Lưu xuống database dưới dạng chuỗi
-/// (UserConfiguration) nên thứ tự khai báo không phải là contract.
+/// The system's only two roles. Stored in the database as strings (UserConfiguration),
+/// so the declaration order is not part of the contract.
 /// </summary>
 public enum UserRole
 {

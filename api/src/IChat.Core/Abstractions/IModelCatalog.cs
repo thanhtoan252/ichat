@@ -1,20 +1,20 @@
 namespace IChat.Core.Abstractions;
 
-/// <summary>Không bao giờ trả API key, kể cả đã mask.</summary>
+/// <summary>Never returns an API key, not even a masked one.</summary>
 public interface IModelCatalog
 {
     ModelCatalogSnapshot GetSnapshot();
 
     bool IsChatModelAllowed(string model);
 
-    /// <summary>Một số provider chỉ nhận một khối system; khi false thì PromptBuilder gộp lại.</summary>
+    /// <summary>Some providers accept only one system block; when false, PromptBuilder merges them.</summary>
     bool SupportsMultipleSystemMessages { get; }
 
-    /// <summary>Timeout cho một lượt sinh câu trả lời, tính bằng giây.</summary>
+    /// <summary>Timeout for generating one answer, in seconds.</summary>
     int ChatTimeoutSeconds { get; }
 
     int ChatMaxOutputTokens { get; }
 
-    /// <summary>null nghĩa là không gửi temperature đi; một số model chỉ nhận giá trị mặc định.</summary>
+    /// <summary>null means do not send a temperature at all; some models only accept their default.</summary>
     double? ChatTemperature { get; }
 }

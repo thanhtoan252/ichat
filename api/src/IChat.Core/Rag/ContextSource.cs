@@ -1,6 +1,6 @@
 namespace IChat.Core.Rag;
 
-/// <summary>Một nguồn đã được đánh số [n] và thực sự nằm trong context gửi cho model.</summary>
+/// <summary>One source, numbered [n], that really is part of the context sent to the model.</summary>
 public sealed class ContextSource
 {
     public required int Index { get; init; }

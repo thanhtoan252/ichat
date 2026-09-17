@@ -12,7 +12,7 @@ public sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refresh
 
         builder.HasKey(token => token.Id);
 
-        // 64 ký tự hex của SHA-256; token thô không bao giờ chạm tới database.
+        // 64 hex characters of SHA-256; the raw token never touches the database.
         builder.Property(token => token.TokenHash).IsRequired().HasMaxLength(64);
         builder.Property(token => token.ReplacedByTokenHash).HasMaxLength(64);
         builder.Property(token => token.CreatedAt).IsRequired();

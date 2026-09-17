@@ -17,8 +17,8 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
         builder.Property(conversation => conversation.CreatedAt).IsRequired();
         builder.Property(conversation => conversation.UpdatedAt).IsRequired();
 
-        // Không khai báo navigation trên Conversation: aggregate hội thoại không cần
-        // đọc ngược sang User, chỉ cần ràng buộc rằng chủ sở hữu có thật.
+        // No navigation property declared on Conversation: the conversation aggregate never needs to read back
+        // to User, it only needs the constraint that the owner exists.
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(conversation => conversation.UserId)

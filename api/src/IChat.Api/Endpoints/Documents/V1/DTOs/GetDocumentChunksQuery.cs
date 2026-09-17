@@ -8,6 +8,6 @@ public sealed class GetDocumentChunksQuery(
 {
     public int Offset { get; } = Math.Max(offset, 0);
 
-    // Xin quá nhiều thì bị cắt về trần chứ không phải 400; phản hồi nói lại limit thật sự đã dùng.
+    // Asking for too many is clamped to the ceiling rather than rejected with a 400; the response repeats the limit actually used.
     public int Limit { get; } = limit <= 0 ? 50 : Math.Min(limit, 200);
 }

@@ -1,8 +1,8 @@
 namespace IChat.Core.Rag;
 
 /// <summary>
-/// RRF là FUSION, không phải rerank: nó trộn nhiều danh sách đã xếp hạng thành một,
-/// chỉ dựa trên thứ hạng chứ không chấm lại độ liên quan.
+/// RRF is FUSION, not reranking: it merges several ranked lists into one based purely on rank,
+/// without ever rescoring relevance.
 /// </summary>
 public static class ReciprocalRankFusion
 {
@@ -27,7 +27,7 @@ public static class ReciprocalRankFusion
             {
                 var id = list[rank];
 
-                // Chỉ cộng qua các danh sách mà chunk có mặt — không phạt chunk vắng mặt.
+                // Only sum across the lists the chunk appears in — a chunk is not penalized for being absent.
                 scores[id] = scores.GetValueOrDefault(id) + 1.0 / (k + rank + 1);
 
                 if (!firstSeen.ContainsKey(id))

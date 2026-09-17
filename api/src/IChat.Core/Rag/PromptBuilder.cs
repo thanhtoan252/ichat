@@ -28,8 +28,8 @@ public static class PromptBuilder
         """;
 
     /// <summary>
-    /// Câu hỏi đưa vào đây phải là câu hỏi GỐC của người dùng. Bản viết lại chỉ phục vụ
-    /// retrieval — dùng nhầm sẽ khiến câu trả lời lệch khỏi điều người dùng thật sự hỏi.
+    /// The question passed in here must be the user's ORIGINAL question. The rewrite only serves
+    /// retrieval — using it here would steer the answer away from what the user actually asked.
     /// </summary>
     public static IReadOnlyList<ChatMessage> BuildAnswerPrompt(
         AssembledContext context,

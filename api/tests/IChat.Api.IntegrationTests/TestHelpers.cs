@@ -36,7 +36,7 @@ public static class TestHelpers
         return new MultipartFormDataContent { { content, "file", fileName } };
     }
 
-    /// <summary>Chờ worker xử lý xong; worker chạy nền nên test phải poll trạng thái.</summary>
+    /// <summary>Waits for the worker to finish; it runs in the background, so the test has to poll the status.</summary>
     public static async Task<string> WaitForStatusAsync(IChatApiFactory factory, Guid documentId, TimeSpan timeout)
     {
         var deadline = DateTime.UtcNow + timeout;

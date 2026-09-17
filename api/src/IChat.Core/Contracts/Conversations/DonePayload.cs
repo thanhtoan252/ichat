@@ -1,6 +1,6 @@
 namespace IChat.Core.Contracts.Conversations;
 
-/// <summary>Chỉ chứa nguồn mà câu trả lời THỰC SỰ trích dẫn, đã qua kiểm chứng marker.</summary>
+/// <summary>Holds only the sources the answer ACTUALLY cited, after the markers were verified.</summary>
 public sealed class DonePayload
 {
     public required Guid MessageId { get; init; }

@@ -16,7 +16,7 @@ public sealed class MessageCitation
 
     public DocumentChunk? Chunk { get; private set; }
 
-    /// <summary>Số [n] thực sự xuất hiện trong câu trả lời, sau khi kiểm chứng.</summary>
+    /// <summary>The [n] that actually appears in the answer, after verification.</summary>
     public int MarkerIndex { get; private set; }
 
     public double Score { get; private set; }

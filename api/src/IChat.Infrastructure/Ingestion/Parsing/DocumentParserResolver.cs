@@ -4,10 +4,10 @@ using IChat.Core.Abstractions;
 using IChat.Core.Common;
 
 /// <summary>
-/// Trình duyệt và HTTP client thỉnh thoảng gửi application/octet-stream hoặc content type
-/// sai, nên ưu tiên phần mở rộng + magic bytes hơn header do client khai báo.
-/// Resolver không biết format nào tồn tại: mọi kiến thức nằm ở <see cref="DocumentFormat"/>
-/// của từng parser, nên thêm format mới không phải sửa file này.
+/// Browsers and HTTP clients occasionally send application/octet-stream or an outright wrong content type,
+/// so the extension plus the magic bytes win over the header the client declared.
+/// The resolver does not know which formats exist: all of that knowledge lives in each parser's
+/// <see cref="DocumentFormat"/>, so adding a format never means editing this file.
 /// </summary>
 public sealed class DocumentParserResolver(
     IEnumerable<IDocumentParser> parsers,
@@ -40,7 +40,7 @@ public sealed class DocumentParserResolver(
 
     public Result<string> ResolveContentType(string fileName, string declaredContentType, ReadOnlySpan<byte> header)
     {
-        // Định dạng bị từ chối có chủ đích phải chặn TRƯỚC TIÊN, kèm hướng dẫn cho người dùng.
+        // Deliberately rejected formats must be stopped FIRST, with guidance for the user.
         foreach (var detector in _detectors)
         {
             var rejected = detector.Detect(fileName, header);
@@ -67,7 +67,7 @@ public sealed class DocumentParserResolver(
             return Result.Success(format.ContentType);
         }
 
-        // Span không đi qua được lambda, nên dò magic bằng vòng lặp tường minh.
+        // A Span cannot cross a lambda, so the magic bytes are probed with an explicit loop.
         foreach (var parser in _parsers)
         {
             if (MatchesMagic(header, parser.Format))
@@ -76,7 +76,7 @@ public sealed class DocumentParserResolver(
             }
         }
 
-        // Không suy được từ đuôi file lẫn magic bytes thì mới xét tới content type client khai báo.
+        // Only once neither the extension nor the magic bytes say anything does the declared content type matter.
         if (_parsersByContentType.ContainsKey(declaredContentType))
         {
             return Result.Success(declaredContentType);
@@ -88,7 +88,7 @@ public sealed class DocumentParserResolver(
 
     private static bool HasReadableHeader(ReadOnlySpan<byte> header, DocumentFormat format)
     {
-        // Header ngắn hơn chữ ký thì không kết luận được gì; đừng từ chối chỉ vì đọc thiếu byte.
+        // A header shorter than the signature proves nothing; do not reject just because too few bytes were read.
         foreach (var magic in format.MagicBytes)
         {
             if (header.Length >= magic.Length)
@@ -114,8 +114,8 @@ public sealed class DocumentParserResolver(
     }
 
     /// <summary>
-    /// Danh sách trong thông điệp lỗi sinh từ đuôi CHÍNH của từng parser theo thứ tự đăng ký,
-    /// nên thêm một parser là thông điệp tự đúng theo.
+    /// The list in the error message is generated from each parser's PRIMARY extension in registration order,
+    /// so adding a parser keeps the message correct by itself.
     /// </summary>
     private string SupportedExtensions()
     {

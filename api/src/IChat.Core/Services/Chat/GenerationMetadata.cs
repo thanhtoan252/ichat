@@ -1,6 +1,6 @@
 namespace IChat.Core.Services.Chat;
 
-/// <summary>Thông tin về lượt sinh nằm ngoài nội dung câu trả lời.</summary>
+/// <summary>Information about the generation that is not part of the answer text.</summary>
 public sealed record GenerationMetadata
 {
     public required string Provider { get; init; }

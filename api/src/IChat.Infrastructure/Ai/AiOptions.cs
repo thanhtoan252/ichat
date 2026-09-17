@@ -17,7 +17,7 @@ public sealed class AiOptions
 
     public PipelineOptions Pipeline { get; set; } = new();
 
-    /// <summary>Allowlist cho field `model` tùy chọn trong body request.</summary>
+    /// <summary>Allowlist for the optional `model` field in a request body.</summary>
     public IList<string> AllowedChatModels { get; set; } = [];
 
     public ResolvedChatSettings ResolveChat()
@@ -34,12 +34,12 @@ public sealed class AiOptions
     }
 
     /// <summary>
-    /// Mọi field bỏ trống của UtilityChat đều kế thừa từ Chat, nên cấu hình utility chỉ
-    /// cần khai báo đúng phần khác biệt (thường là model rẻ hơn). Đây là nơi DUY NHẤT
-    /// định nghĩa quy tắc kế thừa đó: client factory, catalog cho admin và validator lúc
-    /// startup đều phải đi qua đây, nếu không ba nơi sẽ mô tả cùng một hệ thống theo ba
-    /// kiểu khác nhau — và admin endpoint sẽ báo "thiếu key" cho provider đang chạy tốt.
-    /// Model và MaxOutputTokens KHÔNG kế thừa: utility luôn phải tự khai báo model của nó.
+    /// Every field UtilityChat leaves empty is inherited from Chat, so the utility configuration only has
+    /// to declare what differs (usually a cheaper model). This is the ONLY place that rule is defined:
+    /// the client factory, the admin catalog and the startup validator all go through here, otherwise three
+    /// places would describe the same system in three different ways — and the admin endpoint would report
+    /// "missing key" for a provider that works perfectly.
+    /// Model and MaxOutputTokens are NOT inherited: utility must always declare its own model.
     /// </summary>
     public ResolvedChatSettings ResolveUtilityChat()
     {

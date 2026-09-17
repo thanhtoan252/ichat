@@ -3,9 +3,9 @@ namespace IChat.Infrastructure.Ai.Providers;
 using Microsoft.Extensions.AI;
 
 /// <summary>
-/// Một hãng một implementation. Khác với <see cref="IChatClientFactory"/> — cái đó là CỬA VÀO:
-/// đọc config, chọn ra hãng nào, rồi uỷ quyền xuống đây.
-/// Chỉ trả client THÔ: middleware vẫn gắn một lần ở tầng đăng ký DI.
+/// One implementation per vendor. Unlike <see cref="IChatClientFactory"/>, which is THE ENTRY POINT:
+/// it reads config, picks the vendor, then delegates down to here.
+/// Returns the RAW client only: the middleware is still attached once at the DI registration layer.
 /// </summary>
 public interface IChatProviderClientFactory
 {

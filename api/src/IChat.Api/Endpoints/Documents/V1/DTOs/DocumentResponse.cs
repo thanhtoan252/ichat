@@ -1,6 +1,6 @@
 namespace IChat.Api.Endpoints.Documents.V1.DTOs;
 
-/// <summary>Không lộ StoragePath: đường dẫn nội bộ không phải chuyện của client.</summary>
+/// <summary>StoragePath stays hidden: an internal path is none of the client's business.</summary>
 public sealed class DocumentResponse
 {
     public required Guid Id { get; init; }

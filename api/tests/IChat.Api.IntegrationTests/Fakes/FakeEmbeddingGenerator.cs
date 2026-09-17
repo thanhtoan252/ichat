@@ -3,8 +3,8 @@ namespace IChat.Api.IntegrationTests.Fakes;
 using Microsoft.Extensions.AI;
 
 /// <summary>
-/// Embedding tất định sinh từ nội dung text: cùng text luôn ra cùng vector, và
-/// text giống nhau về từ vựng thì gần nhau. Đủ để test retrieval mà không cần API key.
+/// A deterministic embedding derived from the text: the same text always yields the same vector, and texts
+/// with similar vocabulary land near each other. Enough to test retrieval without an API key.
 /// </summary>
 public sealed class FakeEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
 {

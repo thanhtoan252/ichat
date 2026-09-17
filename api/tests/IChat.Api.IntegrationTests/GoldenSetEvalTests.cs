@@ -7,9 +7,9 @@ using Xunit;
 using Xunit.Abstractions;
 
 /// <summary>
-/// Chạy golden set qua pipeline thật. Embedding ở đây là fake tất định nên con số
-/// recall KHÔNG phải thước đo chất lượng ngữ nghĩa; nhưng tỷ lệ nhánh full-text trả rỗng
-/// thì hoàn toàn thật, vì nhánh full-text không dùng embedding chút nào.
+/// Runs the golden set through the real pipeline. The embeddings here are a deterministic fake, so the recall
+/// numbers are NOT a measure of semantic quality; the rate at which the full-text branch comes back empty,
+/// however, is entirely real, because that branch uses no embeddings at all.
 /// </summary>
 [Collection(nameof(IChatApiCollection))]
 public class GoldenSetEvalTests(IChatApiFactory factory, ITestOutputHelper output)
@@ -123,8 +123,8 @@ public class GoldenSetEvalTests(IChatApiFactory factory, ITestOutputHelper outpu
             output.WriteLine($"  [empty] {question}");
         }
 
-        // Đây là điều kiện mà lỗi plainto_tsquery sẽ phá vỡ ngay lập tức:
-        // với AND-query, gần như 100% câu hỏi dài sẽ trả rỗng.
+        // This is the condition the plainto_tsquery bug breaks immediately:
+        // with an AND query, nearly 100% of long questions come back empty.
         emptyRate.Should().BeLessThan(
             0.20,
             "an OR-style tsquery must keep the full-text branch alive; with plainto_tsquery this rate would be near 100%");

@@ -1,8 +1,8 @@
 namespace IChat.Api.Endpoints.Documents.V1.DTOs;
 
 /// <summary>
-/// Công cụ debug ingestion: headingPath và embeddedText là thứ cần nhìn đầu tiên
-/// khi nghi chunker hỏng. Không bao giờ trả vector embedding.
+/// An ingestion debugging tool: headingPath and embeddedText are the first things to look at
+/// when the chunker is suspect. It never returns the embedding vector.
 /// </summary>
 public sealed class DocumentChunkResponse
 {

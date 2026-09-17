@@ -8,8 +8,8 @@ public sealed class ContextAssembler(ITokenEstimator tokenEstimator)
     private readonly ITokenEstimator _tokenEstimator = tokenEstimator;
 
     /// <summary>
-    /// Cắt theo ngân sách token từ chunk rank thấp nhất trở lên, và luôn cắt TRỌN chunk —
-    /// nửa chunk không có ngữ cảnh thì vô dụng với cả embedding lẫn LLM.
+    /// Trims to the token budget starting from the lowest-ranked chunk, and always drops a WHOLE chunk —
+    /// half a chunk has no context and is useless to both the embedding model and the LLM.
     /// </summary>
     public AssembledContext Assemble(IReadOnlyList<ExpandedContext> contexts, int maxTokens)
     {

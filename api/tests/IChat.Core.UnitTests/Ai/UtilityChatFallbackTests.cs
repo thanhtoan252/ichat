@@ -7,10 +7,10 @@ using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
 /// <summary>
-/// Khoá quy tắc "mọi field bỏ trống của UtilityChat kế thừa từ Chat".
-/// Quy tắc này được ba nơi đọc lại một cách độc lập — ChatClientFactory dựng client,
-/// ModelCatalog trả trạng thái cho admin, AiOptionsValidator chặn khởi động — nên nếu
-/// chúng lệch nhau thì admin endpoint sẽ báo "thiếu key" cho một provider đang chạy tốt.
+/// Pins the rule that every field UtilityChat leaves empty is inherited from Chat.
+/// Three places read that rule independently — ChatClientFactory builds the client, ModelCatalog reports the
+/// status to an admin, AiOptionsValidator blocks startup — so if they drift apart the admin endpoint reports
+/// "missing key" for a provider that works perfectly.
 /// </summary>
 [TestFixture]
 public sealed class UtilityChatFallbackTests
@@ -123,7 +123,7 @@ public sealed class UtilityChatFallbackTests
         ]);
 
         // Assert
-        // Anthropic gộp mọi khối system làm một; kế thừa sai provider sẽ dựng prompt sai.
+        // Anthropic merges every system block into one; inheriting the wrong provider builds the wrong prompt.
         factory.UtilityCapabilities.SupportsMultipleSystemMessages.Should().BeFalse();
     }
 

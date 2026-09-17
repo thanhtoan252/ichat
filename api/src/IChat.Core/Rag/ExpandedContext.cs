@@ -1,8 +1,8 @@
 namespace IChat.Core.Rag;
 
 /// <summary>
-/// Khối context liên tục sau khi gộp chunk gốc với các chunk lân cận.
-/// Citation vẫn trỏ về <see cref="AnchorChunkIds"/> — các chunk thực sự được retrieve.
+/// A contiguous context block, formed by merging the retrieved chunk with its neighbours.
+/// Citations still point back to <see cref="AnchorChunkIds"/> — the chunks that were actually retrieved.
 /// </summary>
 public sealed class ExpandedContext
 {

@@ -2,7 +2,7 @@ namespace IChat.Core.Services.Chat;
 
 using Microsoft.Extensions.AI;
 
-/// <summary>Kết quả của nửa đầu một lượt chat: đã có history và câu hỏi dùng để đi tìm.</summary>
+/// <summary>The result of a chat turn's first half: the history, and the question used to search.</summary>
 public sealed record ChatTurnQuery
 {
     public required IReadOnlyList<ChatMessage> History { get; init; }

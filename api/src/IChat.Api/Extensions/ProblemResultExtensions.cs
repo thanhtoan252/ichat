@@ -3,8 +3,8 @@ namespace IChat.Api.Extensions;
 using IChat.Core.Common;
 
 /// <summary>
-/// Lỗi nghiệp vụ từ service layer luôn ra ProblemDetails; "code" lặp lại ở extension
-/// để client chỉ phải phân nhánh trên một trường duy nhất.
+/// Business errors from the service layer always come out as ProblemDetails; "code" is repeated
+/// in an extension so the client only ever branches on a single field.
 /// </summary>
 public static class ProblemResultExtensions
 {
@@ -28,7 +28,7 @@ public static class ProblemResultExtensions
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
-            // Lỗi từ provider AI luôn map về 502, không bao giờ để lộ message gốc của SDK.
+            // Errors from an AI provider always map to 502, and the SDK's own message never leaks out.
             ErrorType.External => StatusCodes.Status502BadGateway,
             _ => StatusCodes.Status500InternalServerError
         };

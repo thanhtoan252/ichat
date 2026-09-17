@@ -10,6 +10,6 @@ public sealed class PaginatedList<TItem>
 
     public required int TotalCount { get; init; }
 
-    /// <summary>Suy ra từ những gì đã trả, nên không nói dối khi trang cuối ngắn hơn limit.</summary>
+    /// <summary>Derived from what was actually returned, so it does not lie when the last page is short.</summary>
     public bool HasMore => Offset + Items.Count < TotalCount;
 }

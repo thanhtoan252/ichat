@@ -1,17 +1,17 @@
 namespace IChat.Core.Common;
 
 /// <summary>
-/// Code là mã máy đọc được và cũng là title của ProblemDetails; Message dành cho người đọc.
-/// Client dựa vào Code để phân nhánh nên đừng đổi chuỗi đã công bố.
+/// Code is the machine-readable code and also the ProblemDetails title; Message is for humans.
+/// Clients branch on Code, so a published string must not be changed.
 /// </summary>
 public sealed class Error(string code, string message, ErrorType type = ErrorType.Unexpected)
 {
     public static readonly Error None = new(string.Empty, string.Empty, ErrorType.None);
 
-    /// <summary>Tầng API lặp lại mã này cho ValidationProblemDetails để client chỉ phân nhánh trên một trường.</summary>
+    /// <summary>The API layer repeats this code for ValidationProblemDetails so the client branches on a single field.</summary>
     public const string ValidationCode = "Validation";
 
-    /// <summary>Type vẫn là Validation, nên chỉ MÃ này phân biệt được 415 với 400.</summary>
+    /// <summary>Type stays Validation, so only THIS code tells a 415 apart from a 400.</summary>
     public const string UnsupportedMediaTypeCode = "UnsupportedMediaType";
 
     public string Code { get; } = code;
@@ -35,7 +35,7 @@ public sealed class Error(string code, string message, ErrorType type = ErrorTyp
     public static Error Unauthorized(string message) =>
         new("Unauthorized", message, ErrorType.Unauthorized);
 
-    /// <summary>ResultExtensions map riêng code này về 415 thay vì 400.</summary>
+    /// <summary>ResultExtensions maps this code to 415 instead of 400.</summary>
     public static Error UnsupportedMediaType(string message) =>
         new(UnsupportedMediaTypeCode, message, ErrorType.Validation);
 

@@ -13,9 +13,9 @@ public sealed class ConversationService(
     TimeProvider timeProvider) : IConversationService
 {
     /// <summary>
-    /// Một định nghĩa duy nhất cho shape của ConversationView. Giữ dạng Expression để EF
-    /// dịch được thành SELECT khi liệt kê, và compile sẵn một lần cho nhánh tạo mới — nơi
-    /// entity đã nằm trong bộ nhớ nên không có truy vấn nào để dịch.
+    /// A single definition of the ConversationView shape. It stays an Expression so EF can translate it into
+    /// a SELECT when listing, and it is compiled once for the create path — where the entity is already in
+    /// memory and there is no query to translate.
     /// </summary>
     private static readonly Expression<Func<Conversation, ConversationView>> ToViewExpression =
         conversation => new ConversationView
@@ -34,7 +34,7 @@ public sealed class ConversationService(
         var title = string.IsNullOrWhiteSpace(request.Title) ? ConversationTitle.Default : request.Title.Trim();
         if (currentUser.Id is not { } ownerId)
         {
-            return Result.Failure<ConversationView>(Error.Unauthorized("Không có phiên đăng nhập nào."));
+            return Result.Failure<ConversationView>(Error.Unauthorized("There is no active session."));
         }
 
         var conversation = Conversation.Create(ownerId, title, timeProvider.GetUtcNow());
@@ -47,9 +47,9 @@ public sealed class ConversationService(
 
     public async Task<Result<PaginatedList<ConversationView>>> GetListAsync(int offset, int limit, CancellationToken cancellationToken)
     {
-        // Hội thoại là riêng tư TUYỆT ĐỐI: kể cả admin cũng không đọc được của người khác.
-        // Quản trị viên quản lý tài khoản và tri thức, không đọc nội dung người ta hỏi.
-        // Đừng thêm nhánh "nếu IsAdmin thì thấy tất cả" vào đây.
+        // Conversations are STRICTLY private: not even an admin may read someone else's.
+        // Administrators manage accounts and knowledge, not the content of other people's questions.
+        // Do not add an "if IsAdmin then see everything" branch here.
         var ownerId = currentUser.Id;
         var source = dbContext.Conversations
             .AsNoTracking()
@@ -81,8 +81,8 @@ public sealed class ConversationService(
             .Select(item => (Guid?)item.UserId)
             .SingleOrDefaultAsync(cancellationToken);
 
-        // Hội thoại của người khác trả 404 chứ không phải 403: 403 sẽ xác nhận rằng
-        // id đó có tồn tại, cho phép dò ra ai đang hỏi gì.
+        // Someone else's conversation returns 404, not 403: a 403 would confirm that the id exists,
+        // which is enough to find out who is asking what.
         if (ownerId is null || !IsOwner(ownerId.Value))
         {
             return Result.Failure<PaginatedList<MessageView>>(Error.NotFound("Conversation", conversationId));
@@ -132,6 +132,6 @@ public sealed class ConversationService(
         });
     }
 
-    /// <summary>Không có ngoại lệ cho admin — xem ghi chú ở GetListAsync.</summary>
+    /// <summary>No exception for admins — see the note in GetListAsync.</summary>
     private bool IsOwner(Guid ownerId) => ownerId == currentUser.Id;
 }

@@ -6,8 +6,8 @@ using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
 /// <summary>
-/// Khác DOCX, PDF không có metadata heading: cấp heading phải suy từ font size và bold.
-/// Suy không được thì HeadingLevel = null, chấp nhận — thà không có còn hơn đoán sai.
+/// Unlike DOCX, a PDF carries no heading metadata: the heading level has to be inferred from font size and
+/// boldness. When it cannot be inferred, HeadingLevel stays null — better none than a wrong guess.
 /// </summary>
 public sealed class PdfDocumentParser : IDocumentParser
 {
@@ -47,7 +47,7 @@ public sealed class PdfDocumentParser : IDocumentParser
             });
         }
 
-        // Cỡ chữ thân bài = trung vị của mọi dòng; heading là dòng nổi bật hơn mức đó.
+        // Body font size = the median across all lines; a heading is a line that stands out above it.
         var bodySize = Median(lines.Select(line => line.FontSize).ToList());
         var headingSizes = lines
             .Where(line => IsHeadingCandidate(line, bodySize))
@@ -136,7 +136,7 @@ public sealed class PdfDocumentParser : IDocumentParser
             yield break;
         }
 
-        // Gom từ thành dòng theo toạ độ Y; ngưỡng nới theo chiều cao chữ.
+        // Group words into lines by their Y coordinate; the threshold scales with the text height.
         var groups = words
             .GroupBy(word => Math.Round(word.BoundingBox.Bottom / 3.0))
             .OrderByDescending(group => group.Key);

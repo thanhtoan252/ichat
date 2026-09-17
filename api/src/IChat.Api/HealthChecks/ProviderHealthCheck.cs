@@ -4,8 +4,8 @@ using IChat.Core.Abstractions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 /// <summary>
-/// Probe phải rẻ: chỉ kiểm tra cấu hình và sự hiện diện của credential, cache 30 giây.
-/// Không bao giờ gọi hẳn một lượt chat completion mỗi lần probe.
+/// The probe has to be cheap: it only checks configuration and the presence of a credential, cached
+/// for 30 seconds. It never runs a real chat completion on every probe.
 /// </summary>
 public sealed class ProviderHealthCheck(IModelCatalog modelCatalog, TimeProvider timeProvider) : IHealthCheck
 {

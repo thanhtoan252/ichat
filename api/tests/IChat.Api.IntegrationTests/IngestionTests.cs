@@ -130,7 +130,7 @@ public class IngestionTests(IChatApiFactory factory)
         chunks.Should().Contain(chunk => chunk.HeadingPath != null && chunk.HeadingPath.Contains("Cai dat he thong"));
         chunks.Should().OnlyContain(chunk => chunk.EmbeddedText.StartsWith("Tai lieu PDF"));
 
-        // page chỉ được điền khi nguồn là PDF.
+        // page is only populated when the source is a PDF.
         chunks.Should().Contain(chunk => chunk.Metadata.Contains("\"page\": 1"));
     }
 

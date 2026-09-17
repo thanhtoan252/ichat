@@ -11,8 +11,8 @@ using Xunit;
 public class AuthTests(IChatApiFactory factory)
 {
     /// <summary>
-    /// Không còn đăng ký công khai: tài khoản chỉ đến từ seeder, nên mọi test dưới đây
-    /// dựng sẵn một hàng users rồi đăng nhập. Mật khẩu là cái EnsureUserAsync đặt.
+    /// There is no public registration any more: accounts only come from the seeder, so every test below
+    /// creates a users row up front and then logs in. The password is whatever EnsureUserAsync sets.
     /// </summary>
     private static readonly object Credentials = new { userName = "alice", password = "password" };
 
@@ -24,8 +24,8 @@ public class AuthTests(IChatApiFactory factory)
     }
 
     /// <summary>
-    /// Tắt cookie container: các test dưới đây gửi cookie bằng tay để kiểm chính xác
-    /// token nào còn dùng được, nên client không được tự chèn thêm bản của nó.
+    /// Cookie container turned off: the tests below send cookies by hand to check exactly which token is
+    /// still usable, so the client must not slip in a copy of its own.
     /// </summary>
     private HttpClient CookielessClient() =>
         factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
@@ -57,25 +57,25 @@ public class AuthTests(IChatApiFactory factory)
         var body = await BodyAsync(response);
         body.GetProperty("accessToken").GetString().Should().NotBeNullOrWhiteSpace();
 
-        // Refresh token chỉ được sống trong cookie httpOnly, không bao giờ trong body.
+        // The refresh token may only live in the httpOnly cookie, never in the body.
         body.TryGetProperty("refreshToken", out _).Should().BeFalse();
 
-        // Profile không đi kèm phiên: nó có một nguồn duy nhất là GET /auth/me.
+        // The profile does not ride along with the session: its single source is GET /auth/me.
         body.TryGetProperty("user", out _).Should().BeFalse();
 
         var cookie = RefreshCookie(response);
         cookie.Should().NotBeNull();
         cookie!.ToLowerInvariant().Should()
-            .Contain("httponly", "script trên trang không được đọc refresh token")
-            .And.Contain("path=/api/v1/auth", "cookie không nên đi kèm mọi request khác")
+            .Contain("httponly", "a script on the page must not be able to read the refresh token")
+            .And.Contain("path=/api/v1/auth", "the cookie should not ride along with every other request")
             .And.Contain("samesite=strict");
     }
 
     [Fact]
     public async Task SignUp_IsNotExposedAtAll()
     {
-        // Tài khoản chỉ đến từ seeder. Nếu route này sống lại, ai cũng tự tạo được tài
-        // khoản và cả mô hình "chỉ dùng seeded account" sụp theo.
+        // Accounts only come from the seeder. If this route came back, anyone could create an account and the
+        // whole "seeded accounts only" model would collapse with it.
         await factory.ResetDatabaseAsync();
         var client = CookielessClient();
 
@@ -105,7 +105,7 @@ public class AuthTests(IChatApiFactory factory)
         wrongPassword.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
         unknownUser.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
 
-        // Hai câu trả lời phải không phân biệt được, nếu không thì đây là công cụ dò tài khoản.
+        // The two answers have to be indistinguishable, otherwise this is an account enumeration tool.
         (await BodyAsync(wrongPassword)).GetProperty("detail").GetString()
             .Should().Be((await BodyAsync(unknownUser)).GetProperty("detail").GetString());
     }
@@ -131,9 +131,9 @@ public class AuthTests(IChatApiFactory factory)
     }
 
     /// <summary>
-    /// Ghim tên claim, không phải chi tiết cài đặt: đổi ngược về URI dài của ClaimTypes là
-    /// mọi request phình thêm ~160 byte, còn ICurrentUser tìm "sub" sẽ không thấy gì và
-    /// im lặng coi mọi người là ẩn danh.
+    /// Pins the claim names, not an implementation detail: going back to the long ClaimTypes URIs adds ~160
+    /// bytes to every request, and ICurrentUser looking for "sub" would find nothing and silently treat
+    /// everyone as anonymous.
     /// </summary>
     [Fact]
     public async Task TheAccessToken_UsesShortJwtClaimNames()
@@ -154,7 +154,7 @@ public class AuthTests(IChatApiFactory factory)
 
         claims.EnumerateObject().Should().NotContain(
             claim => claim.Name.StartsWith("http", StringComparison.Ordinal),
-            "claim URI dài đi kèm mọi request");
+            "the long claim URIs travel with every request");
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class AuthTests(IChatApiFactory factory)
         var secondCookie = CookieHeader(refreshed);
         secondCookie.Should().NotBe(firstCookie);
 
-        // Token cũ đã bị thu hồi ngay khi đổi: một token bị đánh cắp chỉ dùng được một lần.
+        // The old token is revoked the moment it is exchanged: a stolen token works exactly once.
         (await SendWithCookieAsync(client, firstCookie)).StatusCode
             .Should().Be(HttpStatusCode.Unauthorized);
 

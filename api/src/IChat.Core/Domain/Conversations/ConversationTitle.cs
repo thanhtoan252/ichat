@@ -38,7 +38,7 @@ public static class ConversationTitle
 
         var cut = MaxLength - 3;
 
-        // Không cắt giữa một surrogate pair, nếu không emoji cuối tiêu đề thành ký tự hỏng.
+        // Never cut inside a surrogate pair, or an emoji at the end of the title turns into a broken character.
         if (char.IsHighSurrogate(condensed[cut - 1]))
         {
             cut--;

@@ -8,8 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 
 /// <summary>
-/// Thêm một hãng vào enum mà quên đăng ký factory sẽ chỉ vỡ lúc chạy thật, ngay giữa một
-/// request của người dùng. Test này bắt nó ngay lúc build.
+/// Adding a vendor to the enum but forgetting to register its factory would only break at runtime, in the
+/// middle of a real user's request. This test catches it at build time.
 /// </summary>
 [TestFixture]
 public class ProviderFactoryRegistryTests
@@ -50,7 +50,7 @@ public class ProviderFactoryRegistryTests
         var registered = provider.GetServices<IChatProviderClientFactory>().Select(factory => factory.Provider).ToList();
 
         // Assert
-        registered.Should().OnlyHaveUniqueItems("ChatClientFactory dựng dictionary theo Provider và sẽ ném lỗi nếu trùng khoá");
+        registered.Should().OnlyHaveUniqueItems("ChatClientFactory builds a dictionary keyed by Provider and throws on a duplicate key");
     }
 
     [Test]

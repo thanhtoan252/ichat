@@ -1,9 +1,9 @@
 namespace IChat.Api.Security;
 
 /// <summary>
-/// Refresh token sống trong cookie httpOnly chứ không trong localStorage: script trên
-/// trang không đọc được nó, nên một lỗ hổng XSS không đổi được thành phiên đăng nhập
-/// vĩnh viễn. Path bó hẹp vào /api/v1/auth để cookie không đi kèm mọi request khác.
+/// The refresh token lives in an httpOnly cookie rather than in localStorage: a script on the page
+/// cannot read it, so an XSS hole cannot be turned into a permanent session. The path is narrowed
+/// to /api/v1/auth so the cookie does not ride along with every other request.
 /// </summary>
 public static class RefreshTokenCookie
 {
@@ -28,8 +28,8 @@ public static class RefreshTokenCookie
         new()
         {
             HttpOnly = true,
-            // UI và API dùng chung origin (dev proxy, nginx ở production) nên Strict không
-            // cản trở gì; Secure bám theo scheme thật để http://localhost vẫn chạy được.
+            // The UI and the API share one origin (dev proxy, nginx in production), so Strict costs
+            // nothing; Secure follows the real scheme so http://localhost still works.
             Secure = httpContext.Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = Path,

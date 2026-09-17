@@ -9,8 +9,8 @@ using Moq;
 using NUnit.Framework;
 
 /// <summary>
-/// Thứ tự và tên chặng là contract đã công bố cho Retrieval Lab: nó đọc kết quả theo tên
-/// chặng, nên một chặng đổi tên, biến mất hay đổi chỗ đều làm hỏng màn hình debug.
+/// The order and the names of the stages are a published contract for the Retrieval Lab: it reads results by
+/// stage name, so a stage that is renamed, removed or moved breaks the debugging screen.
 /// </summary>
 [TestFixture]
 public class RetrievalStageOrderTests
@@ -33,8 +33,8 @@ public class RetrievalStageOrderTests
         outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
     }
 
-    // Nhánh bị tắt vẫn phải ghi một chặng RỖNG: Retrieval Lab phân biệt "chặng chạy mà không
-    // ra gì" với "chặng không tồn tại", và integration test đang chốt điều này.
+    // A disabled branch still has to record an EMPTY stage: the Retrieval Lab tells "the stage ran and found
+    // nothing" apart from "the stage does not exist", and an integration test pins this too.
     [Test]
     public async Task Execute_DisabledBranch_StillEmitsAnEmptyStage()
     {
@@ -86,7 +86,7 @@ public class RetrievalStageOrderTests
         var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
 
         // Assert
-        // Sau fusion một chunk có thể đến từ nhiều nhánh, nên gán một Source là nói dối.
+        // After fusion a chunk can come from several branches, so assigning one Source would be a lie.
         outcome.Stages.Single(stage => stage.Name == "fused").Top.Should().OnlyContain(candidate => candidate.Source == null);
         outcome.Stages.Single(stage => stage.Name == "vector").Top.Should().OnlyContain(candidate => candidate.Source == RetrievalSource.Vector);
         outcome.Stages.Single(stage => stage.Name == "fulltext").Top.Should().OnlyContain(candidate => candidate.Source == RetrievalSource.FullText);

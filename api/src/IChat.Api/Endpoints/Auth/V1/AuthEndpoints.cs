@@ -80,14 +80,14 @@ public static class AuthEndpoints
 
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return Error.Unauthorized("Không có phiên đăng nhập nào.").ToProblemResult();
+            return Error.Unauthorized("There is no active session.").ToProblemResult();
         }
 
         var result = await authService.RefreshAsync(refreshToken, cancellationToken);
 
         if (result.IsFailure)
         {
-            // Cookie đã hỏng thì xoá luôn, để client không lặp lại vòng refresh vô ích.
+            // A broken cookie is deleted outright, so the client does not repeat a pointless refresh loop.
             RefreshTokenCookie.Delete(httpContext);
 
             return result.Error.ToProblemResult();
@@ -114,7 +114,7 @@ public static class AuthEndpoints
     {
         if (currentUser.Id is not { } userId)
         {
-            return Error.Unauthorized("Không có phiên đăng nhập nào.").ToProblemResult();
+            return Error.Unauthorized("There is no active session.").ToProblemResult();
         }
 
         var result = await authService.GetProfileAsync(userId, cancellationToken);

@@ -53,7 +53,7 @@ public class ReciprocalRankFusionTests
     public void Fuse_ChunkPresentInBothLists_OutranksChunkInOneList()
     {
         // Arrange
-        // B đứng hạng 2 ở cả hai danh sách, A đứng hạng 1 chỉ ở một danh sách.
+        // B ranks 2nd in both lists, A ranks 1st in only one of them.
         IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B], [C, B]];
 
         // Act

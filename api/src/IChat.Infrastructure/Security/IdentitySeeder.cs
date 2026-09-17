@@ -8,7 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Tạo các tài khoản mặc định nếu database chưa có chúng.
+/// Creates the default accounts if the database does not have them yet.
 /// </summary>
 public sealed class IdentitySeeder(
     IServiceScopeFactory scopeFactory,
@@ -17,8 +17,8 @@ public sealed class IdentitySeeder(
 {
     private sealed record DefaultAccount(string UserName, string Password, string DisplayName, UserRole Role);
 
-    // Project showcase: hai tài khoản mặc định cố định trong code để chạy được ngay sau
-    // khi clone. Một hệ thống thật phải nạp từ secret store và bắt đổi mật khẩu lần đầu.
+    // A showcase project: two default accounts are hard-coded so a fresh clone runs straight away.
+    // A real system would load them from a secret store and force a password change on first login.
     private static readonly DefaultAccount[] DefaultAccounts =
     [
         new("admin", "admin", "Administrator", UserRole.Admin),
@@ -33,8 +33,8 @@ public sealed class IdentitySeeder(
             var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
             var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
-            // Xét từng tài khoản một chứ không phải "bảng users có rỗng không": một
-            // database đã có admin từ trước vẫn nhận được tài khoản demo mới thêm vào đây.
+            // Each account is considered on its own rather than asking "is the users table empty": a database
+            // that already has an admin still picks up a demo account newly added here.
             var existing = await dbContext.Users
                 .Select(user => user.UserName)
                 .ToListAsync(stoppingToken);
@@ -66,7 +66,7 @@ public sealed class IdentitySeeder(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            // Database chưa sẵn sàng không được làm sập host: health check sẽ báo lỗi đó.
+            // A database that is not ready yet must not bring the host down: the health check reports that.
             logger.LogError(exception, "Could not seed the default accounts.");
         }
     }

@@ -29,18 +29,18 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
-        // Chạy sau khi migration ở Program.cs xong, nên bảng users đã tồn tại.
+        // Runs after the migrations in Program.cs, so the users table already exists.
         services.AddHostedService<IdentitySeeder>();
 
         services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddScoped<ContextAssembler>();
 
-        // Định dạng bị từ chối có chủ đích chặn ngay đầu chuỗi, trước mọi parser.
+        // Deliberately rejected formats are stopped at the very front, ahead of every parser.
         services.AddSingleton<IUnsupportedFormatDetector, LegacyDocFormatDetector>();
 
-        // Mỗi format một implementation IDocumentParser; resolver chọn theo
-        // phần mở rộng + magic bytes chứ không tin content type client gửi.
-        // THỨ TỰ ĐĂNG KÝ quyết định thứ tự dò và danh sách đuôi file trong thông điệp 415.
+        // One IDocumentParser implementation per format; the resolver picks by extension plus magic bytes
+        // rather than trusting the content type the client sent.
+        // REGISTRATION ORDER decides the probing order and the list of extensions in the 415 message.
         services.AddSingleton<IDocumentParser, DocxDocumentParser>();
         services.AddSingleton<IDocumentParser, PdfDocumentParser>();
         services.AddSingleton<IDocumentParser, MarkdownDocumentParser>();
@@ -49,15 +49,15 @@ public static class DependencyInjection
 
         services.AddScoped<IStructuredChunker, HeadingAwareChunker>();
 
-        // Một instance cho cả hai interface trong cùng scope: hai lần AddScoped riêng lẻ
-        // sẽ dựng hai PostgresChunkStore khác nhau cho cùng một request.
+        // One instance behind both interfaces within a scope: two separate AddScoped calls would build two
+        // different PostgresChunkStore instances for the same request.
         services.AddScoped<PostgresChunkStore>();
         services.AddScoped<IChunkSearch>(provider => provider.GetRequiredService<PostgresChunkStore>());
         services.AddScoped<IChunkLoader>(provider => provider.GetRequiredService<PostgresChunkStore>());
 
-        // THỨ TỰ ĐĂNG KÝ LÀ CONTRACT: IEnumerable<T> của .NET trả về theo đúng thứ tự đăng ký,
-        // và Retrieval Lab đọc các chặng theo thứ tự vector, fulltext, trigram. Đổi thứ tự ba
-        // dòng dưới đây là đổi thứ tự chặng trong response của /api/v1/search.
+        // REGISTRATION ORDER IS A CONTRACT: .NET's IEnumerable<T> returns services in registration order, and
+        // the Retrieval Lab reads the stages as vector, fulltext, trigram. Reordering the three lines below
+        // reorders the stages in the /api/v1/search response.
         services.AddScoped<IRetrievalBranch, VectorSearchBranch>();
         services.AddScoped<IRetrievalBranch, FullTextSearchBranch>();
         services.AddScoped<IRetrievalBranch, TrigramSearchBranch>();

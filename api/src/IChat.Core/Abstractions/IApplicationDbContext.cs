@@ -5,7 +5,7 @@ using IChat.Core.Domain.Documents;
 using IChat.Core.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 
-/// <summary>DbContext chính là Unit of Work — không bọc thêm generic repository.</summary>
+/// <summary>The DbContext IS the unit of work — no generic repository wrapped around it.</summary>
 public interface IApplicationDbContext
 {
     DbSet<Document> Documents { get; }

@@ -2,7 +2,7 @@ namespace IChat.Core.Rag;
 
 public static class NeighborExpansion
 {
-    /// <summary>Các cặp (documentId, chunkIndex) cần nạp thêm — dùng cho MỘT truy vấn gộp, không N+1.</summary>
+    /// <summary>The (documentId, chunkIndex) pairs still to load — for ONE batched query, never N+1.</summary>
     public static IReadOnlyList<(Guid DocumentId, int ChunkIndex)> PlanNeighborKeys(IReadOnlyList<ScoredChunk> selected, int before, int after)
     {
         ArgumentNullException.ThrowIfNull(selected);
@@ -83,7 +83,7 @@ public static class NeighborExpansion
             {
                 var span = spans[i];
 
-                // Gộp khi hai khoảng chạm hoặc chồng nhau, để không đưa cùng đoạn văn vào context hai lần.
+                // Merge when two ranges touch or overlap, so the same passage does not enter the context twice.
                 if (span.Start <= current.End + 1)
                 {
                     current = new Group
@@ -154,8 +154,8 @@ public static class NeighborExpansion
     }
 
     /// <summary>
-    /// Chunk kề nhau chồng lấn OverlapTokens, nên phần đuôi của khối trước trùng phần đầu khối sau.
-    /// Cắt phần trùng để không đưa cùng một đoạn văn vào context hai lần.
+    /// Adjacent chunks overlap by OverlapTokens, so the tail of one block repeats the head of the next.
+    /// Trim the repeated part so the same passage does not enter the context twice.
     /// </summary>
     public static string JoinTrimmingOverlap(IReadOnlyList<string> parts)
     {

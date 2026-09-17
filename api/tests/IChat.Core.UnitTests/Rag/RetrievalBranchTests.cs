@@ -88,7 +88,7 @@ public class RetrievalBranchTests
         enabled.Should().Be(expected);
     }
 
-    // TrigramCandidates = 0 là công tắc tắt nhánh 3 (mặc định của appsettings).
+    // TrigramCandidates = 0 is the switch that turns the third branch off (the appsettings default).
     [TestCase(SearchMode.Hybrid)]
     [TestCase(SearchMode.Trigram)]
     public void TrigramBranch_IsDisabled_WhenTrigramCandidatesIsZero(SearchMode mode)
@@ -132,8 +132,8 @@ public class RetrievalBranchTests
             Times.Once);
     }
 
-    // Embedding hỏng là bước phụ có thể degrade: nhánh tự báo Degraded thay vì ném lỗi ra
-    // pipeline, để full-text và trigram vẫn trả lời được.
+    // A failing embedding call is a secondary step that may degrade: the branch reports Degraded for itself
+    // instead of throwing into the pipeline, so full-text and trigram can still answer.
     [Test]
     public async Task VectorBranch_EmbeddingFails_ReturnsDegradedWithNoCandidates()
     {
