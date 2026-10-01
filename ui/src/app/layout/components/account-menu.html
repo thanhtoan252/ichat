@@ -1,0 +1,23 @@
+@if (user(); as account) {
+  <span
+    class="bg-muted text-muted-foreground grid size-7 shrink-0 place-items-center rounded-full"
+  >
+    <ng-icon [name]="account.role === 'Admin' ? 'lucideShield' : 'lucideUser'" class="text-sm" />
+  </span>
+
+  <span class="grid min-w-0 flex-1 leading-tight">
+    <span class="truncate text-xs font-medium">{{ account.displayName }}</span>
+    <span class="text-muted-foreground truncate text-[0.6875rem]">{{ account.role }}</span>
+  </span>
+
+  <button
+    hlmBtn
+    variant="ghost"
+    size="icon"
+    class="text-muted-foreground size-7 shrink-0"
+    aria-label="Sign out"
+    (click)="signOut.emit()"
+  >
+    <ng-icon name="lucideLogOut" class="text-sm" />
+  </button>
+}

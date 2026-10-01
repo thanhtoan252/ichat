@@ -1,0 +1,196 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+@import 'tw-animate-css';
+/* You can add global styles to this file, and also import other style files */
+
+:root {
+  color-scheme: light;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.141 0.005 285.823);
+  --sidebar-primary: oklch(0.21 0.006 285.885);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.967 0.001 286.375);
+  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-border: oklch(0.92 0.004 286.32);
+  --sidebar-ring: oklch(0.705 0.015 286.067);
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+  --sidebar: oklch(0.21 0.006 285.885);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.21 0.006 285.885);
+  --sidebar-accent: oklch(0.274 0.006 286.033);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.552 0.016 285.938);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply h-dvh overflow-hidden;
+  }
+
+  /* Firefox has no ::-webkit-scrollbar; scrollbar-width covers it. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 0.5rem;
+    height: 0.5rem;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* Markdown produced by the assistant: the renderer emits plain tags, so the
+     typographic rhythm has to live here rather than on per-element classes. */
+  .prose-answer {
+    @apply text-sm leading-relaxed;
+  }
+
+  .prose-answer > * + * {
+    @apply mt-3;
+  }
+
+  .prose-answer h1,
+  .prose-answer h2,
+  .prose-answer h3,
+  .prose-answer h4 {
+    @apply mt-5 mb-2 font-semibold tracking-tight text-foreground;
+  }
+
+  .prose-answer h1 {
+    @apply text-lg;
+  }
+  .prose-answer h2 {
+    @apply text-base;
+  }
+  .prose-answer h3,
+  .prose-answer h4 {
+    @apply text-sm;
+  }
+
+  .prose-answer ul {
+    @apply list-disc space-y-1 ps-5;
+  }
+  .prose-answer ol {
+    @apply list-decimal space-y-1 ps-5;
+  }
+  .prose-answer li > ul,
+  .prose-answer li > ol {
+    @apply mt-1;
+  }
+
+  .prose-answer a {
+    @apply text-primary underline underline-offset-4;
+  }
+  .prose-answer strong {
+    @apply font-semibold text-foreground;
+  }
+
+  .prose-answer blockquote {
+    @apply border-s-2 border-border ps-4 text-muted-foreground italic;
+  }
+
+  .prose-answer code:not(pre code) {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.8125rem];
+  }
+
+  .prose-answer pre {
+    @apply overflow-x-auto rounded-lg border bg-muted/50 p-3 font-mono text-xs leading-relaxed;
+  }
+
+  .prose-answer table {
+    @apply w-full border-collapse text-left text-xs;
+  }
+
+  .prose-answer th,
+  .prose-answer td {
+    @apply border border-border px-2 py-1.5 align-top;
+  }
+
+  .prose-answer th {
+    @apply bg-muted/60 font-medium;
+  }
+
+  .prose-answer hr {
+    @apply border-border;
+  }
+
+  /* The streaming caret is appended by the markdown renderer as the last node. */
+  .prose-answer .streaming-caret {
+    @apply ms-0.5 inline-block h-4 w-[2px] translate-y-0.5 animate-pulse rounded-full bg-primary align-baseline;
+  }
+}

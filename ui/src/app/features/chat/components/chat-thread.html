@@ -1,0 +1,30 @@
+@if (loading()) {
+  <div class="space-y-6" aria-busy="true">
+    @for (row of skeletonRows; track row) {
+      <div class="space-y-2">
+        <hlm-skeleton class="ms-auto h-8 w-2/5 rounded-xl" />
+        <hlm-skeleton class="h-3.5 w-[90%]" />
+        <hlm-skeleton class="h-3.5 w-[75%]" />
+      </div>
+    }
+  </div>
+} @else {
+  <div class="flex flex-col gap-4">
+    @for (message of messages(); track message.id) {
+      <app-message-turn
+        [message]="message"
+        (citationClick)="citationSelect.emit($event)"
+        (copyRequest)="copyRequest.emit($event)"
+      />
+    }
+
+    @if (pending(); as turn) {
+      <app-streaming-turn
+        [turn]="turn"
+        (citationClick)="citationSelect.emit({ markerIndex: $event, messageId: null })"
+        (retry)="retryFailure.emit()"
+        (dismiss)="dismissFailure.emit()"
+      />
+    }
+  </div>
+}

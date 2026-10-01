@@ -1,0 +1,41 @@
+<form class="grid gap-4" [formGroup]="form" (submit)="onSubmit($event)">
+  <div class="grid gap-1.5">
+    <label hlmLabel for="userName">Username</label>
+    <input
+      hlmInput
+      id="userName"
+      formControlName="userName"
+      autocomplete="username"
+      spellcheck="false"
+      class="w-full"
+    />
+  </div>
+
+  <div class="grid gap-1.5">
+    <label hlmLabel for="password">Password</label>
+    <input
+      hlmInput
+      id="password"
+      type="password"
+      formControlName="password"
+      autocomplete="current-password"
+      class="w-full"
+    />
+  </div>
+
+  @if (failure(); as message) {
+    <p class="text-destructive flex items-start gap-1.5 text-xs" role="alert">
+      <ng-icon name="lucideCircleAlert" class="mt-px shrink-0 text-sm" />
+      <span>{{ message }}</span>
+    </p>
+  }
+
+  <button hlmBtn type="submit" class="w-full gap-2" [disabled]="form.invalid || submitting()">
+    @if (submitting()) {
+      <ng-icon name="lucideLoaderCircle" class="animate-spin text-base" />
+    } @else {
+      <ng-icon name="lucideLogIn" class="text-base" />
+    }
+    Sign in
+  </button>
+</form>

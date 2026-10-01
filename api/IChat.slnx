@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IChat.Api/IChat.Api.csproj" />
+    <Project Path="src/IChat.Core/IChat.Core.csproj" />
+    <Project Path="src/IChat.Infrastructure/IChat.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IChat.Api.IntegrationTests/IChat.Api.IntegrationTests.csproj" />
+    <Project Path="tests/IChat.Core.UnitTests/IChat.Core.UnitTests.csproj" />
+    <Project Path="tests/IChat.Providers.ContractTests/IChat.Providers.ContractTests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/IChat.RagEval/IChat.RagEval.csproj" />
+  </Folder>
+</Solution>

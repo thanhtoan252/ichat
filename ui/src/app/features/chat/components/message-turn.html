@@ -1,0 +1,67 @@
+@if (message().role === 'User') {
+  <div hlmMessage align="end" class="py-1.5">
+    <div hlmMessageContent>
+      <div hlmBubble align="end" variant="tinted">
+        <div hlmBubbleContent class="whitespace-pre-wrap">{{ message().content }}</div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div hlmMessage class="py-1.5">
+    <div hlmMessageContent>
+      <app-answer-content
+        [content]="message().content"
+        [sourceCount]="citationCeiling()"
+        (citationClick)="citationClick.emit({ markerIndex: $event, messageId: message().id })"
+      />
+
+      @if (citations().length > 0) {
+        <div class="mt-3 flex flex-wrap items-center gap-1.5">
+          <span class="text-muted-foreground me-0.5 text-xs">Sources</span>
+          @for (citation of citations(); track citation.chunkId) {
+            <button
+              type="button"
+              hlmBadge
+              variant="secondary"
+              class="hover:bg-secondary/70 max-w-[16rem] cursor-pointer gap-1.5 font-normal"
+              (click)="
+                citationClick.emit({ markerIndex: citation.markerIndex, messageId: message().id })
+              "
+            >
+              <span
+                class="bg-primary/15 text-primary grid size-4 shrink-0 place-items-center rounded-full text-[0.625rem] font-medium"
+              >
+                {{ citation.markerIndex }}
+              </span>
+              <span class="truncate">{{ citation.documentTitle }}</span>
+            </button>
+          }
+        </div>
+      }
+
+      <div hlmMessageFooter class="mt-2 gap-2 px-0">
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          class="size-7"
+          aria-label="Copy answer"
+          (click)="copyRequest.emit(message().content)"
+        >
+          <ng-icon name="lucideCopy" class="text-sm" />
+        </button>
+
+        <span>{{ message().createdAt | date: 'HH:mm' }}</span>
+
+        @if (meta(); as detail) {
+          <span
+            class="cursor-default underline decoration-dotted underline-offset-4"
+            [hlmTooltip]="detail.long"
+          >
+            {{ detail.short }}
+          </span>
+        }
+      </div>
+    </div>
+  </div>
+}

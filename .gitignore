@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+.DS_Store
+.idea/
+*.local
+*.log
+.vite
+coverage
+
+# Local env files (chứa key thật) - chỉ commit các file .example
+.env
+.env.*
+!.env.*.example

@@ -1,0 +1,69 @@
+<table hlmTable class="w-full min-w-[46rem] table-fixed">
+  <thead hlmTHead>
+    <tr hlmTr>
+      <th hlmTh class="w-[38%]">Document</th>
+      <th hlmTh class="w-[16%]">Status</th>
+      <th hlmTh class="w-[10%] text-end">Chunks</th>
+      <th hlmTh class="w-[10%] text-end">Size</th>
+      <th hlmTh class="w-[18%]">Indexed</th>
+      @if (canManage()) {
+        <th hlmTh class="w-[8%]"></th>
+      }
+    </tr>
+  </thead>
+  <tbody hlmTBody>
+    @for (document of documents(); track document.id) {
+      <tr hlmTr>
+        <td hlmTd>
+          <p class="truncate font-medium" [title]="document.title">{{ document.title }}</p>
+          <p class="text-muted-foreground truncate text-xs" [title]="document.fileName">
+            {{ document.fileName }}
+          </p>
+        </td>
+        <td hlmTd>
+          <span
+            hlmBadge
+            class="gap-1.5"
+            [variant]="statusStyle(document.status).variant"
+            [hlmTooltip]="document.errorMessage ?? document.status"
+          >
+            <ng-icon
+              [name]="statusStyle(document.status).icon"
+              [class.animate-spin]="document.status === 'Processing'"
+            />
+            {{ document.status }}
+          </span>
+        </td>
+        <td hlmTd class="text-end tabular-nums">{{ document.chunkCount | number }}</td>
+        <td hlmTd class="text-muted-foreground text-end tabular-nums">
+          {{ formatSize(document.sizeInBytes) }}
+        </td>
+        <td hlmTd class="text-muted-foreground text-xs">
+          {{ document.indexedAt ? (document.indexedAt | date: 'dd MMM, HH:mm') : '—' }}
+        </td>
+        @if (canManage()) {
+          <td hlmTd>
+            <button
+              hlmBtn
+              variant="ghost"
+              size="icon"
+              class="text-muted-foreground hover:text-destructive size-7"
+              [attr.aria-label]="'Delete ' + document.title"
+              (click)="remove.emit(document)"
+            >
+              <ng-icon name="lucideTrash2" class="text-sm" />
+            </button>
+          </td>
+        }
+      </tr>
+
+      @if (document.status === 'Failed' && document.errorMessage) {
+        <tr hlmTr>
+          <td hlmTd [attr.colspan]="canManage() ? 6 : 5" class="text-destructive pt-0 text-xs">
+            {{ document.errorMessage }}
+          </td>
+        </tr>
+      }
+    }
+  </tbody>
+</table>

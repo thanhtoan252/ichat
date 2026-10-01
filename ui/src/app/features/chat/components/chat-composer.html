@@ -1,0 +1,54 @@
+<div
+  class="bg-background focus-within:border-ring focus-within:ring-ring/40 relative rounded-2xl border shadow-sm transition-[color,box-shadow] focus-within:ring-[3px]"
+>
+  <textarea
+    #input
+    rows="1"
+    class="placeholder:text-muted-foreground field-sizing-content max-h-[220px] w-full resize-none bg-transparent px-4 py-3.5 pe-14 text-sm leading-relaxed outline-none disabled:opacity-60"
+    [attr.aria-label]="'Ask a question'"
+    [placeholder]="placeholder()"
+    [disabled]="disabled()"
+    [value]="draft()"
+    (input)="onInput($event)"
+    (keydown)="onKeydown($event)"
+  ></textarea>
+
+  <div class="absolute end-2.5 bottom-2.5">
+    @if (streaming()) {
+      <button
+        hlmBtn
+        size="icon"
+        variant="secondary"
+        class="size-9 rounded-xl"
+        aria-label="Stop generating"
+        (click)="stop.emit()"
+      >
+        <ng-icon name="lucideSquare" class="text-sm" />
+      </button>
+    } @else {
+      <button
+        hlmBtn
+        size="icon"
+        class="size-9 rounded-xl"
+        aria-label="Send question"
+        [disabled]="!canSend()"
+        (click)="submit()"
+      >
+        <ng-icon name="lucideSend" class="text-base" />
+      </button>
+    }
+  </div>
+</div>
+
+<p
+  class="text-muted-foreground mt-2 hidden items-center justify-center gap-1.5 text-xs pointer-fine:flex"
+>
+  <kbd hlmKbd>Enter</kbd>
+  to send
+  <span class="text-muted-foreground/40">·</span>
+  <kbd hlmKbdGroup>
+    <kbd hlmKbd>Shift</kbd>
+    <kbd hlmKbd>Enter</kbd>
+  </kbd>
+  for a new line
+</p>
