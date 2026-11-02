@@ -1,20 +1,10 @@
-# Da nha cung cap LLM
+# Tich hop OpenAI
 
-## Tach chat va embedding
+Chat, utility chat va embedding deu goi OpenAI API. Cac model duoc cau hinh rieng trong
+`Ai:Chat:Model`, `Ai:UtilityChat:Model` va `Ai:Embedding:Model`; API key duoc nap tu
+`Ai:Chat:ApiKey` va `Ai:Embedding:ApiKey`. Utility chat co the dung cung key chat neu
+khong khai bao key rieng.
 
-Cau hinh chat va cau hinh embedding la hai khoi doc lap va co the chon khac nha cung cap.
-Ly do rat cu the: Anthropic khong cung cap API embedding.
-Neu muon Claude sinh cau tra loi thi vector van phai lay tu cho khac, vi du OpenAI hoac Voyage.
-
-## Cac nha cung cap duoc ho tro
-
-He thong ho tro OpenAI, Azure OpenAI, Anthropic va Google Gemini.
-Moi nha cung cap deu bat buoc phai co API key; rieng Azure OpenAI con bat buoc phai co Endpoint.
-
-## So chieu vector
-
-Cot vector trong pgvector co dinh so chieu o cap schema, mac dinh la 1536 chieu.
-Model text-embedding-3-small cho 1536 chieu, con text-embedding-3-large cho 3072 chieu.
-
-Doi model embedding la breaking change o tang du lieu. Phai chay lai POST /api/v1/admin/reindex,
-neu khong vector cu va moi se nam o hai khong gian khac nhau va search sai mot cach im lang.
+Cot vector cua pgvector co dinh 1536 chieu. `text-embedding-3-small` duoc cau hinh tra ve
+1536 chieu. Doi model embedding can reindex toan bo tai lieu de vector cu va moi khong bi
+tron lan.

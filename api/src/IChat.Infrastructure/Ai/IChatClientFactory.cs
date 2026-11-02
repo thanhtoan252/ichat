@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 
 /// <summary>
 /// Returns the RAW client only. The middleware (caching, telemetry, logging, function invocation) is
-/// attached once at the DI registration layer so every provider behaves identically.
+/// attached once at the DI registration layer.
 /// </summary>
 public interface IChatClientFactory
 {
@@ -12,7 +12,4 @@ public interface IChatClientFactory
 
     IChatClient CreateUtility();
 
-    ChatProviderCapabilities Capabilities { get; }
-
-    ChatProviderCapabilities UtilityCapabilities { get; }
 }

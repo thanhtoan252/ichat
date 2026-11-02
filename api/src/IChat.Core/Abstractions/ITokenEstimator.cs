@@ -1,8 +1,7 @@
 namespace IChat.Core.Abstractions;
 
 /// <summary>
-/// Estimates tokens without depending on any one vendor's tokenizer, because the system supports
-/// several vendors and each of them tokenizes differently.
+/// Estimates tokens locally without making an extra OpenAI API call.
 /// </summary>
 public interface ITokenEstimator
 {

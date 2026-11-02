@@ -2,7 +2,6 @@ namespace IChat.Core.UnitTests.Ai;
 
 using FluentAssertions;
 using IChat.Infrastructure.Ai;
-using IChat.Infrastructure.Ai.Providers;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
@@ -21,33 +20,20 @@ public sealed class UtilityChatFallbackTests
     public void Snapshot_UtilityProvider_InheritsFromChat_WhenNotConfigured()
     {
         // Arrange
-        var options = OptionsFor(utilityProvider: null);
+        var options = OptionsFor();
 
         // Act
         var snapshot = new ModelCatalog(options).GetSnapshot();
 
         // Assert
-        snapshot.UtilityChat.Provider.Should().Be(ChatProvider.Anthropic.ToString());
-    }
-
-    [Test]
-    public void Snapshot_UtilityProvider_WinsOverChat_WhenConfigured()
-    {
-        // Arrange
-        var options = OptionsFor(utilityProvider: ChatProvider.OpenAI);
-
-        // Act
-        var snapshot = new ModelCatalog(options).GetSnapshot();
-
-        // Assert
-        snapshot.UtilityChat.Provider.Should().Be(ChatProvider.OpenAI.ToString());
+        snapshot.UtilityChat.Provider.Should().Be("OpenAI");
     }
 
     [Test]
     public void Snapshot_UtilityApiKey_InheritsFromChat_SoAvailabilityIsNotAFalseAlarm()
     {
         // Arrange
-        var options = OptionsFor(utilityProvider: null, chatApiKey: PresentKey, utilityApiKey: null);
+        var options = OptionsFor(chatApiKey: PresentKey, utilityApiKey: null);
 
         // Act
         var snapshot = new ModelCatalog(options).GetSnapshot();
@@ -58,47 +44,10 @@ public sealed class UtilityChatFallbackTests
     }
 
     [Test]
-    public void Snapshot_UtilityEndpoint_InheritsFromChat_ForAProviderThatRequiresOne()
-    {
-        // Arrange
-        var options = OptionsFor(
-            utilityProvider: null,
-            chatApiKey: PresentKey,
-            utilityApiKey: null,
-            chatProvider: ChatProvider.AzureOpenAI,
-            chatEndpoint: "https://contoso.openai.azure.com/");
-
-        // Act
-        var snapshot = new ModelCatalog(options).GetSnapshot();
-
-        // Assert
-        snapshot.UtilityChat.Available.Should().BeTrue();
-    }
-
-    [Test]
-    public void Snapshot_UtilityEndpoint_MissingOnBothSides_ReportsTheReason()
-    {
-        // Arrange
-        var options = OptionsFor(
-            utilityProvider: null,
-            chatApiKey: PresentKey,
-            utilityApiKey: null,
-            chatProvider: ChatProvider.AzureOpenAI,
-            chatEndpoint: null);
-
-        // Act
-        var snapshot = new ModelCatalog(options).GetSnapshot();
-
-        // Assert
-        snapshot.UtilityChat.Available.Should().BeFalse();
-        snapshot.UtilityChat.Reason.Should().Be("Endpoint is missing.");
-    }
-
-    [Test]
     public void Snapshot_UtilityApiKey_MissingOnBothSides_ReportsTheReason()
     {
         // Arrange
-        var options = OptionsFor(utilityProvider: null, chatApiKey: null, utilityApiKey: null);
+        var options = OptionsFor(chatApiKey: null, utilityApiKey: null);
 
         // Act
         var snapshot = new ModelCatalog(options).GetSnapshot();
@@ -109,29 +58,10 @@ public sealed class UtilityChatFallbackTests
     }
 
     [Test]
-    public void Factory_UtilityCapabilities_FollowTheInheritedProvider()
-    {
-        // Arrange
-        var options = OptionsFor(utilityProvider: null);
-
-        // Act
-        var factory = new ChatClientFactory(options, [
-            new OpenAIChatClientFactory(),
-            new AzureOpenAIChatClientFactory(),
-            new AnthropicChatClientFactory(),
-            new GoogleChatClientFactory()
-        ]);
-
-        // Assert
-        // Anthropic merges every system block into one; inheriting the wrong provider builds the wrong prompt.
-        factory.UtilityCapabilities.SupportsMultipleSystemMessages.Should().BeFalse();
-    }
-
-    [Test]
     public void Validator_ReportsTheUtilitySection_WhenTheInheritedApiKeyIsMissing()
     {
         // Arrange
-        var options = OptionsFor(utilityProvider: null, chatApiKey: null, utilityApiKey: null).Value;
+        var options = OptionsFor(chatApiKey: null, utilityApiKey: null).Value;
 
         // Act
         var result = new AiOptionsValidator().Validate(name: null, options);
@@ -145,7 +75,7 @@ public sealed class UtilityChatFallbackTests
     public void Validator_AcceptsTheUtilitySection_WhenTheKeyIsInheritedFromChat()
     {
         // Arrange
-        var options = OptionsFor(utilityProvider: null, chatApiKey: PresentKey, utilityApiKey: null).Value;
+        var options = OptionsFor(chatApiKey: PresentKey, utilityApiKey: null).Value;
 
         // Act
         var result = new AiOptionsValidator().Validate(name: null, options);
@@ -155,24 +85,18 @@ public sealed class UtilityChatFallbackTests
     }
 
     private static IOptions<AiOptions> OptionsFor(
-        ChatProvider? utilityProvider,
         string? chatApiKey = null,
-        string? utilityApiKey = null,
-        ChatProvider chatProvider = ChatProvider.Anthropic,
-        string? chatEndpoint = null)
+        string? utilityApiKey = null)
     {
         return Options.Create(new AiOptions
         {
-            Chat = new ChatProviderOptions
+            Chat = new ChatModelOptions
             {
-                Provider = chatProvider,
                 Model = "chat-model",
-                Endpoint = chatEndpoint,
                 ApiKey = chatApiKey
             },
             UtilityChat = new UtilityChatOptions
             {
-                Provider = utilityProvider,
                 Model = "utility-model",
                 ApiKey = utilityApiKey
             },

@@ -13,22 +13,15 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
         ValidateChat(options.ResolveChat(), "Ai:Chat", failures);
         ValidateChat(options.ResolveUtilityChat(), "Ai:UtilityChat", failures);
 
-        var embeddingCapabilities = EmbeddingProviderCapabilities.For(options.Embedding.Provider);
-
         if (string.IsNullOrWhiteSpace(options.Embedding.Model))
         {
             failures.Add("Ai:Embedding:Model is required. Never hardcode a model name in C#.");
         }
 
-        if (embeddingCapabilities.RequiresEndpoint && string.IsNullOrWhiteSpace(options.Embedding.Endpoint))
-        {
-            failures.Add($"Ai:Embedding:Endpoint is required for provider {options.Embedding.Provider}.");
-        }
-
-        if (embeddingCapabilities.RequiresApiKey && string.IsNullOrWhiteSpace(options.Embedding.ApiKey))
+        if (string.IsNullOrWhiteSpace(options.Embedding.ApiKey))
         {
             failures.Add(
-                $"Missing API key for embedding provider {options.Embedding.Provider}: " +
+                "Missing OpenAI API key for embeddings: " +
                 "set Ai:Embedding:ApiKey (env var Ai__Embedding__ApiKey, user secrets, or a secret store).");
         }
 
@@ -49,22 +42,15 @@ public sealed class AiOptionsValidator : IValidateOptions<AiOptions>
 
     private static void ValidateChat(ResolvedChatSettings settings, string section, List<string> failures)
     {
-        var capabilities = settings.Capabilities;
-
         if (string.IsNullOrWhiteSpace(settings.Model))
         {
             failures.Add($"{section}:Model is required. Never hardcode a model name in C#.");
         }
 
-        if (capabilities.RequiresEndpoint && string.IsNullOrWhiteSpace(settings.Endpoint))
-        {
-            failures.Add($"{section}:Endpoint is required for provider {settings.Provider}.");
-        }
-
-        if (capabilities.RequiresApiKey && string.IsNullOrWhiteSpace(settings.ApiKey))
+        if (string.IsNullOrWhiteSpace(settings.ApiKey))
         {
             failures.Add(
-                $"Missing API key for {section} (provider {settings.Provider}): " +
+                $"Missing OpenAI API key for {section}: " +
                 $"set {section}:ApiKey (env var {section.Replace(":", "__")}__ApiKey, user secrets, or a secret store).");
         }
     }

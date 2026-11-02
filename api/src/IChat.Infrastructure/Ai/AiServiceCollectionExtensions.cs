@@ -12,9 +12,7 @@ using Microsoft.Extensions.Options;
 public static class AiServiceCollectionExtensions
 {
     /// <summary>
-    /// Where all of the AI wiring happens. Vendor names appear only under Ai/Providers — one file per vendor —
-    /// so adding a vendor means one new file and one registration line here.
-    /// Not a single line in Core or Api knows about OpenAI/Anthropic/Google.
+    /// Where all OpenAI AI clients and their shared middleware are registered.
     /// </summary>
     public static IServiceCollection AddIChatAi(this IServiceCollection services, IConfiguration configuration)
     {
@@ -30,16 +28,8 @@ public static class AiServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-        // One implementation per vendor; ChatClientFactory / EmbeddingGeneratorFactory only look the provider up
-        // by enum. Forgetting to register a vendor fails ProviderFactoryRegistryTests.
-        services.AddSingleton<IChatProviderClientFactory, OpenAIChatClientFactory>();
-        services.AddSingleton<IChatProviderClientFactory, AzureOpenAIChatClientFactory>();
-        services.AddSingleton<IChatProviderClientFactory, AnthropicChatClientFactory>();
-        services.AddSingleton<IChatProviderClientFactory, GoogleChatClientFactory>();
-
-        services.AddSingleton<IEmbeddingProviderClientFactory, OpenAIEmbeddingClientFactory>();
-        services.AddSingleton<IEmbeddingProviderClientFactory, AzureOpenAIEmbeddingClientFactory>();
-        services.AddSingleton<IEmbeddingProviderClientFactory, GoogleEmbeddingClientFactory>();
+        services.AddSingleton<OpenAIChatClientFactory>();
+        services.AddSingleton<OpenAIEmbeddingClientFactory>();
 
         services.AddSingleton<IChatClientFactory, ChatClientFactory>();
         services.AddSingleton<IEmbeddingGeneratorFactory, EmbeddingGeneratorFactory>();
@@ -84,7 +74,7 @@ public static class AiServiceCollectionExtensions
 
     /// <summary>
     /// The middleware is attached once here rather than inside each branch of the factory, so caching,
-    /// telemetry and logging behave identically no matter which provider is running.
+    /// telemetry and logging are attached once for OpenAI chat clients.
     /// </summary>
     private static void ApplyPipeline(ChatClientBuilder builder, PipelineOptions pipeline, string telemetrySourceName)
     {
@@ -114,8 +104,6 @@ public static class AiServiceCollectionExtensions
         {
             RerankMode.Llm => ActivatorUtilities.CreateInstance<LlmReranker>(serviceProvider),
 
-            // Cohere/Voyage would mean adding another vendor to the system; not enabled in this version,
-            // so it degrades to a no-op instead of throwing at runtime.
             _ => new NoOpReranker()
         };
     }

@@ -6,22 +6,15 @@ namespace IChat.Infrastructure.Ai;
 /// </summary>
 public sealed record ResolvedChatSettings
 {
-    public required ChatProvider Provider { get; init; }
-
     public required string Model { get; init; }
 
     public required int MaxOutputTokens { get; init; }
 
     public required int TimeoutSeconds { get; init; }
 
-    public string? Endpoint { get; init; }
-
     public string? ApiKey { get; init; }
 
-    public ChatProviderCapabilities Capabilities => ChatProviderCapabilities.For(Provider);
-
-    /// <summary>The name shown in error messages; it matches the config section's branch name.</summary>
-    public string Label => Provider.ToString();
+    public string Label => "OpenAI";
 
     /// <summary>
     /// AiOptionsValidator already rejects a missing key at startup; this is the safety net for the paths

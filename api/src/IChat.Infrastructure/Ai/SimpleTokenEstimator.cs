@@ -4,8 +4,7 @@ using IChat.Core.Abstractions;
 
 /// <summary>
 /// Approximates ~4 characters per token for Latin text and ~2 for Vietnamese with diacritics.
-/// It deliberately does NOT use any one vendor's tokenizer: the system supports several vendors and each
-/// tokenizes differently, so a shared estimate is more stable.
+/// It uses a conservative estimate instead of making another OpenAI API call for token counting.
 /// </summary>
 public sealed class SimpleTokenEstimator : ITokenEstimator
 {

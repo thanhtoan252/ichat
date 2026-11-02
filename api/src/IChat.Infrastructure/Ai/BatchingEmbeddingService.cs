@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 /// </summary>
 public sealed class BatchingEmbeddingService(
     IEmbeddingGenerator<string, Embedding<float>> embeddingGenerator,
-    IEmbeddingGeneratorFactory embeddingGeneratorFactory,
     IOptions<AiOptions> options)
 {
     private readonly EmbeddingOptions _embedding = options.Value.Embedding;
@@ -45,7 +44,7 @@ public sealed class BatchingEmbeddingService(
         if (results.Count != texts.Count)
         {
             throw new InvalidOperationException(
-                $"The embedding provider returned {results.Count} vectors for {texts.Count} texts.");
+                $"OpenAI returned {results.Count} embeddings for {texts.Count} texts.");
         }
 
         return results;
@@ -60,12 +59,6 @@ public sealed class BatchingEmbeddingService(
 
     private EmbeddingGenerationOptions? BuildGenerationOptions()
     {
-        // Only pass Dimensions when the provider really supports reducing the output dimensionality.
-        if (!embeddingGeneratorFactory.Capabilities.SupportsEmbeddingDimensions)
-        {
-            return null;
-        }
-
         return new EmbeddingGenerationOptions { Dimensions = _embedding.Dimensions };
     }
 }

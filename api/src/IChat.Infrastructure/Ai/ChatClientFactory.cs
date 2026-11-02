@@ -5,21 +5,13 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 
 /// <summary>
-/// THE ENTRY POINT: reads config, picks the vendor, then delegates to exactly one
-/// <see cref="IChatProviderClientFactory"/>. It does not itself know which vendors exist.
+/// Builds OpenAI chat clients from the configured chat and utility models.
 /// </summary>
 public sealed class ChatClientFactory(
     IOptions<AiOptions> options,
-    IEnumerable<IChatProviderClientFactory> providers) : IChatClientFactory
+    OpenAIChatClientFactory openAi) : IChatClientFactory
 {
     private readonly AiOptions _options = options.Value;
-
-    private readonly Dictionary<ChatProvider, IChatProviderClientFactory> _providers =
-        providers.ToDictionary(factory => factory.Provider);
-
-    public ChatProviderCapabilities Capabilities => _options.ResolveChat().Capabilities;
-
-    public ChatProviderCapabilities UtilityCapabilities => _options.ResolveUtilityChat().Capabilities;
 
     public IChatClient Create()
     {
@@ -33,11 +25,6 @@ public sealed class ChatClientFactory(
 
     private IChatClient Build(ResolvedChatSettings settings)
     {
-        if (!_providers.TryGetValue(settings.Provider, out var factory))
-        {
-            throw new InvalidOperationException($"Unsupported chat provider: {settings.Provider}.");
-        }
-
-        return factory.Create(settings);
+        return openAi.Create(settings);
     }
 }
