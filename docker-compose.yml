@@ -30,18 +30,12 @@ services:
       # below only exists so `docker compose up` runs out of the box — set Jwt__SigningKey in .env before
       # this leaves your own machine.
       - Jwt__SigningKey=${Jwt__SigningKey:-ichat-compose-signing-key-change-me-please}
-      - Ai__Chat__Provider=${Ai__Chat__Provider:-OpenAI}
       - Ai__Chat__Model=${Ai__Chat__Model:-gpt-4o-mini}
-      - Ai__Chat__Endpoint=${Ai__Chat__Endpoint:-}
       # Empty = do not send a temperature; reasoning-family models answer 400 for anything but their default.
       - Ai__Chat__Temperature=${Ai__Chat__Temperature:-}
       - Ai__Chat__ApiKey=${Ai__Chat__ApiKey:-}
-      - Ai__UtilityChat__Provider=${Ai__UtilityChat__Provider:-}
       - Ai__UtilityChat__Model=${Ai__UtilityChat__Model:-gpt-4o-mini}
-      - Ai__UtilityChat__Endpoint=${Ai__UtilityChat__Endpoint:-}
-      - Ai__Embedding__Provider=${Ai__Embedding__Provider:-OpenAI}
       - Ai__Embedding__Model=${Ai__Embedding__Model:-text-embedding-3-small}
-      - Ai__Embedding__Endpoint=${Ai__Embedding__Endpoint:-}
       - Ai__Embedding__ApiKey=${Ai__Embedding__ApiKey:-}
     ports:
       - "8080:8080"

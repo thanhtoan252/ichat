@@ -2,14 +2,12 @@ namespace IChat.Infrastructure.Ai.Providers;
 
 using Microsoft.Extensions.AI;
 
-public sealed class OpenAIEmbeddingClientFactory : IEmbeddingProviderClientFactory
+public sealed class OpenAIEmbeddingClientFactory
 {
-    public EmbeddingProvider Provider => EmbeddingProvider.OpenAI;
-
-    public IEmbeddingGenerator<string, Embedding<float>> Create(EmbeddingOptions options, int? dimensions)
+    public IEmbeddingGenerator<string, Embedding<float>> Create(EmbeddingOptions options, int dimensions)
     {
-        return OpenAICompatibleClientFactory
-            .Create(options.RequireApiKey(), options.Endpoint)
+        return OpenAIClientFactory
+            .Create(options.RequireApiKey())
             .GetEmbeddingClient(options.Model)
             .AsIEmbeddingGenerator(dimensions);
     }

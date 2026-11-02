@@ -4,8 +4,6 @@ using System.ComponentModel.DataAnnotations;
 
 public sealed class EmbeddingOptions
 {
-    public EmbeddingProvider Provider { get; set; } = EmbeddingProvider.OpenAI;
-
     [Required(AllowEmptyStrings = false)]
     public string Model { get; set; } = string.Empty;
 
@@ -18,11 +16,9 @@ public sealed class EmbeddingOptions
     [Range(1, 600)]
     public int TimeoutSeconds { get; set; } = 60;
 
-    public string? Endpoint { get; set; }
-
     public string? ApiKey { get; set; }
 
-    public string Qualified => $"{Provider.ToString().ToLowerInvariant()}:{Model}";
+    public string Qualified => $"openai:{Model}";
 
     /// <summary>A safety net, like ResolvedChatSettings.RequireApiKey.</summary>
     public string RequireApiKey()
@@ -30,7 +26,7 @@ public sealed class EmbeddingOptions
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
             throw new InvalidOperationException(
-                $"Missing API key for embedding provider {Provider}. Set Ai__Embedding__ApiKey " +
+                "Missing OpenAI API key for embeddings. Set Ai__Embedding__ApiKey " +
                 "as an environment variable, in user secrets, or in a secret store.");
         }
 

@@ -3,8 +3,7 @@ namespace IChat.Core.Rag;
 using Microsoft.Extensions.AI;
 
 /// <summary>
-/// Anthropic requires messages to alternate user/assistant and the first message (after system) to be
-/// a user message. OpenAI is more forgiving, so this only surfaces when switching provider.
+/// a user message, and merges consecutive messages with the same role.
 /// </summary>
 public static class ChatHistoryNormalizer
 {

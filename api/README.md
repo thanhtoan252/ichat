@@ -1,6 +1,6 @@
 # IChat RAG Backend
 
-Backend API for a RAG-based AI chatbox, .NET 10 + PostgreSQL/pgvector, with LLM providers swappable by configuration alone.
+Backend API for a RAG-based AI chatbox, .NET 10 + PostgreSQL/pgvector, using the OpenAI API.
 
 ## Quick start
 
@@ -9,9 +9,7 @@ up, because the stack spans both `api/` and `ui/`:
 
 ```bash
 cd ..
-docker compose --env-file .env.openai.example up      # OpenAI
-docker compose --env-file .env.anthropic.example up   # Claude (chat) + OpenAI (embedding)
-docker compose --env-file .env.gemini.example up      # Gemini (chat) + OpenAI (embedding)
+docker compose --env-file .env.openai.example up
 ```
 
 Brings up Postgres, the API and the Angular UI together:
@@ -101,13 +99,9 @@ curl -c cookies.txt -X POST localhost:8080/api/v1/auth/login \
 without it. Development supplies one in `appsettings.Development.json`, production through
 `Jwt__SigningKey` or user-secrets.
 
-### Which files a provider change touches
+### OpenAI configuration
 
-Exactly two: `appsettings.json` (or environment variables) and — only when adding a brand new
-vendor — one new file under `Infrastructure/Ai/Providers/` implementing
-`IChatProviderClientFactory`. Core and Api do not contain a single line that knows about
-OpenAI/Anthropic/Google. Middleware (cache, telemetry, logging) is attached once in
-`AiServiceCollectionExtensions`, so every provider behaves identically.
+Chat, utility chat and embeddings use OpenAI models configured in `appsettings.json` or environment variables.
 
 ### API keys
 
@@ -125,29 +119,10 @@ Ai__Chat__ApiKey=sk-...
 Ai__Embedding__ApiKey=sk-...
 ```
 
-Chat and embedding take **separate** keys, because they are often different vendors. A missing
+Chat and embedding take separate keys, which may use the same OpenAI API key. A missing
 key fails fast at startup via `AiOptionsValidator`, not at the user's first question. The
 `/api/v1/providers` endpoint reports only whether a key is present — it never returns one,
 not even masked.
-
-The chat provider and the embedding provider are **decoupled**, because Anthropic has no
-embedding API:
-
-```
-Ai:Chat:Provider      = Anthropic   (claude-sonnet-5)
-Ai:Embedding:Provider = OpenAI      (text-embedding-3-small)
-```
-
-### Choosing the Anthropic package
-
-Use the NuGet package named **`Anthropic` v12.43.0** — that is the official SDK (from v10 up).
-Do not use `tryAGI.Anthropic` (which is `Anthropic` ≤ 3.x under its old name) and do not use
-tghamm's `Anthropic.SDK`; both are community packages.
-
-One practical difference from the original documentation: this SDK does **not** implement
-`IChatClient` itself. It provides the extension
-`AnthropicClientExtensions.AsIChatClient(model, defaultMaxOutputTokens)`. That second parameter
-is where the `MaxOutputTokens` value Anthropic requires goes.
 
 ## Traps that have already been handled
 

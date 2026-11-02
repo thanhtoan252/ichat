@@ -9,7 +9,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
 /// <summary>
-/// Calls the model and emits each piece of text. Everything about "talking to a provider" lives here:
+/// Calls the model and emits each piece of text. Everything about streaming a response lives here:
 /// ChatOptions, timeout, the telemetry span, and how every kind of ending is funnelled into one path.
 /// </summary>
 public sealed class AnswerGenerator(
@@ -18,7 +18,7 @@ public sealed class AnswerGenerator(
     ILogger<AnswerGenerator> logger)
 {
     /// <summary>
-    /// Emits each piece of text the provider returns, and at the end an "error" event if the provider failed.
+    /// Emits each piece of text OpenAI returns, and at the end an "error" event if generation failed.
     /// It is split out because C# does not allow `yield return` inside try/catch: the loop has to call
     /// MoveNextAsync and catch errors by hand, and that is the knottiest part of the whole chat flow.
     /// </summary>
@@ -32,8 +32,8 @@ public sealed class AnswerGenerator(
 
         using var generationActivity = StartGenerationActivity(options);
 
-        // The timeout has to be enforced here: each vendor's SDK is constructed directly by a factory, so it
-        // never passes through our HttpClient pipeline, and a hung provider would hold the SSE connection
+        // The timeout has to be enforced here: the SDK is constructed directly by a factory, so it
+        // never passes through our HttpClient pipeline, and a hung request would hold the SSE connection
         // open forever.
         using var generationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         generationCts.CancelAfter(TimeSpan.FromSeconds(modelCatalog.ChatTimeoutSeconds));
@@ -91,10 +91,9 @@ public sealed class AnswerGenerator(
             ModelId = requestedModel,
 
             // Not configured means not sent: the reasoning-family models reject any temperature other than
-            // the vendor's default with an HTTP 400.
+            // OpenAI's default with an HTTP 400.
             Temperature = (float?)modelCatalog.ChatTemperature,
 
-            // Anthropic requires max_tokens; always set it, for every provider.
             MaxOutputTokens = modelCatalog.ChatMaxOutputTokens
         };
     }
@@ -113,7 +112,7 @@ public sealed class AnswerGenerator(
 
     /// <summary>
     /// Reads one update and funnels every way of ending into the same return type: the stream ran out,
-    /// the client disconnected midway, or the provider failed.
+    /// the client disconnected midway, or generation failed.
     /// </summary>
     private async Task<StreamStep> ReadNextUpdateAsync(IAsyncEnumerator<ChatResponseUpdate> stream)
     {
@@ -131,14 +130,14 @@ public sealed class AnswerGenerator(
         catch (Exception exception)
         {
             // The SDK's own error message never reaches the client: it can leak configuration details.
-            logger.LogError(exception, "The provider failed while streaming the answer.");
+            logger.LogError(exception, "OpenAI failed while streaming the answer.");
 
             return new StreamStep
             {
                 Error = new ErrorPayload
                 {
                     Code = SseErrorCode.External,
-                    Message = "The AI provider failed while generating the answer."
+                    Message = "OpenAI failed while generating the answer."
                 }
             };
         }

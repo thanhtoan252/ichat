@@ -119,7 +119,7 @@ public class RetrievalTests(IChatApiFactory factory)
     }
 
     [Fact]
-    public async Task EmbeddingProviderFailure_DegradesToFullText_AndFlagsDegraded()
+    public async Task EmbeddingFailure_DegradesToFullText_AndFlagsDegraded()
     {
         var client = await factory.CreateClientAsync();
         await SeedAsync(client);

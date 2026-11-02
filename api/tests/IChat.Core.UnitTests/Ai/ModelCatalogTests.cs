@@ -16,7 +16,7 @@ public sealed class ModelCatalogTests
     public void ChatTemperature_IsNull_WhenNotConfigured()
     {
         // Arrange
-        var catalog = CatalogFor(new ChatProviderOptions { Model = "gpt-5.6-luna" });
+        var catalog = CatalogFor(new ChatModelOptions { Model = "gpt-5.6-luna" });
 
         // Act
         var temperature = catalog.ChatTemperature;
@@ -29,7 +29,7 @@ public sealed class ModelCatalogTests
     public void ChatTemperature_IsTheConfiguredValue_WhenConfigured()
     {
         // Arrange
-        var catalog = CatalogFor(new ChatProviderOptions { Model = "gpt-4o-mini", Temperature = 0.2 });
+        var catalog = CatalogFor(new ChatModelOptions { Model = "gpt-4o-mini", Temperature = 0.2 });
 
         // Act
         var temperature = catalog.ChatTemperature;
@@ -39,7 +39,6 @@ public sealed class ModelCatalogTests
     }
 
     // docker-compose passes every `Ai__*` variable into the container even when it is not set: the value arrives
-    // as an empty string rather than absent (see .env.gemini.example).
     // An empty string has to bind to null, otherwise the "do not send a temperature" escape hatch is unusable
     // through docker-compose.
     [TestCase("")]
@@ -71,7 +70,7 @@ public sealed class ModelCatalogTests
         options.Chat.Temperature.Should().Be(0.2);
     }
 
-    private static ModelCatalog CatalogFor(ChatProviderOptions chat)
+    private static ModelCatalog CatalogFor(ChatModelOptions chat)
     {
         return new ModelCatalog(Options.Create(new AiOptions { Chat = chat }));
     }

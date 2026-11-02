@@ -7,7 +7,7 @@ public sealed class AiOptions
     public const string SectionName = "Ai";
 
     [Required]
-    public ChatProviderOptions Chat { get; set; } = new();
+    public ChatModelOptions Chat { get; set; } = new();
 
     [Required]
     public UtilityChatOptions UtilityChat { get; set; } = new();
@@ -24,11 +24,9 @@ public sealed class AiOptions
     {
         return new ResolvedChatSettings
         {
-            Provider = Chat.Provider,
             Model = Chat.Model,
             MaxOutputTokens = Chat.MaxOutputTokens,
             TimeoutSeconds = Chat.TimeoutSeconds,
-            Endpoint = Chat.Endpoint,
             ApiKey = Chat.ApiKey
         };
     }
@@ -38,18 +36,16 @@ public sealed class AiOptions
     /// to declare what differs (usually a cheaper model). This is the ONLY place that rule is defined:
     /// the client factory, the admin catalog and the startup validator all go through here, otherwise three
     /// places would describe the same system in three different ways — and the admin endpoint would report
-    /// "missing key" for a provider that works perfectly.
+    /// "missing key" despite a key being configured for chat.
     /// Model and MaxOutputTokens are NOT inherited: utility must always declare its own model.
     /// </summary>
     public ResolvedChatSettings ResolveUtilityChat()
     {
         return new ResolvedChatSettings
         {
-            Provider = UtilityChat.Provider ?? Chat.Provider,
             Model = UtilityChat.Model,
             MaxOutputTokens = UtilityChat.MaxOutputTokens,
             TimeoutSeconds = UtilityChat.TimeoutSeconds,
-            Endpoint = UtilityChat.Endpoint ?? Chat.Endpoint,
             ApiKey = UtilityChat.ApiKey ?? Chat.ApiKey
         };
     }

@@ -9,72 +9,47 @@ using Xunit;
 using Xunit.Abstractions;
 
 /// <summary>
-/// One shared test suite, run against each provider in turn. It skips itself when the environment variables
-/// are missing, so CI ignores it by default; set the matching API key to run it for real.
+/// Verifies OpenAI API behavior when OPENAI_API_KEY is present; skips when it is not configured.
 /// </summary>
 [Trait("Category", "RequiresApiKey")]
 public class ProviderContractTests(ITestOutputHelper output)
 {
-    public static TheoryData<string> ChatProviders =>
-    [
-        nameof(ChatProvider.OpenAI),
-        nameof(ChatProvider.Anthropic)
-    ];
+    private static string ChatModel => Environment.GetEnvironmentVariable("CONTRACT_OPENAI_MODEL") ?? "gpt-4o-mini";
 
-    public static TheoryData<string> EmbeddingProviders =>
-    [
-        nameof(EmbeddingProvider.OpenAI)
-    ];
-
-    private static (string? KeyVariable, string? Endpoint, string? Model) Configure(string provider) => provider switch
-    {
-        nameof(ChatProvider.OpenAI) => ("OPENAI_API_KEY", null, Environment.GetEnvironmentVariable("CONTRACT_OPENAI_MODEL") ?? "gpt-4o-mini"),
-        nameof(ChatProvider.Anthropic) => ("ANTHROPIC_API_KEY", null, Environment.GetEnvironmentVariable("CONTRACT_ANTHROPIC_MODEL") ?? "claude-haiku-4-5"),
-        _ => (null, null, null)
-    };
-
-    private bool TryBuildChatClient(string provider, out IChatClient chatClient)
+    private bool TryBuildChatClient(out IChatClient chatClient)
     {
         chatClient = null!;
-        var (keyVariable, endpoint, model) = Configure(provider);
+        const string keyVariable = "OPENAI_API_KEY";
+        var model = ChatModel;
+        var apiKey = Environment.GetEnvironmentVariable(keyVariable);
 
-        var apiKey = keyVariable is null ? null : Environment.GetEnvironmentVariable(keyVariable);
-
-        if (keyVariable is not null && string.IsNullOrWhiteSpace(apiKey))
+        if (string.IsNullOrWhiteSpace(apiKey))
         {
-            output.WriteLine($"SKIP {provider}: environment variable {keyVariable} is not set.");
+            output.WriteLine($"SKIP OpenAI: environment variable {keyVariable} is not set.");
 
             return false;
         }
 
         var options = Options.Create(new AiOptions
         {
-            Chat = new ChatProviderOptions {
-                Provider = Enum.Parse<ChatProvider>(provider),
-                Model = model!,
-                Endpoint = endpoint,
+            Chat = new ChatModelOptions {
+                Model = model,
                 ApiKey = apiKey,
                 MaxOutputTokens = 64
             },
-            UtilityChat = new UtilityChatOptions { Model = model! },
+            UtilityChat = new UtilityChatOptions { Model = model },
             Embedding = new EmbeddingOptions { Model = "text-embedding-3-small", ApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") }
         });
 
-        chatClient = new ChatClientFactory(options, [
-            new OpenAIChatClientFactory(),
-            new AzureOpenAIChatClientFactory(),
-            new AnthropicChatClientFactory(),
-            new GoogleChatClientFactory()
-        ]).Create();
+        chatClient = new ChatClientFactory(options, new OpenAIChatClientFactory()).Create();
 
         return true;
     }
 
-    [Theory]
-    [MemberData(nameof(ChatProviders))]
-    public async Task NonStreaming_ReturnsNonEmptyText(string provider)
+    [Fact]
+    public async Task NonStreaming_ReturnsNonEmptyText()
     {
-        if (!TryBuildChatClient(provider, out var chatClient))
+        if (!TryBuildChatClient(out var chatClient))
         {
             return;
         }
@@ -88,11 +63,10 @@ public class ProviderContractTests(ITestOutputHelper output)
         response.Text.Should().NotBeNullOrWhiteSpace();
     }
 
-    [Theory]
-    [MemberData(nameof(ChatProviders))]
-    public async Task Streaming_YieldsAtLeastTwoUpdates_AndMatchesNonStreaming(string provider)
+    [Fact]
+    public async Task Streaming_YieldsAtLeastTwoUpdates_AndMatchesNonStreaming()
     {
-        if (!TryBuildChatClient(provider, out var chatClient))
+        if (!TryBuildChatClient(out var chatClient))
         {
             return;
         }
@@ -112,11 +86,10 @@ public class ProviderContractTests(ITestOutputHelper output)
         string.Concat(updates.Select(update => update.Text)).Should().NotBeNullOrWhiteSpace();
     }
 
-    [Theory]
-    [MemberData(nameof(ChatProviders))]
-    public async Task MaxOutputTokens_IsRespected(string provider)
+    [Fact]
+    public async Task MaxOutputTokens_IsRespected()
     {
-        if (!TryBuildChatClient(provider, out var chatClient))
+        if (!TryBuildChatClient(out var chatClient))
         {
             return;
         }
@@ -127,16 +100,15 @@ public class ProviderContractTests(ITestOutputHelper output)
             [new ChatMessage(ChatRole.User, "Write a very long paragraph about the history of computing.")],
             new ChatOptions { MaxOutputTokens = 16 });
 
-        // A rough estimate: 16 tokens cannot exceed a few hundred characters at any vendor.
+        // A rough estimate: 16 tokens cannot exceed a few hundred characters.
         response.Text.Should().NotBeNull();
         response.Text!.Length.Should().BeLessThan(600);
     }
 
-    [Theory]
-    [MemberData(nameof(ChatProviders))]
-    public async Task UsageMetadata_IsReadableOrSafelyNull(string provider)
+    [Fact]
+    public async Task UsageMetadata_IsReadableOrSafelyNull()
     {
-        if (!TryBuildChatClient(provider, out var chatClient))
+        if (!TryBuildChatClient(out var chatClient))
         {
             return;
         }
@@ -153,9 +125,8 @@ public class ProviderContractTests(ITestOutputHelper output)
         act.Should().NotThrow();
     }
 
-    [Theory]
-    [MemberData(nameof(EmbeddingProviders))]
-    public async Task Embedding_ReturnsConfiguredDimensions(string provider)
+    [Fact]
+    public async Task Embedding_ReturnsConfiguredDimensions()
     {
         var keyVariable = "OPENAI_API_KEY";
 
@@ -163,7 +134,7 @@ public class ProviderContractTests(ITestOutputHelper output)
 
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            output.WriteLine($"SKIP {provider}: {keyVariable} is not set.");
+            output.WriteLine($"SKIP OpenAI: {keyVariable} is not set.");
 
             return;
         }
@@ -172,36 +143,23 @@ public class ProviderContractTests(ITestOutputHelper output)
 
         var options = Options.Create(new AiOptions
         {
-            Chat = new ChatProviderOptions { Model = "unused", ApiKey = apiKey },
+            Chat = new ChatModelOptions { Model = "unused", ApiKey = apiKey },
             UtilityChat = new UtilityChatOptions { Model = "unused" },
             Embedding = new EmbeddingOptions
             {
-                Provider = Enum.Parse<EmbeddingProvider>(provider),
                 Model = "text-embedding-3-small",
                 Dimensions = dimensions,
                 ApiKey = apiKey
             }
         });
 
-        var factory = new EmbeddingGeneratorFactory(options, [
-            new OpenAIEmbeddingClientFactory(),
-            new AzureOpenAIEmbeddingClientFactory(),
-            new GoogleEmbeddingClientFactory()
-        ]);
+        var factory = new EmbeddingGeneratorFactory(options, new OpenAIEmbeddingClientFactory());
         using var generator = factory.Create();
 
         var embeddings = await generator.GenerateAsync(["a test sentence"]);
 
         embeddings.Should().ContainSingle();
 
-        if (factory.Capabilities.SupportsEmbeddingDimensions)
-        {
-            embeddings[0].Vector.Length.Should().Be(dimensions);
-        }
-        else
-        {
-            output.WriteLine($"{provider} does not support dimension reduction; got {embeddings[0].Vector.Length} dimensions.");
-            embeddings[0].Vector.Length.Should().BeGreaterThan(0);
-        }
+        embeddings[0].Vector.Length.Should().Be(dimensions);
     }
 }

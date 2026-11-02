@@ -4,7 +4,7 @@ A retrieval-augmented chat application: ask questions in natural language and ge
 answers composed **only** from your own indexed documents, with every claim carrying
 a citation you can open and verify.
 
-.NET 10 API + PostgreSQL/pgvector, Angular UI, LLM providers swappable by configuration alone.
+.NET 10 API + PostgreSQL/pgvector, Angular UI, powered by the OpenAI API.
 
 ![Chat with grounded answers and citations](docs/screenshots/chat.png)
 
@@ -86,15 +86,11 @@ query-embedding round-trip, which the vector branch makes *before* its stopwatch
 there is no `reranked` row at all: the toggle is on, but `Reranking:Mode` is `None` by default,
 so the stage never ran. None of that is visible from the chat window.
 
-### 4. Swap providers without touching code
+### 4. OpenAI configuration
 
 ![Provider and appearance settings](docs/screenshots/settings.png)
 
-Chat and embedding providers are configured **separately**, because some vendors (Anthropic)
-have no embedding API — so a chat vendor can be paired with an embedding vendor that does.
-A third "utility chat" slot runs the cheaper side tasks like query rewriting. Settings reports
-which providers are available and which models are selectable; keys live on the server and are
-never returned to the browser, not even masked.
+Chat and embedding use the OpenAI API. A separate utility model handles side tasks such as query rewriting. Settings reports the configured models and whether credentials are present; API keys stay on the server.
 
 ## Under the hood
 
@@ -102,7 +98,7 @@ never returned to the browser, not even masked.
 | --- | --- |
 | API | .NET 10 minimal APIs. No MediatR, no AutoMapper, no generic repository — one service per area, `Result<T>` instead of exceptions for business failures, RFC 7807 errors carrying a `traceId` |
 | Data | PostgreSQL 17 with `vector`, `pg_trgm` and `unaccent`; EF Core migrations |
-| AI | `Microsoft.Extensions.AI` abstractions; each vendor is one file under `Infrastructure/Ai/Providers/`, and one middleware chain (cache → telemetry → logging) wraps them all so every provider behaves identically |
+| AI | `Microsoft.Extensions.AI` abstractions with OpenAI chat and embedding clients; one middleware chain (cache → telemetry → logging) wraps both |
 | UI | Angular 22 standalone, **zoneless**, signals only — no NgRx; spartan/ui components vendored into the repo, Tailwind v4 |
 | Streaming | SSE over `fetch`, with a hand-rolled reader — the chat endpoint is a POST, so `EventSource` is out |
 | Telemetry | OpenTelemetry spans under the GenAI semantic conventions, Serilog JSON logs |
@@ -123,20 +119,20 @@ Errors arrive as an `error` event on HTTP **200**, not as a 4xx/5xx: the respons
 already on the wire before anything can fail, so the status code cannot be taken back mid-stream.
 Provider error text never reaches the browser — it can leak configuration — and stays in the logs.
 
-Deltas are buffered and flushed on `requestAnimationFrame`. A fast provider emits tokens far
-quicker than the screen refreshes, and the answer is re-parsed as markdown on every change.
+Deltas are buffered and flushed on `requestAnimationFrame`. OpenAI can emit tokens far quicker
+than the screen refreshes, and the answer is re-parsed as markdown on every change.
 
 ### Failures degrade instead of cascading
 
-- Embedding provider down → the vector branch drops out, full-text still answers, and
+- OpenAI embeddings unavailable → the vector branch drops out, full-text still answers, and
   `degraded: true` reaches the UI as a toast rather than an error.
 - Query rewriting fails or returns something implausible → fall back to the original question.
-- Chat provider dies mid-stream, or the user hits **Stop** → whatever was generated is still
+- OpenAI chat fails mid-stream, or the user hits **Stop** → whatever was generated is still
   persisted and marked `[interrupted]`. The write deliberately runs with `CancellationToken.None`,
   since the request's own token is already cancelled by then.
 
 Health checks split the two questions an orchestrator asks: `/health/live` (is the process up?)
-checks nothing, `/health/ready` checks Postgres, pgvector and the AI providers. Sending a message
+checks nothing, `/health/ready` checks Postgres, pgvector and OpenAI configuration. Sending a message
 is rate-limited to 30 per minute with no queue.
 
 The browser only ever talks to one origin: nginx in the `ui` container proxies `/api` and
@@ -146,13 +142,10 @@ ends and the answer lands in one lump instead of streaming.
 
 ## Quick start
 
-Pick a provider set, copy it, fill in the real API keys — the `.example` files ship with
-placeholders, and every `.env*` file except the examples is gitignored:
+Copy the OpenAI example and fill in the API keys — it ships with placeholders, and every `.env*` file except the example is gitignored:
 
 ```bash
-cp .env.openai.example    .env.local   # OpenAI
-cp .env.anthropic.example .env.local   # Claude (chat) + OpenAI (embedding)
-cp .env.gemini.example    .env.local   # Gemini (chat) + OpenAI (embedding)
+cp .env.openai.example .env.local
 
 docker compose --env-file .env.local up
 ```
@@ -171,7 +164,7 @@ Run just the backend with `docker compose up postgres api`.
 /api/v1/documents…              upload, list, read chunks, delete
 /api/v1/conversations…          history, and the SSE chat endpoint
 /api/v1/search                  the retrieval pipeline without an answer — what the lab calls
-/api/v1/providers               which providers and models are live
+/api/v1/providers               which OpenAI models are configured
 /api/v1/admin/reindex           re-queue every document
 ```
 
@@ -251,8 +244,7 @@ Dependencies point inward only:
 Api  ──►  Infrastructure  ──►  Core
 ```
 
-Core knows nothing about OpenAI, Anthropic or Google — adding a vendor touches configuration
-and one factory under `Infrastructure/Ai/Providers/`.
+The AI integration uses the OpenAI API for chat and embeddings.
 
 See [`api/README.md`](api/README.md) for the backend in depth, including the retrieval traps
 already handled (full-text `tsquery` construction, `unaccent()` immutability) and how API keys
@@ -266,14 +258,10 @@ Worth knowing before this runs anywhere real:
   parameter, but nothing enforces it — anyone who can reach the API can read every conversation.
 - **The ingestion queue is in-process.** Restarting the API while a document sits in
   `Pending` / `Processing` strands it there; `POST /api/v1/admin/reindex` is the way out.
-- **Reranking is off by default.** `Llm` mode costs an extra round-trip per query. `Cohere` and
-  `Voyage` exist in the `RerankMode` enum but have no implementation behind them — selecting one
-  binds successfully and then falls through to a no-op reranker, so retrieval quietly runs
-  unreranked instead of failing at startup.
+- **Reranking is off by default.** `Llm` mode costs an extra OpenAI round-trip per query.
 - **The trigram branch is off by default**, though its GIN index is created either way. Set
   `TrigramCandidates` above 0 to switch it on.
 - **`Database:AutoMigrate` differs per environment** — `true` in docker-compose and in
   `appsettings.Development.json`, `false` in the base `appsettings.json`. Anything
   production-shaped should run `dotnet ef database update` rather than migrate at startup.
-- **Embedding dimensions are pinned to `vector(1536)` by the schema.** That is why the Gemini
-  example keeps embeddings on OpenAI: `gemini-embedding-001` returns 3072 dimensions.
+- **Embedding dimensions are pinned to `vector(1536)` by the schema.** OpenAI’s `text-embedding-3-small` is configured to return 1536 dimensions.

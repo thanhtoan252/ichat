@@ -112,27 +112,6 @@
     ]
   },
   {
-    "tag": "fact",
-    "question": "Nhung nha cung cap LLM nao duoc ho tro",
-    "expectedAnswerContains": [
-      "OpenAI, Azure OpenAI, Anthropic"
-    ]
-  },
-  {
-    "tag": "fact",
-    "question": "Nha cung cap nao bat buoc phai co Endpoint",
-    "expectedAnswerContains": [
-      "Azure OpenAI"
-    ]
-  },
-  {
-    "tag": "multi-hop",
-    "question": "Tai sao khong the dung Anthropic cho embedding",
-    "expectedAnswerContains": [
-      "Anthropic khong cung cap API embedding"
-    ]
-  },
-  {
     "tag": "multi-hop",
     "question": "He thong chay bao nhieu nhanh tim kiem va la nhung nhanh nao",
     "expectedAnswerContains": [
@@ -215,23 +194,6 @@
       {
         "role": "assistant",
         "content": "He thong dung Reciprocal Rank Fusion de tron ket qua."
-      }
-    ]
-  },
-  {
-    "tag": "followup",
-    "question": "The con no thi can gi",
-    "expectedAnswerContains": [
-      "bat buoc phai co Endpoint"
-    ],
-    "history": [
-      {
-        "role": "user",
-        "content": "Azure OpenAI co can API key khong"
-      },
-      {
-        "role": "assistant",
-        "content": "Azure OpenAI bat buoc phai co API key."
       }
     ]
   },
