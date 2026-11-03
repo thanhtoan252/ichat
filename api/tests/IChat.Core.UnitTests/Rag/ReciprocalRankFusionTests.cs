@@ -11,98 +11,82 @@ public class ReciprocalRankFusionTests
     private static readonly Guid B = Guid.Parse("00000000-0000-0000-0000-0000000000b2");
     private static readonly Guid C = Guid.Parse("00000000-0000-0000-0000-0000000000c3");
 
-    [Test]
+[Test]
     public void Fuse_NoLists_ReturnsEmpty()
     {
-        // Arrange — not a single ranked list
 
-        // Act
-        var fused = ReciprocalRankFusion.Fuse([], 60, 10);
+var fused = ReciprocalRankFusion.Fuse([], 60, 10);
 
-        // Assert
-        fused.Should().BeEmpty();
+fused.Should().BeEmpty();
     }
 
-    [Test]
+[Test]
     public void Fuse_AllListsEmpty_ReturnsEmpty()
     {
-        // Arrange
-        IReadOnlyList<IReadOnlyList<Guid>> lists = [[], []];
 
-        // Act
-        var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+IReadOnlyList<IReadOnlyList<Guid>> lists = [[], []];
 
-        // Assert
-        fused.Should().BeEmpty();
+var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+
+fused.Should().BeEmpty();
     }
 
-    [Test]
+[Test]
     public void Fuse_OneEmptyList_StillRanksTheOther()
     {
-        // Arrange
-        IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B], []];
 
-        // Act
-        var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B], []];
 
-        // Assert
-        fused.Select(item => item.Id).Should().Equal(A, B);
+var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+
+fused.Select(item => item.Id).Should().Equal(A, B);
     }
 
-    [Test]
+[Test]
     public void Fuse_ChunkPresentInBothLists_OutranksChunkInOneList()
     {
-        // Arrange
-        // B ranks 2nd in both lists, A ranks 1st in only one of them.
-        IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B], [C, B]];
 
-        // Act
-        var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B], [C, B]];
 
-        // Assert
-        fused[0].Id.Should().Be(B);
+var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+
+fused[0].Id.Should().Be(B);
         fused.Select(item => item.Id).Should().Contain([A, C]);
     }
 
-    [Test]
+[Test]
     public void Fuse_ScoreMatchesFormula()
     {
-        // Arrange
-        IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B]];
 
-        // Act
-        var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B]];
 
-        // Assert
-        fused.Single(item => item.Id == A).Score.Should().BeApproximately(1.0 / 61, 1e-12);
+var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+
+fused.Single(item => item.Id == A).Score.Should().BeApproximately(1.0 / 61, 1e-12);
         fused.Single(item => item.Id == B).Score.Should().BeApproximately(1.0 / 62, 1e-12);
     }
 
-    [Test]
+[Test]
     public void Fuse_RespectsTopK()
     {
-        // Arrange
-        IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B, C]];
 
-        // Act
-        var fused = ReciprocalRankFusion.Fuse(lists, 60, 2);
+IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B, C]];
 
-        // Assert
-        fused.Should().HaveCount(2);
+var fused = ReciprocalRankFusion.Fuse(lists, 60, 2);
+
+fused.Should().HaveCount(2);
         fused.Select(item => item.Id).Should().Equal(A, B);
     }
 
-    [Test]
+[Test]
     public void Fuse_HigherRankScoresHigher()
     {
-        // Arrange
-        IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B, C]];
 
-        // Act
-        var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+IReadOnlyList<IReadOnlyList<Guid>> lists = [[A, B, C]];
 
-        // Assert
-        fused[0].Score.Should().BeGreaterThan(fused[1].Score);
+var fused = ReciprocalRankFusion.Fuse(lists, 60, 10);
+
+fused[0].Score.Should().BeGreaterThan(fused[1].Score);
         fused[1].Score.Should().BeGreaterThan(fused[2].Score);
     }
 }

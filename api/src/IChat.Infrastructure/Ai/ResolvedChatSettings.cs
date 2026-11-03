@@ -1,26 +1,18 @@
 namespace IChat.Infrastructure.Ai;
 
-/// <summary>
-/// One chat provider's configuration AFTER the UtilityChat -> Chat fallback has been applied.
-/// Enough to build a client, describe a status or validate, without rereading AiOptions.
-/// </summary>
 public sealed record ResolvedChatSettings
 {
     public required string Model { get; init; }
 
-    public required int MaxOutputTokens { get; init; }
+public required int MaxOutputTokens { get; init; }
 
-    public required int TimeoutSeconds { get; init; }
+public required int TimeoutSeconds { get; init; }
 
-    public string? ApiKey { get; init; }
+public string? ApiKey { get; init; }
 
-    public string Label => "OpenAI";
+public string Label => "OpenAI";
 
-    /// <summary>
-    /// AiOptionsValidator already rejects a missing key at startup; this is the safety net for the paths
-    /// that do not go through ValidateOnStart (tests, tooling).
-    /// </summary>
-    public string RequireApiKey()
+public string RequireApiKey()
     {
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
@@ -29,6 +21,6 @@ public sealed record ResolvedChatSettings
                 "as an environment variable, in user secrets, or in a secret store.");
         }
 
-        return ApiKey;
+return ApiKey;
     }
 }

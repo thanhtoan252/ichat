@@ -11,20 +11,19 @@ public class DocumentFormatResolverTests
 {
     private static readonly byte[] ZipHeader = [0x50, 0x4B, 0x03, 0x04, 0x00, 0x00, 0x00, 0x00];
 
-    private static readonly byte[] Ole2Header = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+private static readonly byte[] Ole2Header = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
 
-    private static readonly byte[] PdfHeader = [0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37];
+private static readonly byte[] PdfHeader = [0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x37];
 
-    private static readonly byte[] TextHeader = [0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x0A, 0x0A, 0x0A];
+private static readonly byte[] TextHeader = [0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x0A, 0x0A, 0x0A];
 
-    private DocumentParserResolver _resolver = null!;
+private DocumentParserResolver _resolver = null!;
 
-    [SetUp]
+[SetUp]
     public void SetUp()
     {
-        // The parser order matches DependencyInjection: it decides the list of extensions
-        // in the 415 message.
-        IDocumentParser[] parsers =
+
+IDocumentParser[] parsers =
         [
             new DocxDocumentParser(),
             new PdfDocumentParser(),
@@ -32,135 +31,115 @@ public class DocumentFormatResolverTests
             new PlainTextDocumentParser()
         ];
 
-        _resolver = new DocumentParserResolver(parsers, [new LegacyDocFormatDetector()]);
+_resolver = new DocumentParserResolver(parsers, [new LegacyDocFormatDetector()]);
     }
 
-    // .doc has to be stopped FIRST with guidance, never left to blow up as a 500 inside OpenXml.
-    [Test]
+[Test]
     public void Resolve_LegacyDocExtension_Returns415WithGuidance()
     {
-        // Arrange
-        const string fileName = "bao-cao.doc";
 
-        // Act
-        var result = Resolve(fileName, "application/msword", Ole2Header);
+const string fileName = "bao-cao.doc";
 
-        // Assert
-        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
+var result = Resolve(fileName, "application/msword", Ole2Header);
+
+result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
         result.Error.Message.Should().Contain("save it as .docx");
     }
 
-    [Test]
+[Test]
     public void Resolve_Ole2MagicUnderADocxName_IsStillRejectedAsLegacyDoc()
     {
-        // Arrange
-        const string fileName = "bao-cao.docx";
 
-        // Act
-        var result = Resolve(fileName, "application/octet-stream", Ole2Header);
+const string fileName = "bao-cao.docx";
 
-        // Assert
-        // Renaming the extension does not change the content: the OLE2 magic is still Word 97-2003.
-        result.Error.Message.Should().Contain("Word 97-2003");
+var result = Resolve(fileName, "application/octet-stream", Ole2Header);
+
+result.Error.Message.Should().Contain("Word 97-2003");
     }
 
-    [Test]
+[Test]
     public void Resolve_DocxExtensionWithoutZipHeader_Returns415()
     {
-        // Arrange
-        const string fileName = "gia-mao.docx";
 
-        // Act
-        var result = Resolve(fileName, "application/octet-stream", TextHeader);
+const string fileName = "gia-mao.docx";
 
-        // Assert
-        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
+var result = Resolve(fileName, "application/octet-stream", TextHeader);
+
+result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
         result.Error.Message.Should().Be("The file has a .docx extension but its content is not an Office (zip) container.");
     }
 
-    [Test]
+[Test]
     public void Resolve_DocxExtensionWithZipHeader_ResolvesToDocx()
     {
-        // Arrange
-        const string fileName = "tai-lieu.docx";
 
-        // Act
-        var result = Resolve(fileName, "application/octet-stream", ZipHeader);
+const string fileName = "tai-lieu.docx";
 
-        // Assert
-        result.IsSuccess.Should().BeTrue();
+var result = Resolve(fileName, "application/octet-stream", ZipHeader);
+
+result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(DocxDocumentParser.DocxContentType);
     }
 
-    [Test]
+[Test]
     public void Resolve_NoExtensionButPdfMagic_ResolvesToPdf()
     {
-        // Arrange
-        const string fileName = "khong-duoi-file";
 
-        // Act
-        var result = Resolve(fileName, "application/octet-stream", PdfHeader);
+const string fileName = "khong-duoi-file";
 
-        // Assert
-        result.IsSuccess.Should().BeTrue();
+var result = Resolve(fileName, "application/octet-stream", PdfHeader);
+
+result.IsSuccess.Should().BeTrue();
         result.Value.Should().Be(PdfDocumentParser.PdfContentType);
     }
 
-    [TestCase("ghi-chu.md", "text/markdown")]
+[TestCase("ghi-chu.md", "text/markdown")]
     [TestCase("ghi-chu.markdown", "text/markdown")]
     [TestCase("ghi-chu.txt", "text/plain")]
     public void Resolve_KnownExtension_ResolvesToItsContentType(string fileName, string expected)
     {
-        // Arrange & Act
-        var result = Resolve(fileName, "application/octet-stream", TextHeader);
 
-        // Assert
-        result.Value.Should().Be(expected);
+var result = Resolve(fileName, "application/octet-stream", TextHeader);
+
+result.Value.Should().Be(expected);
     }
 
-    [Test]
+[Test]
     public void Resolve_UnknownExtension_Returns415ListingWhatIsAccepted()
     {
-        // Arrange
-        const string fileName = "bang-tinh.xlsx";
 
-        // Act
-        var result = Resolve(fileName, "application/octet-stream", TextHeader);
+const string fileName = "bang-tinh.xlsx";
 
-        // Assert
-        result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
+var result = Resolve(fileName, "application/octet-stream", TextHeader);
+
+result.Error.Code.Should().Be(Error.UnsupportedMediaTypeCode);
         result.Error.Message.Should().Be("The '.xlsx' format is not supported. Only .docx, .pdf, .md and .txt are accepted.");
     }
 
-    // Browsers often send the wrong content type, so it is only consulted when extension and magic are both silent.
-    [Test]
+[Test]
     public void Resolve_UnknownExtension_FallsBackToTheDeclaredContentType()
     {
-        // Arrange
-        const string fileName = "khong-duoi-file";
 
-        // Act
-        var result = Resolve(fileName, "text/markdown", TextHeader);
+const string fileName = "khong-duoi-file";
 
-        // Assert
-        result.Value.Should().Be(MarkdownDocumentParser.MarkdownContentType);
+var result = Resolve(fileName, "text/markdown", TextHeader);
+
+result.Value.Should().Be(MarkdownDocumentParser.MarkdownContentType);
     }
 
-    [Test]
+[Test]
     public void Resolve_ReturnsTheParserOwningTheResolvedFormat()
     {
-        // Arrange
-        const string fileName = "tai-lieu.pdf";
 
-        // Act
-        var result = _resolver.Resolve(fileName, "application/octet-stream", PdfHeader);
+const string fileName = "tai-lieu.pdf";
 
-        // Assert
-        result.IsSuccess.Should().BeTrue();
+var result = _resolver.Resolve(fileName, "application/octet-stream", PdfHeader);
+
+result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeOfType<PdfDocumentParser>();
     }
 
-    private Result<string> Resolve(string fileName, string declaredContentType, byte[] header)
+private Result<string> Resolve(string fileName, string declaredContentType, byte[] header)
     {
         return _resolver.ResolveContentType(fileName, declaredContentType, header);
     }

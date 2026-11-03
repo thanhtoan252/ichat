@@ -4,5 +4,5 @@ public sealed class StorageOptions
 {
     public const string SectionName = "Storage";
 
-    public string RootPath { get; set; } = "/data/documents";
+public string RootPath { get; set; } = "/data/documents";
 }

@@ -6,21 +6,20 @@ public sealed class AiOptions
 {
     public const string SectionName = "Ai";
 
-    [Required]
+[Required]
     public ChatModelOptions Chat { get; set; } = new();
 
-    [Required]
+[Required]
     public UtilityChatOptions UtilityChat { get; set; } = new();
 
-    [Required]
+[Required]
     public EmbeddingOptions Embedding { get; set; } = new();
 
-    public PipelineOptions Pipeline { get; set; } = new();
+public PipelineOptions Pipeline { get; set; } = new();
 
-    /// <summary>Allowlist for the optional `model` field in a request body.</summary>
-    public IList<string> AllowedChatModels { get; set; } = [];
+public IList<string> AllowedChatModels { get; set; } = [];
 
-    public ResolvedChatSettings ResolveChat()
+public ResolvedChatSettings ResolveChat()
     {
         return new ResolvedChatSettings
         {
@@ -31,15 +30,7 @@ public sealed class AiOptions
         };
     }
 
-    /// <summary>
-    /// Every field UtilityChat leaves empty is inherited from Chat, so the utility configuration only has
-    /// to declare what differs (usually a cheaper model). This is the ONLY place that rule is defined:
-    /// the client factory, the admin catalog and the startup validator all go through here, otherwise three
-    /// places would describe the same system in three different ways — and the admin endpoint would report
-    /// "missing key" despite a key being configured for chat.
-    /// Model and MaxOutputTokens are NOT inherited: utility must always declare its own model.
-    /// </summary>
-    public ResolvedChatSettings ResolveUtilityChat()
+public ResolvedChatSettings ResolveUtilityChat()
     {
         return new ResolvedChatSettings
         {

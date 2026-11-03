@@ -7,28 +7,24 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 
-/// <summary>
-/// Lives in the Api layer next to <c>AddJwtBearer</c>: the signing parameters and the validation
-/// parameters read from one and the same <see cref="JwtOptions"/>, so they cannot drift apart.
-/// </summary>
 public sealed class JwtAccessTokenService(
     IOptions<JwtOptions> options,
     TimeProvider timeProvider) : IAccessTokenService
 {
     private readonly JwtOptions _options = options.Value;
 
-    public TimeSpan RefreshTokenLifetime => TimeSpan.FromDays(_options.RefreshTokenDays);
+public TimeSpan RefreshTokenLifetime => TimeSpan.FromDays(_options.RefreshTokenDays);
 
-    public AccessToken Create(UserView user)
+public AccessToken Create(UserView user)
     {
         var now = timeProvider.GetUtcNow();
         var expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
 
-        var credentials = new SigningCredentials(
+var credentials = new SigningCredentials(
             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey)),
             SecurityAlgorithms.HmacSha256);
 
-        var descriptor = new SecurityTokenDescriptor
+var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _options.Issuer,
             Audience = _options.Audience,
@@ -44,7 +40,7 @@ public sealed class JwtAccessTokenService(
             }
         };
 
-        return new AccessToken
+return new AccessToken
         {
             Value = new JsonWebTokenHandler().CreateToken(descriptor),
             ExpiresAt = expiresAt

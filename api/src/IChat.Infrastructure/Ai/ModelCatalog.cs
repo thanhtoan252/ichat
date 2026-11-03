@@ -3,39 +3,33 @@ namespace IChat.Infrastructure.Ai;
 using IChat.Core.Abstractions;
 using Microsoft.Extensions.Options;
 
-/// <summary>
-/// The source of truth for Core and the admin endpoint on "which model is running, are the credentials there".
-/// It never returns an API key, not even masked — only a yes/no status.
-/// </summary>
 public sealed class ModelCatalog : IModelCatalog
 {
     private const string ChatKind = "chat";
     private const string UtilityKind = "utility";
     private const string EmbeddingKind = "embedding";
 
-    private readonly AiOptions _options;
+private readonly AiOptions _options;
 
-    // AiOptions is a singleton and was validated at startup, so the allowlist is computed once;
-    // IsChatModelAllowed runs on every request and must not rebuild the list each time.
-    private readonly IReadOnlyList<string> _allowedChatModels;
+private readonly IReadOnlyList<string> _allowedChatModels;
     private readonly HashSet<string> _allowedChatModelLookup;
 
-    public ModelCatalog(IOptions<AiOptions> options)
+public ModelCatalog(IOptions<AiOptions> options)
     {
         _options = options.Value;
         _allowedChatModels = ResolveAllowedChatModels(_options);
         _allowedChatModelLookup = new HashSet<string>(_allowedChatModels, StringComparer.OrdinalIgnoreCase);
     }
 
-    public bool SupportsMultipleSystemMessages => true;
+public bool SupportsMultipleSystemMessages => true;
 
-    public int ChatTimeoutSeconds => _options.Chat.TimeoutSeconds;
+public int ChatTimeoutSeconds => _options.Chat.TimeoutSeconds;
 
-    public int ChatMaxOutputTokens => _options.Chat.MaxOutputTokens;
+public int ChatMaxOutputTokens => _options.Chat.MaxOutputTokens;
 
-    public double? ChatTemperature => _options.Chat.Temperature;
+public double? ChatTemperature => _options.Chat.Temperature;
 
-    public ModelCatalogSnapshot GetSnapshot()
+public ModelCatalogSnapshot GetSnapshot()
     {
         return new ModelCatalogSnapshot
         {
@@ -46,22 +40,22 @@ public sealed class ModelCatalog : IModelCatalog
         };
     }
 
-    public bool IsChatModelAllowed(string model)
+public bool IsChatModelAllowed(string model)
     {
         return !string.IsNullOrWhiteSpace(model) && _allowedChatModelLookup.Contains(model);
     }
 
-    private ModelEntry ChatEntry()
+private ModelEntry ChatEntry()
     {
         return ToEntry(ChatKind, _options.ResolveChat());
     }
 
-    private ModelEntry UtilityChatEntry()
+private ModelEntry UtilityChatEntry()
     {
         return ToEntry(UtilityKind, _options.ResolveUtilityChat());
     }
 
-    private static ModelEntry ToEntry(string kind, ResolvedChatSettings settings)
+private static ModelEntry ToEntry(string kind, ResolvedChatSettings settings)
     {
         return new ModelEntry
         {
@@ -72,7 +66,7 @@ public sealed class ModelCatalog : IModelCatalog
         };
     }
 
-    private ModelEntry EmbeddingEntry()
+private ModelEntry EmbeddingEntry()
     {
         var embedding = _options.Embedding;
         return new ModelEntry
@@ -84,11 +78,11 @@ public sealed class ModelCatalog : IModelCatalog
         };
     }
 
-    private static ProviderDescriptor Describe(ModelEntry entry)
+private static ProviderDescriptor Describe(ModelEntry entry)
     {
         var reason = FindUnavailableReason(entry);
 
-        return new ProviderDescriptor
+return new ProviderDescriptor
         {
             Kind = entry.Kind,
             Provider = entry.Provider,
@@ -98,19 +92,17 @@ public sealed class ModelCatalog : IModelCatalog
         };
     }
 
-    /// <summary>Returning null means the provider is usable; anything else is the reason shown to an admin.</summary>
-    private static string? FindUnavailableReason(ModelEntry entry)
+private static string? FindUnavailableReason(ModelEntry entry)
     {
         if (string.IsNullOrWhiteSpace(entry.ApiKey))
         {
             return "No API key is configured.";
         }
 
-        return null;
+return null;
     }
 
-    // The configured model is always part of the allowlist, even when AllowedChatModels is empty.
-    private static IReadOnlyList<string> ResolveAllowedChatModels(AiOptions options)
+private static IReadOnlyList<string> ResolveAllowedChatModels(AiOptions options)
     {
         return new[] { options.Chat.Model }
             .Concat(options.AllowedChatModels)
@@ -119,17 +111,14 @@ public sealed class ModelCatalog : IModelCatalog
             .ToList();
     }
 
-    /// <summary>Resolved model and credential status for the settings response.</summary>
-    private sealed record ModelEntry
+private sealed record ModelEntry
     {
         public required string Kind { get; init; }
 
-        public required string Provider { get; init; }
+public required string Provider { get; init; }
 
-        public required string Model { get; init; }
+public required string Model { get; init; }
 
-        /// <summary>Used only to answer "is there a key or not". NEVER map it into a ProviderDescriptor
-        /// or any other DTO — /api/v1/providers never returns a key, not even a masked one.</summary>
-        public string? ApiKey { get; init; }
+public string? ApiKey { get; init; }
     }
 }

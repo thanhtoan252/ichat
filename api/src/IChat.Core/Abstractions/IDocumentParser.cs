@@ -6,5 +6,5 @@ public interface IDocumentParser
 {
     DocumentFormat Format { get; }
 
-    Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken);
+Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken);
 }

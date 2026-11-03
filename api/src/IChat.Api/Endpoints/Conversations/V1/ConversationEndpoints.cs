@@ -16,37 +16,37 @@ public static class ConversationEndpoints
     {
         var group = app.MapGroup("/conversations").WithTags("Conversations");
 
-        group.MapPost("/", CreateConversationAsync)
+group.MapPost("/", CreateConversationAsync)
             .WithName("CreateConversation")
             .WithSummary("Create a conversation.")
             .WithDescription("An empty title is replaced with the default name.")
             .Produces<ConversationResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem();
 
-        group.MapGet("/", GetConversationsAsync)
+group.MapGet("/", GetConversationsAsync)
             .WithName("GetConversations")
             .WithSummary("List conversations.")
             .WithDescription("Paged, most recently updated first. Scoped to the caller; an administrator sees every conversation.")
             .Produces<PagedResponse<ConversationResponse>>();
 
-        group.MapGet("/{id:guid}/messages", GetConversationMessagesAsync)
+group.MapGet("/{id:guid}/messages", GetConversationMessagesAsync)
             .WithName("GetConversationMessages")
             .WithSummary("Message history of a conversation.")
             .WithDescription("Oldest first, including the marker-verified citations of each answer.")
             .Produces<PagedResponse<MessageResponse>>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapPost("/{id:guid}/messages", SendMessage)
+group.MapPost("/{id:guid}/messages", SendMessage)
             .RequireRateLimiting("chat")
             .WithName("SendMessage")
             .WithSummary("RAG question answering, streamed over SSE.")
             .WithDescription("Four event types: status, sources, delta, done. Business errors come back as an error event with HTTP 200 rather than a different status code.")
             .Produces<SseItem<object>>(StatusCodes.Status200OK, "text/event-stream");
 
-        return app;
+return app;
     }
 
-    private static async Task<IResult> CreateConversationAsync(
+private static async Task<IResult> CreateConversationAsync(
         CreateConversationDto dto,
         IValidator<CreateConversationDto> validator,
         IConversationService conversationService,
@@ -54,39 +54,39 @@ public static class ConversationEndpoints
     {
         var validation = await validator.ValidateAsync(dto, cancellationToken);
 
-        if (!validation.IsValid)
+if (!validation.IsValid)
         {
             return validation.ToValidationProblem();
         }
 
-        var result = await conversationService.CreateAsync(dto.ToServiceRequest(), cancellationToken);
+var result = await conversationService.CreateAsync(dto.ToServiceRequest(), cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        var response = result.Value.ToResponse();
+var response = result.Value.ToResponse();
 
-        return Results.Created($"/api/v1/conversations/{response.Id}", response);
+return Results.Created($"/api/v1/conversations/{response.Id}", response);
     }
 
-    private static async Task<IResult> GetConversationsAsync(
+private static async Task<IResult> GetConversationsAsync(
         [AsParameters] GetConversationsQuery query,
         IConversationService conversationService,
         CancellationToken cancellationToken)
     {
         var result = await conversationService.GetListAsync(query.Offset, query.Limit, cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
+return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
     }
 
-    private static async Task<IResult> GetConversationMessagesAsync(
+private static async Task<IResult> GetConversationMessagesAsync(
         Guid id,
         [AsParameters] GetMessagesQuery query,
         IConversationService conversationService,
@@ -94,19 +94,15 @@ public static class ConversationEndpoints
     {
         var result = await conversationService.GetMessagesAsync(id, query.Offset, query.Limit, cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
+return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
     }
 
-    /// <summary>
-    /// The DTO is not validated here: every error of a chat turn travels over the SSE channel
-    /// as an "error" event with HTTP 200, so ChatService is the only place that decides errors.
-    /// </summary>
-    private static IResult SendMessage(
+private static IResult SendMessage(
         Guid id,
         SendMessageDto dto,
         IChatService chatService,
@@ -115,11 +111,7 @@ public static class ConversationEndpoints
         return TypedResults.ServerSentEvents(Stream(chatService, dto.ToServiceRequest(id), cancellationToken));
     }
 
-    /// <summary>
-    /// The CancellationToken is passed all the way down: when the client closes the tab the
-    /// service stops streaming and still persists what was generated, marked [interrupted].
-    /// </summary>
-    private static async IAsyncEnumerable<SseItem<object>> Stream(
+private static async IAsyncEnumerable<SseItem<object>> Stream(
         IChatService chatService,
         SendMessageRequest request,
         [EnumeratorCancellation] CancellationToken cancellationToken)

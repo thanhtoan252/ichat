@@ -15,7 +15,7 @@ public static class DocumentEndpoints
     {
         var group = app.MapGroup("/documents").WithTags("Documents");
 
-        group.MapPost("/", UploadDocumentAsync)
+group.MapPost("/", UploadDocumentAsync)
             .RequireAuthorization(AuthPolicies.Admin)
             .DisableAntiforgery()
             .WithName("UploadDocument")
@@ -25,27 +25,27 @@ public static class DocumentEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status415UnsupportedMediaType);
 
-        group.MapGet("/", GetDocumentsAsync)
+group.MapGet("/", GetDocumentsAsync)
             .WithName("GetDocuments")
             .WithSummary("List documents.")
             .WithDescription("Paged, newest first, optionally filtered by ingestion status.")
             .Produces<PagedResponse<DocumentResponse>>();
 
-        group.MapGet("/{id:guid}", GetDocumentByIdAsync)
+group.MapGet("/{id:guid}", GetDocumentByIdAsync)
             .WithName("GetDocumentById")
             .WithSummary("Document details.")
             .WithDescription("Used to poll the ingestion status: Pending, Processing, Indexed, or Failed with an errorMessage.")
             .Produces<DocumentResponse>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapGet("/{id:guid}/chunks", GetDocumentChunksAsync)
+group.MapGet("/{id:guid}/chunks", GetDocumentChunksAsync)
             .WithName("GetDocumentChunks")
             .WithSummary("Chunks of a document.")
             .WithDescription("An ingestion debugging tool: shows the headingPath and embeddedText that were actually produced. Does not return embedding vectors.")
             .Produces<PagedResponse<DocumentChunkResponse>>()
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        group.MapDelete("/{id:guid}", DeleteDocumentAsync)
+group.MapDelete("/{id:guid}", DeleteDocumentAsync)
             .RequireAuthorization(AuthPolicies.Admin)
             .WithName("DeleteDocument")
             .WithSummary("Delete a document.")
@@ -53,10 +53,10 @@ public static class DocumentEndpoints
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound);
 
-        return app;
+return app;
     }
 
-    private static async Task<IResult> UploadDocumentAsync(
+private static async Task<IResult> UploadDocumentAsync(
         [FromForm] IFormFile file,
         [FromForm] string? title,
         IValidator<UploadDocumentDto> validator,
@@ -66,55 +66,55 @@ public static class DocumentEndpoints
         var dto = new UploadDocumentDto { File = file, Title = title };
         var validation = await validator.ValidateAsync(dto, cancellationToken);
 
-        if (!validation.IsValid)
+if (!validation.IsValid)
         {
             return validation.ToValidationProblem();
         }
 
-        await using var content = file.OpenReadStream();
+await using var content = file.OpenReadStream();
         var result = await documentService.UploadAsync(dto.ToServiceRequest(content), cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        var response = result.Value.ToResponse();
+var response = result.Value.ToResponse();
 
-        return Results.Accepted($"/api/v1/documents/{response.Id}", response);
+return Results.Accepted($"/api/v1/documents/{response.Id}", response);
     }
 
-    private static async Task<IResult> GetDocumentsAsync(
+private static async Task<IResult> GetDocumentsAsync(
         [AsParameters] GetDocumentsQuery query,
         IDocumentService documentService,
         CancellationToken cancellationToken)
     {
         var result = await documentService.GetListAsync(query.ToServiceRequest(), cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Results.Ok(result.Value.ToPagedResponse(DocumentMapper.ToResponse));
+return Results.Ok(result.Value.ToPagedResponse(DocumentMapper.ToResponse));
     }
 
-    private static async Task<IResult> GetDocumentByIdAsync(
+private static async Task<IResult> GetDocumentByIdAsync(
         Guid id,
         IDocumentService documentService,
         CancellationToken cancellationToken)
     {
         var result = await documentService.GetByIdAsync(id, cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Results.Ok(result.Value.ToResponse());
+return Results.Ok(result.Value.ToResponse());
     }
 
-    private static async Task<IResult> GetDocumentChunksAsync(
+private static async Task<IResult> GetDocumentChunksAsync(
         Guid id,
         [AsParameters] GetDocumentChunksQuery query,
         IDocumentService documentService,
@@ -122,26 +122,26 @@ public static class DocumentEndpoints
     {
         var result = await documentService.GetChunksAsync(query.ToServiceRequest(id), cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Results.Ok(result.Value.ToPagedResponse(DocumentMapper.ToResponse));
+return Results.Ok(result.Value.ToPagedResponse(DocumentMapper.ToResponse));
     }
 
-    private static async Task<IResult> DeleteDocumentAsync(
+private static async Task<IResult> DeleteDocumentAsync(
         Guid id,
         IDocumentService documentService,
         CancellationToken cancellationToken)
     {
         var result = await documentService.DeleteAsync(id, cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Results.NoContent();
+return Results.NoContent();
     }
 }

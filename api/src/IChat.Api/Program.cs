@@ -26,8 +26,6 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 
-// Bootstrap logger: anything logged before the host finishes building (bad config, broken DI)
-// still comes out as JSON instead of vanishing. Replaced by the appsettings logger after Build().
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console(new CompactJsonFormatter())
@@ -37,48 +35,39 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // Kestrel caps the request body at 30MB by default, which is before the validator even runs: an
-    // oversized file would get a bare 413 instead of a readable message. Take the validator's own
-    // ceiling and leave room for the multipart envelope (boundary plus each part's headers) so the
-    // two numbers cannot drift apart when the limit changes.
-    builder.WebHost.ConfigureKestrel(options =>
+builder.WebHost.ConfigureKestrel(options =>
         options.Limits.MaxRequestBodySize = UploadDocumentDtoValidator.MaxSizeInBytes + 1024 * 1024);
 
-    // Sinks, enrichers and formatting all live in the "Serilog" section of appsettings: switching
-    // between JSON and text is a config change, not a code change plus a rebuild.
-    builder.Services.AddSerilog((services, configuration) => configuration
+builder.Services.AddSerilog((services, configuration) => configuration
         .ReadFrom.Configuration(builder.Configuration)
         .ReadFrom.Services(services)
         .Enrich.FromLogContext());
 
-    builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(TimeProvider.System);
     builder.Services.AddIChatCore();
-    // Validators for the API-layer DTOs (Endpoints/<Feature>/V1/Validators); validators for service
-    // models live in Core and are registered separately by AddIChatCore.
-    builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
     builder.Services.AddIChatInfrastructure(builder.Configuration);
 
-    builder.Services.AddOptions<JwtOptions>()
+builder.Services.AddOptions<JwtOptions>()
         .BindConfiguration(JwtOptions.SectionName)
         .ValidateDataAnnotations()
         .ValidateOnStart();
 
-    builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
     builder.Services.AddSingleton<IAccessTokenService, JwtAccessTokenService>();
 
-    // Read early to build TokenValidationParameters; ValidateOnStart above only runs once the host
-    // is built, so an empty key has to be rejected right here with a clear message.
-    var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
         ?? throw new InvalidOperationException($"Missing configuration section '{JwtOptions.SectionName}'.");
 
-    if (jwtOptions.SigningKey.Length < 32)
+if (jwtOptions.SigningKey.Length < 32)
     {
         throw new InvalidOperationException(
             "Jwt:SigningKey must be at least 32 characters. Set it through user-secrets or the Jwt__SigningKey environment variable.");
     }
 
-    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
             options.TokenValidationParameters = new TokenValidationParameters
@@ -90,26 +79,22 @@ try
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
                 ValidateLifetime = true,
-                // The access token only lives 15 minutes, and the library's default 5-minute skew on top
-                // of that would make expiry something the client cannot reason about.
-                ClockSkew = TimeSpan.Zero,
+
+ClockSkew = TimeSpan.Zero,
                 RoleClaimType = ClaimNames.Role,
                 NameClaimType = ClaimNames.Name
             };
 
-            // By default the handler translates "sub"/"role" back into the long ClaimTypes URIs, so
-            // FindFirstValue("sub") finds nothing. Turn it off to read claims under the names they were signed with.
-            options.MapInboundClaims = false;
+options.MapInboundClaims = false;
         });
 
-    builder.Services.AddAuthorization(options =>
+builder.Services.AddAuthorization(options =>
         options.AddPolicy(AuthPolicies.Admin, policy => policy.RequireRole(nameof(UserRole.Admin))));
 
-    // Enums travel as strings ("Hybrid", "FullText") rather than ordinals.
-    builder.Services.ConfigureHttpJsonOptions(options =>
+builder.Services.ConfigureHttpJsonOptions(options =>
         options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-    builder.Services.AddProblemDetails();
+builder.Services.AddProblemDetails();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddOpenApi(options =>
     {
@@ -117,12 +102,12 @@ try
         options.AddOperationTransformer<AuthorizationOperationTransformer>();
     });
 
-    builder.Services.AddHealthChecks()
+builder.Services.AddHealthChecks()
         .AddDbContextCheck<IChatDbContext>("postgres", tags: ["ready"])
         .AddCheck<VectorExtensionHealthCheck>("pgvector", tags: ["ready"])
         .AddCheck<ProviderHealthCheck>("ai-providers", tags: ["ready"]);
 
-    builder.Services.AddOpenTelemetry()
+builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource => resource.AddService("IChat.Api"))
         .WithTracing(tracing => tracing
             .AddAspNetCoreInstrumentation()
@@ -135,7 +120,7 @@ try
             .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation());
 
-    builder.Services.AddRateLimiter(options =>
+builder.Services.AddRateLimiter(options =>
     {
         options.AddFixedWindowLimiter("chat", limiter =>
         {
@@ -145,52 +130,49 @@ try
         });
     });
 
-    var app = builder.Build();
+var app = builder.Build();
 
-    app.UseExceptionHandler();
+app.UseExceptionHandler();
 
-    // One summary line per request instead of the three or four ASP.NET Core's default logger writes.
-    app.UseSerilogRequestLogging(options =>
+app.UseSerilogRequestLogging(options =>
     {
         options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
         options.GetLevel = GetRequestLogLevel;
         options.EnrichDiagnosticContext = EnrichRequestLog;
     });
 
-    app.UseRateLimiter();
+app.UseRateLimiter();
 
-    app.UseAuthentication();
+app.UseAuthentication();
     app.UseAuthorization();
 
-    if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
-        // The UI reads the document straight from /openapi/v1.json; only enabled in Development.
-        app.MapScalarApiReference("/docs", options => options
+
+app.MapScalarApiReference("/docs", options => options
             .WithTitle("IChat API")
-            // Preselect the Bearer box and keep the token across reloads, so trying an authenticated
-            // endpoint does not mean pasting the token again after every F5.
-            .AddPreferredSecuritySchemes(JwtBearerSecuritySchemeTransformer.SchemeName)
+
+.AddPreferredSecuritySchemes(JwtBearerSecuritySchemeTransformer.SchemeName)
             .EnablePersistentAuthentication());
     }
 
-    app.MapIChatEndpoints();
+app.MapIChatEndpoints();
 
-    // Migrations run at startup ONLY in Development; production uses `dotnet ef database update`.
-    if (app.Configuration.GetValue<bool>("Database:AutoMigrate"))
+if (app.Configuration.GetValue<bool>("Database:AutoMigrate"))
     {
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IChatDbContext>();
         await dbContext.Database.MigrateAsync();
     }
 
-    await app.RunAsync();
+await app.RunAsync();
 }
 catch (Exception exception) when (exception is not HostAbortedException)
 {
     Log.Fatal(exception, "Host terminated unexpectedly");
 
-    return 1;
+return 1;
 }
 finally
 {
@@ -199,7 +181,6 @@ finally
 
 return 0;
 
-// Health checks are polled constantly by the orchestrator; leaving them at Information would drown the real logs.
 static LogEventLevel GetRequestLogLevel(HttpContext httpContext, double elapsedMs, Exception? exception)
 {
     if (exception is not null || httpContext.Response.StatusCode >= StatusCodes.Status500InternalServerError)
@@ -207,19 +188,19 @@ static LogEventLevel GetRequestLogLevel(HttpContext httpContext, double elapsedM
         return LogEventLevel.Error;
     }
 
-    if (httpContext.Request.Path.StartsWithSegments("/health"))
+if (httpContext.Request.Path.StartsWithSegments("/health"))
     {
         return LogEventLevel.Debug;
     }
 
-    return LogEventLevel.Information;
+return LogEventLevel.Information;
 }
 
 static void EnrichRequestLog(IDiagnosticContext diagnosticContext, HttpContext httpContext)
 {
     var request = httpContext.Request;
 
-    diagnosticContext.Set("RequestHost", request.Host.Value);
+diagnosticContext.Set("RequestHost", request.Host.Value);
     diagnosticContext.Set("RequestScheme", request.Scheme);
     diagnosticContext.Set("RequestProtocol", request.Protocol);
     diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
@@ -227,19 +208,19 @@ static void EnrichRequestLog(IDiagnosticContext diagnosticContext, HttpContext h
     diagnosticContext.Set("TraceIdentifier", httpContext.TraceIdentifier);
     diagnosticContext.Set("UserId", httpContext.User.FindFirstValue(ClaimNames.Sub));
 
-    if (request.QueryString.HasValue)
+if (request.QueryString.HasValue)
     {
         diagnosticContext.Set("QueryString", request.QueryString.Value);
     }
 
-    var endpoint = httpContext.GetEndpoint();
+var endpoint = httpContext.GetEndpoint();
 
-    if (endpoint is not null)
+if (endpoint is not null)
     {
         diagnosticContext.Set("EndpointName", endpoint.DisplayName);
     }
 
-    if (httpContext.Response.ContentType is { Length: > 0 } contentType)
+if (httpContext.Response.ContentType is { Length: > 0 } contentType)
     {
         diagnosticContext.Set("ResponseContentType", contentType);
     }

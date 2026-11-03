@@ -4,5 +4,5 @@ public sealed class SearchHistoryTurn
 {
     public required string Role { get; init; }
 
-    public required string Content { get; init; }
+public required string Content { get; init; }
 }

@@ -12,7 +12,7 @@ public static class AuthMapper
             Password = dto.Password
         };
 
-    public static UserResponse ToResponse(this UserView view) =>
+public static UserResponse ToResponse(this UserView view) =>
         new()
         {
             Id = view.Id,
@@ -23,7 +23,7 @@ public static class AuthMapper
             CreatedAt = view.CreatedAt
         };
 
-    public static AuthResponse ToResponse(this AuthResult result) =>
+public static AuthResponse ToResponse(this AuthResult result) =>
         new()
         {
             AccessToken = result.AccessToken,

@@ -4,10 +4,10 @@ internal sealed class GoldenItem
 {
     public required string Tag { get; init; }
 
-    public required string Question { get; init; }
+public required string Question { get; init; }
 
-    [JsonPropertyName("expectedAnswerContains")]
+[JsonPropertyName("expectedAnswerContains")]
     public required List<string> ExpectedAnswerContains { get; init; }
 
-    public List<HistoryTurn>? History { get; init; }
+public List<HistoryTurn>? History { get; init; }
 }

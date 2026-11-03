@@ -16,7 +16,7 @@ public static class DocumentMapper
             Title = dto.Title
         };
 
-    public static GetDocumentsRequest ToServiceRequest(this GetDocumentsQuery query) =>
+public static GetDocumentsRequest ToServiceRequest(this GetDocumentsQuery query) =>
         new()
         {
             Status = (DocumentStatus?)query.Status,
@@ -24,7 +24,7 @@ public static class DocumentMapper
             Limit = query.Limit
         };
 
-    public static GetDocumentChunksRequest ToServiceRequest(this GetDocumentChunksQuery query, Guid documentId) =>
+public static GetDocumentChunksRequest ToServiceRequest(this GetDocumentChunksQuery query, Guid documentId) =>
         new()
         {
             DocumentId = documentId,
@@ -32,7 +32,7 @@ public static class DocumentMapper
             Limit = query.Limit
         };
 
-    public static UploadDocumentResponse ToResponse(this UploadDocumentResult result) =>
+public static UploadDocumentResponse ToResponse(this UploadDocumentResult result) =>
         new()
         {
             Id = result.Id,
@@ -40,7 +40,7 @@ public static class DocumentMapper
             Status = result.Status
         };
 
-    public static DocumentResponse ToResponse(this DocumentSummary summary) =>
+public static DocumentResponse ToResponse(this DocumentSummary summary) =>
         new()
         {
             Id = summary.Id,
@@ -55,7 +55,7 @@ public static class DocumentMapper
             IndexedAt = summary.IndexedAt
         };
 
-    public static DocumentChunkResponse ToResponse(this ChunkView chunk) =>
+public static DocumentChunkResponse ToResponse(this ChunkView chunk) =>
         new()
         {
             Id = chunk.Id,

@@ -16,7 +16,7 @@ public sealed class SearchService(RetrievalPipeline pipeline) : ISearchService
                 turn.Content))
             .ToList();
 
-        var retrievalRequest = new RetrievalRequest
+var retrievalRequest = new RetrievalRequest
         {
             Query = request.Query,
             Mode = request.Mode,
@@ -28,9 +28,9 @@ public sealed class SearchService(RetrievalPipeline pipeline) : ISearchService
             Rerank = request.Rerank
         };
 
-        var outcome = await pipeline.ExecuteAsync(retrievalRequest, cancellationToken);
+var outcome = await pipeline.ExecuteAsync(retrievalRequest, cancellationToken);
 
-        var stages = outcome.Stages.ToDictionary(
+var stages = outcome.Stages.ToDictionary(
             stage => stage.Name,
             stage => new SearchStageView
             {
@@ -49,7 +49,7 @@ public sealed class SearchService(RetrievalPipeline pipeline) : ISearchService
                 }).ToList()
             });
 
-        return Result.Success(new SearchChunksResult
+return Result.Success(new SearchChunksResult
         {
             OriginalQuery = outcome.OriginalQuery,
             RewrittenQuery = outcome.RewrittenQuery,

@@ -11,65 +11,56 @@ public class PdfDocumentParserTests
     private ParsedDocument _parsed = null!;
     private IReadOnlyList<DocumentBlock> _blocks = null!;
 
-    // Parse the fixture once for the whole suite: every test below only reads the parse result, never changes it.
-    [OneTimeSetUp]
+[OneTimeSetUp]
     public async Task ParseTheFixtureOnce()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "fixtures", "sample.pdf");
         await using var stream = File.OpenRead(path);
 
-        _parsed = await new PdfDocumentParser().ParseAsync(stream, CancellationToken.None);
+_parsed = await new PdfDocumentParser().ParseAsync(stream, CancellationToken.None);
         _blocks = _parsed.Blocks;
     }
 
-    [Test]
+[Test]
     public void Parse_ExtractsText()
     {
-        // Arrange & Act
-        var allText = string.Join(" ", _blocks.Select(block => block.Text));
 
-        // Assert
-        allText.Should().Contain("Timeout mac dinh la 120 giay");
+var allText = string.Join(" ", _blocks.Select(block => block.Text));
+
+allText.Should().Contain("Timeout mac dinh la 120 giay");
     }
 
-    [Test]
+[Test]
     public void Parse_InfersHeadingsFromLargerFontSize()
     {
-        // Arrange & Act
-        var headings = _blocks.Where(block => block.Kind == BlockKind.Heading).Select(block => block.Text).ToList();
 
-        // Assert
-        headings.Should().Contain("Cai dat he thong");
+var headings = _blocks.Where(block => block.Kind == BlockKind.Heading).Select(block => block.Text).ToList();
+
+headings.Should().Contain("Cai dat he thong");
         headings.Should().Contain("Cau hinh nang cao");
     }
 
-    [Test]
+[Test]
     public void Parse_BodyTextIsNotTreatedAsHeading()
     {
-        // Arrange & Act
-        var headings = _blocks.Where(block => block.Kind == BlockKind.Heading);
 
-        // Assert
-        headings.Should().NotContain(block => block.Text.Contains("Doan van mo dau"));
+var headings = _blocks.Where(block => block.Kind == BlockKind.Heading);
+
+headings.Should().NotContain(block => block.Text.Contains("Doan van mo dau"));
     }
 
-    [Test]
+[Test]
     public void Parse_PdfBlocksCarryPageNumber()
     {
-        // Arrange & Act — parsing happened in OneTimeSetUp
 
-        // Assert
-        // page is ONLY meaningful for PDFs; docx has to leave it null.
-        _blocks.Should().OnlyContain(block => block.Metadata != null && block.Metadata.ContainsKey("page"));
+_blocks.Should().OnlyContain(block => block.Metadata != null && block.Metadata.ContainsKey("page"));
         _blocks[0].Metadata!["page"].Should().Be("1");
     }
 
-    [Test]
+[Test]
     public void Parse_ReportsPdfFormat()
     {
-        // Arrange & Act — parsing happened in OneTimeSetUp
 
-        // Assert
-        _parsed.Metadata["format"].Should().Be("pdf");
+_parsed.Metadata["format"].Should().Be("pdf");
     }
 }
