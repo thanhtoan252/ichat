@@ -5,7 +5,8 @@ public sealed class ContextSource
 {
     public required int Index { get; init; }
 
-    public required IReadOnlyList<Guid> AnchorChunkIds { get; init; }
+    /// <summary>The highest-ranked retrieved chunk that represents this numbered source.</summary>
+    public required Guid CitationChunkId { get; init; }
 
     public required Guid DocumentId { get; init; }
 

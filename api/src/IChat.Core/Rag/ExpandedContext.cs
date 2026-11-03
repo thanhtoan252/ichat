@@ -2,11 +2,12 @@ namespace IChat.Core.Rag;
 
 /// <summary>
 /// A contiguous context block, formed by merging the retrieved chunk with its neighbours.
-/// Citations still point back to <see cref="AnchorChunkIds"/> — the chunks that were actually retrieved.
+/// The best-scoring retrieved anchor represents citations for the merged block.
 /// </summary>
 public sealed class ExpandedContext
 {
-    public required IReadOnlyList<Guid> AnchorChunkIds { get; init; }
+    /// <summary>The top-scoring retrieved anchor that represents this merged context block.</summary>
+    public required Guid CitationChunkId { get; init; }
 
     public required Guid DocumentId { get; init; }
 

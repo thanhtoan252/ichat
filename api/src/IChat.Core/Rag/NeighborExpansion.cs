@@ -139,7 +139,7 @@ public static class NeighborExpansion
 
             results.Add(new ExpandedContext
             {
-                AnchorChunkIds = group.Anchors.OrderByDescending(anchor => anchor.Score).Select(anchor => anchor.ChunkId).ToList(),
+                CitationChunkId = best.ChunkId,
                 DocumentId = group.DocumentId,
                 DocumentTitle = best.DocumentTitle,
                 HeadingPath = best.HeadingPath,

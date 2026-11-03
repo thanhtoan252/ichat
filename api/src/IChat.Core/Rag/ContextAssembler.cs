@@ -49,7 +49,7 @@ public sealed class ContextAssembler(ITokenEstimator tokenEstimator)
             sources.Add(new ContextSource
             {
                 Index = index,
-                AnchorChunkIds = context.AnchorChunkIds,
+                CitationChunkId = context.CitationChunkId,
                 DocumentId = context.DocumentId,
                 DocumentTitle = context.DocumentTitle,
                 HeadingPath = context.HeadingPath,

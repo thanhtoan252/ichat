@@ -82,7 +82,7 @@ public class NeighborExpansionTests
 
         // Assert
         var block = result.Should().ContainSingle("two adjacent chunks must merge rather than duplicate").Subject;
-        block.AnchorChunkIds.Should().HaveCount(2);
+        block.CitationChunkId.Should().Be(selected[0].ChunkId);
         block.StartChunkIndex.Should().Be(2);
         block.EndChunkIndex.Should().Be(5);
     }
@@ -115,7 +115,7 @@ public class NeighborExpansionTests
         var result = NeighborExpansion.Expand([anchor], neighbors, 1, 1);
 
         // Assert
-        result.Single().AnchorChunkIds.Should().Equal(anchor.ChunkId);
+        result.Single().CitationChunkId.Should().Be(anchor.ChunkId);
     }
 
     [Test]

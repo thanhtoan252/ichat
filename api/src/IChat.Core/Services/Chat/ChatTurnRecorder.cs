@@ -101,34 +101,26 @@ public sealed class ChatTurnRecorder(
         }
 
         var citations = new List<CitationPayload>();
-        var seenChunks = new HashSet<Guid>();
 
         foreach (var citation in extracted)
         {
             var source = assembled.Sources[citation.SourceOrdinal];
+            // Several retrieved anchor chunks can be merged into one context source. The core
+            // source exposes its highest-ranked anchor as the single citation representative.
+            var chunkId = source.CitationChunkId;
 
-            // One context block can merge several original chunks; a citation points at the original chunk,
-            // while neighbouring chunks only enrich the context and never become a citation of their own.
-            foreach (var chunkId in source.AnchorChunkIds)
+            dbContext.MessageCitations.Add(
+                MessageCitation.Create(assistantMessage.Id, chunkId, citation.MarkerIndex, source.Score));
+
+            citations.Add(new CitationPayload
             {
-                if (!seenChunks.Add(chunkId))
-                {
-                    continue;
-                }
-
-                dbContext.MessageCitations.Add(
-                    MessageCitation.Create(assistantMessage.Id, chunkId, citation.MarkerIndex, source.Score));
-
-                citations.Add(new CitationPayload
-                {
-                    MarkerIndex = citation.MarkerIndex,
-                    ChunkId = chunkId,
-                    DocumentId = source.DocumentId,
-                    DocumentTitle = source.DocumentTitle,
-                    HeadingPath = source.HeadingPath,
-                    Score = source.Score
-                });
-            }
+                MarkerIndex = citation.MarkerIndex,
+                ChunkId = chunkId,
+                DocumentId = source.DocumentId,
+                DocumentTitle = source.DocumentTitle,
+                HeadingPath = source.HeadingPath,
+                Score = source.Score
+            });
         }
 
         return citations;

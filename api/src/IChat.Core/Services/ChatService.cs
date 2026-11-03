@@ -158,7 +158,7 @@ public sealed class ChatService(
             .Select(source => new SourceView
             {
                 Index = source.Index,
-                ChunkId = source.AnchorChunkIds.Count > 0 ? source.AnchorChunkIds[0] : Guid.Empty,
+                ChunkId = source.CitationChunkId,
                 DocumentId = source.DocumentId,
                 DocumentTitle = source.DocumentTitle,
                 HeadingPath = source.HeadingPath,

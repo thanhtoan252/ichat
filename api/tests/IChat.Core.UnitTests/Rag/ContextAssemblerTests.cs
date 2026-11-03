@@ -162,7 +162,7 @@ public class ContextAssemblerTests
 
         return new ExpandedContext
         {
-            AnchorChunkIds = [guid],
+            CitationChunkId = guid,
             DocumentId = guid,
             DocumentTitle = "Tài liệu",
             HeadingPath = "Mục",

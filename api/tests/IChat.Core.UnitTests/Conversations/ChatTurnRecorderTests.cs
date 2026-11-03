@@ -78,7 +78,7 @@ public class ChatTurnRecorderTests
 
     // One context block merges several anchor chunks; two sources can share a chunk between them.
     [Test]
-    public async Task RecordAnswer_DeduplicatesAnchorChunksSharedBetweenSources()
+    public async Task RecordAnswer_WritesOneRepresentativeAnchorPerSource()
     {
         // Arrange
         var answer = Answer("Ca [1] lan [2].");
@@ -88,12 +88,12 @@ public class ChatTurnRecorderTests
         var done = await _recorder.RecordAnswerAsync(Conversation(), answer, context, Metadata(), CancellationToken.None);
 
         // Assert
-        done.Citations.Select(citation => citation.ChunkId).Should().Equal(ChunkA, ChunkB, ChunkC);
-        _savedCitations.Should().HaveCount(3);
+        done.Citations.Select(citation => citation.ChunkId).Should().Equal(ChunkA, ChunkB);
+        _savedCitations.Should().HaveCount(2);
     }
 
     [Test]
-    public async Task RecordAnswer_MultipleAnchorsInOneSource_AllBecomeCitations()
+    public async Task RecordAnswer_MultipleAnchorsInOneSource_UsesOneRepresentativeCitation()
     {
         // Arrange
         var answer = Answer("Chi mot nguon [1].");
@@ -103,8 +103,10 @@ public class ChatTurnRecorderTests
         var done = await _recorder.RecordAnswerAsync(Conversation(), answer, context, Metadata(), CancellationToken.None);
 
         // Assert
-        done.Citations.Should().HaveCount(2);
+        done.Citations.Should().ContainSingle();
+        done.Citations[0].ChunkId.Should().Be(ChunkA);
         done.Citations.Should().OnlyContain(citation => citation.MarkerIndex == 1);
+        _savedCitations.Should().ContainSingle();
     }
 
     [Test]
@@ -225,7 +227,7 @@ public class ChatTurnRecorderTests
         return new ContextSource
         {
             Index = index,
-            AnchorChunkIds = anchorChunkIds,
+            CitationChunkId = anchorChunkIds[0],
             DocumentId = Guid.Parse("00000000-0000-0000-0000-0000000000d4"),
             DocumentTitle = "Tai lieu",
             HeadingPath = "Muc > Tieu muc",
