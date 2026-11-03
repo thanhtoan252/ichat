@@ -23,7 +23,7 @@ public static class SearchMapper
             Rerank = dto.Rerank
         };
 
-    public static SearchResponse ToResponse(this SearchChunksResult result) =>
+public static SearchResponse ToResponse(this SearchChunksResult result) =>
         new()
         {
             OriginalQuery = result.OriginalQuery,
@@ -33,7 +33,7 @@ public static class SearchMapper
             ElapsedMs = result.ElapsedMs
         };
 
-    private static SearchStageResponse ToResponse(this SearchStageView stage) =>
+private static SearchStageResponse ToResponse(this SearchStageView stage) =>
         new()
         {
             Name = stage.Name,
@@ -43,7 +43,7 @@ public static class SearchMapper
             Top = stage.Top.Select(ToResponse).ToArray()
         };
 
-    private static SearchHitResponse ToResponse(this SearchHit hit) =>
+private static SearchHitResponse ToResponse(this SearchHit hit) =>
         new()
         {
             ChunkId = hit.ChunkId,

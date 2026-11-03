@@ -14,91 +14,77 @@ public class ConversationTitleTests
     [TestCase("  new CONVERSATION  ")]
     public void IsDefault_RecognisesThePlaceholder(string? title)
     {
-        // Arrange & Act
-        var isDefault = ConversationTitle.IsDefault(title);
 
-        // Assert
-        isDefault.Should().BeTrue();
+var isDefault = ConversationTitle.IsDefault(title);
+
+isDefault.Should().BeTrue();
     }
 
-    [Test]
+[Test]
     public void IsDefault_TitleChosenByTheCallerIsNotAPlaceholder()
     {
-        // Arrange
-        const string title = "Cấu hình hệ thống";
 
-        // Act
-        var isDefault = ConversationTitle.IsDefault(title);
+const string title = "Cấu hình hệ thống";
 
-        // Assert
-        isDefault.Should().BeFalse();
+var isDefault = ConversationTitle.IsDefault(title);
+
+isDefault.Should().BeFalse();
     }
 
-    [Test]
+[Test]
     public void FromQuestion_CollapsesWhitespace()
     {
-        // Arrange
-        const string question = "  timeout   mặc\n định là  bao nhiêu ";
 
-        // Act
-        var title = ConversationTitle.FromQuestion(question);
+const string question = "  timeout   mặc\n định là  bao nhiêu ";
 
-        // Assert
-        title.Should().Be("timeout mặc định là bao nhiêu");
+var title = ConversationTitle.FromQuestion(question);
+
+title.Should().Be("timeout mặc định là bao nhiêu");
     }
 
-    [Test]
+[Test]
     public void FromQuestion_LongQuestionIsCutToSixtyCharacters()
     {
-        // Arrange
-        var question = new string('a', 200);
 
-        // Act
-        var title = ConversationTitle.FromQuestion(question);
+var question = new string('a', 200);
 
-        // Assert
-        title.Should().HaveLength(58);
+var title = ConversationTitle.FromQuestion(question);
+
+title.Should().HaveLength(58);
         title.Should().EndWith("…");
     }
 
-    [Test]
+[Test]
     public void FromQuestion_QuestionOfExactlySixtyCharactersIsKeptWhole()
     {
-        // Arrange
-        var question = new string('a', 60);
 
-        // Act
-        var title = ConversationTitle.FromQuestion(question);
+var question = new string('a', 60);
 
-        // Assert
-        title.Should().Be(question);
+var title = ConversationTitle.FromQuestion(question);
+
+title.Should().Be(question);
     }
 
-    [Test]
+[Test]
     public void FromQuestion_DoesNotCutASurrogatePairInHalf()
     {
-        // Arrange
-        // Characters 57-58 are one emoji: cutting between the surrogate pair produces a broken character.
-        var question = $"{new string('a', 56)}😀{new string('b', 60)}";
 
-        // Act
-        var title = ConversationTitle.FromQuestion(question);
+var question = $"{new string('a', 56)}😀{new string('b', 60)}";
 
-        // Assert
-        char.IsSurrogate(title[^2]).Should().BeFalse();
+var title = ConversationTitle.FromQuestion(question);
+
+char.IsSurrogate(title[^2]).Should().BeFalse();
         title.Should().Be($"{new string('a', 56)}…");
     }
 
-    [Test]
+[Test]
     public void FromQuestion_WhitespaceOnlyFallsBackToThePlaceholder()
     {
-        // Arrange
-        const string question = "   ";
 
-        // Act
-        var title = ConversationTitle.FromQuestion(question);
+const string question = "   ";
 
-        // Assert
-        title.Should().Be(ConversationTitle.Default);
+var title = ConversationTitle.FromQuestion(question);
+
+title.Should().Be(ConversationTitle.Default);
     }
 }

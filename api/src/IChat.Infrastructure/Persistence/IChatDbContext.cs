@@ -10,31 +10,31 @@ public sealed class IChatDbContext(DbContextOptions<IChatDbContext> options) : D
 {
     public DbSet<Document> Documents => Set<Document>();
 
-    public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
+public DbSet<DocumentChunk> DocumentChunks => Set<DocumentChunk>();
 
-    public DbSet<Conversation> Conversations => Set<Conversation>();
+public DbSet<Conversation> Conversations => Set<Conversation>();
 
-    public DbSet<Message> Messages => Set<Message>();
+public DbSet<Message> Messages => Set<Message>();
 
-    public DbSet<MessageCitation> MessageCitations => Set<MessageCitation>();
+public DbSet<MessageCitation> MessageCitations => Set<MessageCitation>();
 
-    public DbSet<User> Users => Set<User>();
+public DbSet<User> Users => Set<User>();
 
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
-    Task<int> IApplicationDbContext.SaveChangesAsync(CancellationToken cancellationToken)
+Task<int> IApplicationDbContext.SaveChangesAsync(CancellationToken cancellationToken)
     {
         return SaveChangesAsync(cancellationToken);
     }
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("vector");
         modelBuilder.HasPostgresExtension("unaccent");
         modelBuilder.HasPostgresExtension("pg_trgm");
 
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(IChatDbContext).Assembly);
+modelBuilder.ApplyConfigurationsFromAssembly(typeof(IChatDbContext).Assembly);
 
-        base.OnModelCreating(modelBuilder);
+base.OnModelCreating(modelBuilder);
     }
 }

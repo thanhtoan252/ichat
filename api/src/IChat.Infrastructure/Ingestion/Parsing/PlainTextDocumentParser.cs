@@ -3,35 +3,34 @@ namespace IChat.Infrastructure.Ingestion.Parsing;
 using IChat.Core.Abstractions;
 using IChat.Core.Domain.Documents.Parsing;
 
-/// <summary>TXT has no structure: everything is a Paragraph, and there are no headings.</summary>
 public sealed class PlainTextDocumentParser : IDocumentParser
 {
     public const string PlainTextContentType = "text/plain";
 
-    public DocumentFormat Format { get; } = new()
+public DocumentFormat Format { get; } = new()
     {
         ContentType = PlainTextContentType,
         Extensions = [".txt"]
     };
 
-    public async Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
+public async Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(content, leaveOpen: true);
         var text = await reader.ReadToEndAsync(cancellationToken);
 
-        var blocks = new List<DocumentBlock>();
+var blocks = new List<DocumentBlock>();
         var order = 0;
 
-        foreach (var paragraph in text.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries))
+foreach (var paragraph in text.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries))
         {
             var trimmed = paragraph.Trim();
 
-            if (trimmed.Length == 0)
+if (trimmed.Length == 0)
             {
                 continue;
             }
 
-            blocks.Add(new DocumentBlock
+blocks.Add(new DocumentBlock
             {
                 Kind = BlockKind.Paragraph,
                 Text = trimmed,
@@ -39,7 +38,7 @@ public sealed class PlainTextDocumentParser : IDocumentParser
             });
         }
 
-        return new ParsedDocument
+return new ParsedDocument
         {
             Blocks = blocks,
             Metadata = new Dictionary<string, string> { ["format"] = "txt" }

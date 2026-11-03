@@ -5,40 +5,36 @@ using IChat.Core.Domain.Documents.Parsing;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.Content;
 
-/// <summary>
-/// Unlike DOCX, a PDF carries no heading metadata: the heading level has to be inferred from font size and
-/// boldness. When it cannot be inferred, HeadingLevel stays null — better none than a wrong guess.
-/// </summary>
 public sealed class PdfDocumentParser : IDocumentParser
 {
     public const string PdfContentType = "application/pdf";
 
-    private const double HeadingSizeRatio = 1.15;
+private const double HeadingSizeRatio = 1.15;
 
-    public DocumentFormat Format { get; } = new()
+public DocumentFormat Format { get; } = new()
     {
         ContentType = PdfContentType,
         Extensions = [".pdf"],
         MagicBytes = [[0x25, 0x50, 0x44, 0x46]]
     };
 
-    public Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
+public Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
     {
         using var buffer = new MemoryStream();
         content.CopyTo(buffer);
         buffer.Position = 0;
 
-        using var pdfDocument = PdfDocument.Open(buffer);
+using var pdfDocument = PdfDocument.Open(buffer);
 
-        var lines = new List<PdfLine>();
+var lines = new List<PdfLine>();
 
-        foreach (var page in pdfDocument.GetPages())
+foreach (var page in pdfDocument.GetPages())
         {
             cancellationToken.ThrowIfCancellationRequested();
             lines.AddRange(ExtractLines(page));
         }
 
-        if (lines.Count == 0)
+if (lines.Count == 0)
         {
             return Task.FromResult(new ParsedDocument
             {
@@ -47,8 +43,7 @@ public sealed class PdfDocumentParser : IDocumentParser
             });
         }
 
-        // Body font size = the median across all lines; a heading is a line that stands out above it.
-        var bodySize = Median(lines.Select(line => line.FontSize).ToList());
+var bodySize = Median(lines.Select(line => line.FontSize).ToList());
         var headingSizes = lines
             .Where(line => IsHeadingCandidate(line, bodySize))
             .Select(line => Math.Round(line.FontSize, 1))
@@ -56,20 +51,20 @@ public sealed class PdfDocumentParser : IDocumentParser
             .OrderByDescending(size => size)
             .ToList();
 
-        var blocks = new List<DocumentBlock>();
+var blocks = new List<DocumentBlock>();
         var order = 0;
         var paragraphBuffer = new List<PdfLine>();
 
-        void FlushParagraph()
+void FlushParagraph()
         {
             if (paragraphBuffer.Count == 0)
             {
                 return;
             }
 
-            var text = string.Join(" ", paragraphBuffer.Select(line => line.Text)).Trim();
+var text = string.Join(" ", paragraphBuffer.Select(line => line.Text)).Trim();
 
-            if (text.Length > 0)
+if (text.Length > 0)
             {
                 blocks.Add(new DocumentBlock
                 {
@@ -80,20 +75,20 @@ public sealed class PdfDocumentParser : IDocumentParser
                 });
             }
 
-            paragraphBuffer.Clear();
+paragraphBuffer.Clear();
         }
 
-        foreach (var line in lines)
+foreach (var line in lines)
         {
             if (IsHeadingCandidate(line, bodySize))
             {
                 FlushParagraph();
 
-                var rounded = Math.Round(line.FontSize, 1);
+var rounded = Math.Round(line.FontSize, 1);
                 var level = headingSizes.IndexOf(rounded);
                 var headingLevel = level >= 0 ? Math.Min(level + 1, 6) : (int?)null;
 
-                blocks.Add(new DocumentBlock
+blocks.Add(new DocumentBlock
                 {
                     Kind = BlockKind.Heading,
                     Text = line.Text,
@@ -102,66 +97,65 @@ public sealed class PdfDocumentParser : IDocumentParser
                     Metadata = new Dictionary<string, string> { ["page"] = line.PageNumber.ToString() }
                 });
 
-                continue;
+continue;
             }
 
-            paragraphBuffer.Add(line);
+paragraphBuffer.Add(line);
         }
 
-        FlushParagraph();
+FlushParagraph();
 
-        return Task.FromResult(new ParsedDocument
+return Task.FromResult(new ParsedDocument
         {
             Blocks = blocks,
             Metadata = new Dictionary<string, string> { ["format"] = "pdf" }
         });
     }
 
-    private static bool IsHeadingCandidate(PdfLine line, double bodySize)
+private static bool IsHeadingCandidate(PdfLine line, double bodySize)
     {
         if (line.Text.Length > 200)
         {
             return false;
         }
 
-        return line.FontSize >= bodySize * HeadingSizeRatio || (line.IsBold && line.FontSize >= bodySize);
+return line.FontSize >= bodySize * HeadingSizeRatio || (line.IsBold && line.FontSize >= bodySize);
     }
 
-    private static IEnumerable<PdfLine> ExtractLines(Page page)
+private static IEnumerable<PdfLine> ExtractLines(Page page)
     {
         var words = page.GetWords().ToList();
 
-        if (words.Count == 0)
+if (words.Count == 0)
         {
             yield break;
         }
 
-        // Group words into lines by their Y coordinate; the threshold scales with the text height.
-        var groups = words
+var groups = words
             .GroupBy(word => Math.Round(word.BoundingBox.Bottom / 3.0))
             .OrderByDescending(group => group.Key);
 
-        foreach (var group in groups)
+foreach (var group in groups)
         {
             var ordered = group.OrderBy(word => word.BoundingBox.Left).ToList();
             var text = string.Join(" ", ordered.Select(word => word.Text)).Trim();
 
-            if (text.Length == 0)
+if (text.Length == 0)
             {
                 continue;
             }
 
-            var letters = ordered.SelectMany(word => word.Letters).ToList();
+var letters = ordered.SelectMany(word => word.Letters).ToList();
 
-            if (letters.Count == 0)
+if (letters.Count == 0)
             {
                 continue;
             }
 
-            var fontSize = Median(letters.Select(letter => letter.PointSize).ToList());
+var fontSize = Median(letters.Select(letter => letter.PointSize).ToList());
             var boldCount = letters.Count(letter => letter.FontName?.Contains("Bold", StringComparison.OrdinalIgnoreCase) == true);
 
-            yield return new PdfLine
+yield return new PdfLine
             {
                 Text = text,
                 FontSize = fontSize,
@@ -171,26 +165,26 @@ public sealed class PdfDocumentParser : IDocumentParser
         }
     }
 
-    private static double Median(List<double> values)
+private static double Median(List<double> values)
     {
         if (values.Count == 0)
         {
             return 0;
         }
 
-        var sorted = values.OrderBy(value => value).ToList();
+var sorted = values.OrderBy(value => value).ToList();
 
-        return sorted[sorted.Count / 2];
+return sorted[sorted.Count / 2];
     }
 
-    private readonly struct PdfLine
+private readonly struct PdfLine
     {
         public required string Text { get; init; }
 
-        public required double FontSize { get; init; }
+public required double FontSize { get; init; }
 
-        public required bool IsBold { get; init; }
+public required bool IsBold { get; init; }
 
-        public required int PageNumber { get; init; }
+public required int PageNumber { get; init; }
     }
 }

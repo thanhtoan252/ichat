@@ -8,91 +8,74 @@ using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
 
-/// <summary>
-/// The order and the names of the stages are a published contract for the Retrieval Lab: it reads results by
-/// stage name, so a stage that is renamed, removed or moved breaks the debugging screen.
-/// </summary>
 [TestFixture]
 public class RetrievalStageOrderTests
 {
     private static readonly Guid VectorChunk = Guid.Parse("00000000-0000-0000-0000-0000000000a1");
     private static readonly Guid FullTextChunk = Guid.Parse("00000000-0000-0000-0000-0000000000b2");
 
-    private static readonly string[] PublishedStageOrder = ["vector", "fulltext", "trigram", "fused", "afterMmr", "final"];
+private static readonly string[] PublishedStageOrder = ["vector", "fulltext", "trigram", "fused", "afterMmr", "final"];
 
-    [Test]
+[Test]
     public async Task Execute_EmitsStagesInThePublishedOrder()
     {
-        // Arrange
-        var pipeline = Pipeline();
 
-        // Act
-        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+var pipeline = Pipeline();
 
-        // Assert
-        outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
+var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+
+outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
     }
 
-    // A disabled branch still has to record an EMPTY stage: the Retrieval Lab tells "the stage ran and found
-    // nothing" apart from "the stage does not exist", and an integration test pins this too.
-    [Test]
+[Test]
     public async Task Execute_DisabledBranch_StillEmitsAnEmptyStage()
     {
-        // Arrange
-        var pipeline = Pipeline(trigramEnabled: false);
 
-        // Act
-        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+var pipeline = Pipeline(trigramEnabled: false);
 
-        // Assert
-        outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
+var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+
+outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
         outcome.Stages.Single(stage => stage.Name == "trigram").Count.Should().Be(0);
     }
 
-    [Test]
+[Test]
     public async Task Execute_ModeSelectsOneBranch_StillEmitsEveryBranchStage()
     {
-        // Arrange
-        var pipeline = Pipeline();
 
-        // Act
-        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Vector), CancellationToken.None);
+var pipeline = Pipeline();
 
-        // Assert
-        outcome.Stages.Select(stage => stage.Name).Should().Contain(["vector", "fulltext", "trigram"]);
+var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Vector), CancellationToken.None);
+
+outcome.Stages.Select(stage => stage.Name).Should().Contain(["vector", "fulltext", "trigram"]);
         outcome.Stages.Single(stage => stage.Name == "fulltext").Count.Should().Be(0);
     }
 
-    [Test]
+[Test]
     public async Task Execute_BranchReportsDegraded_MarksTheWholeOutcomeDegraded()
     {
-        // Arrange
-        var pipeline = Pipeline(vectorDegraded: true);
 
-        // Act
-        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+var pipeline = Pipeline(vectorDegraded: true);
 
-        // Assert
-        outcome.Degraded.Should().BeTrue();
+var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+
+outcome.Degraded.Should().BeTrue();
     }
 
-    [Test]
+[Test]
     public async Task Execute_CandidatesAfterFusion_HaveNoSingleSource()
     {
-        // Arrange
-        var pipeline = Pipeline();
 
-        // Act
-        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+var pipeline = Pipeline();
 
-        // Assert
-        // After fusion a chunk can come from several branches, so assigning one Source would be a lie.
-        outcome.Stages.Single(stage => stage.Name == "fused").Top.Should().OnlyContain(candidate => candidate.Source == null);
+var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+
+outcome.Stages.Single(stage => stage.Name == "fused").Top.Should().OnlyContain(candidate => candidate.Source == null);
         outcome.Stages.Single(stage => stage.Name == "vector").Top.Should().OnlyContain(candidate => candidate.Source == RetrievalSource.Vector);
         outcome.Stages.Single(stage => stage.Name == "fulltext").Top.Should().OnlyContain(candidate => candidate.Source == RetrievalSource.FullText);
     }
 
-    private static RetrievalPipeline Pipeline(bool trigramEnabled = true, bool vectorDegraded = false)
+private static RetrievalPipeline Pipeline(bool trigramEnabled = true, bool vectorDegraded = false)
     {
         IRetrievalBranch[] branches =
         [
@@ -101,7 +84,7 @@ public class RetrievalStageOrderTests
             Branch(RetrievalStageName.Trigram, trigramEnabled ? [SearchMode.Hybrid, SearchMode.Trigram] : [], [])
         ];
 
-        return new RetrievalPipeline(
+return new RetrievalPipeline(
             branches,
             ChunkLoader(VectorChunk, FullTextChunk),
             PassThroughRewriter(),
@@ -109,7 +92,7 @@ public class RetrievalStageOrderTests
             Options.Create(new RagOptions()));
     }
 
-    private static IRetrievalBranch Branch(
+private static IRetrievalBranch Branch(
         string stageName,
         IReadOnlyList<SearchMode> enabledModes,
         IReadOnlyList<RetrievalCandidate> candidates,
@@ -127,10 +110,10 @@ public class RetrievalStageOrderTests
                 Degraded = degraded
             });
 
-        return branch.Object;
+return branch.Object;
     }
 
-    private static IChunkLoader ChunkLoader(params Guid[] known)
+private static IChunkLoader ChunkLoader(params Guid[] known)
     {
         var loader = new Mock<IChunkLoader>();
         loader
@@ -150,41 +133,41 @@ public class RetrievalStageOrderTests
                     })
                 ];
 
-                return chunks;
+return chunks;
             });
         loader
             .Setup(l => l.LoadNeighborsAsync(It.IsAny<IReadOnlyList<(Guid DocumentId, int ChunkIndex)>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-        return loader.Object;
+return loader.Object;
     }
 
-    private static IQueryRewriter PassThroughRewriter()
+private static IQueryRewriter PassThroughRewriter()
     {
         var rewriter = new Mock<IQueryRewriter>();
         rewriter
             .Setup(r => r.RewriteAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string originalQuestion, IReadOnlyList<ChatMessage> _, CancellationToken _) => originalQuestion);
 
-        return rewriter.Object;
+return rewriter.Object;
     }
 
-    private static IReranker PassThroughReranker()
+private static IReranker PassThroughReranker()
     {
         var reranker = new Mock<IReranker>();
         reranker
             .Setup(r => r.RerankAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<ScoredChunk>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string _, IReadOnlyList<ScoredChunk> candidates, CancellationToken _) => candidates);
 
-        return reranker.Object;
+return reranker.Object;
     }
 
-    private static RetrievalRequest Request(SearchMode mode)
+private static RetrievalRequest Request(SearchMode mode)
     {
         return new RetrievalRequest { Query = "cau hoi", Mode = mode, Rewrite = false, Rerank = false };
     }
 
-    private static RetrievalCandidate Candidate(Guid id, RetrievalSource source)
+private static RetrievalCandidate Candidate(Guid id, RetrievalSource source)
     {
         return new RetrievalCandidate
         {

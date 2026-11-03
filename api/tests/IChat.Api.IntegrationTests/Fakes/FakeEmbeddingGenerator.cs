@@ -2,17 +2,13 @@ namespace IChat.Api.IntegrationTests.Fakes;
 
 using Microsoft.Extensions.AI;
 
-/// <summary>
-/// A deterministic embedding derived from the text: the same text always yields the same vector, and texts
-/// with similar vocabulary land near each other. Enough to test retrieval without an API key.
-/// </summary>
 public sealed class FakeEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<float>>
 {
     public const int Dimensions = 1536;
 
-    public static volatile bool ShouldFail;
+public static volatile bool ShouldFail;
 
-    public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
         IEnumerable<string> values,
         EmbeddingGenerationOptions? options = null,
         CancellationToken cancellationToken = default)
@@ -22,24 +18,24 @@ public sealed class FakeEmbeddingGenerator : IEmbeddingGenerator<string, Embeddi
             throw new InvalidOperationException("Fake embedding provider failing on purpose.");
         }
 
-        var embeddings = values.Select(value => new Embedding<float>(Vectorise(value))).ToList();
+var embeddings = values.Select(value => new Embedding<float>(Vectorise(value))).ToList();
 
-        return Task.FromResult(new GeneratedEmbeddings<Embedding<float>>(embeddings));
+return Task.FromResult(new GeneratedEmbeddings<Embedding<float>>(embeddings));
     }
 
-    public static float[] Vectorise(string text)
+public static float[] Vectorise(string text)
     {
         var vector = new float[Dimensions];
 
-        foreach (var token in text.ToLowerInvariant().Split([' ', '\n', '\t', '>', ',', '.'], StringSplitOptions.RemoveEmptyEntries))
+foreach (var token in text.ToLowerInvariant().Split([' ', '\n', '\t', '>', ',', '.'], StringSplitOptions.RemoveEmptyEntries))
         {
             var slot = (int)((uint)token.GetHashCode(StringComparison.Ordinal) % Dimensions);
             vector[slot] += 1f;
         }
 
-        var norm = MathF.Sqrt(vector.Sum(value => value * value));
+var norm = MathF.Sqrt(vector.Sum(value => value * value));
 
-        if (norm > 0)
+if (norm > 0)
         {
             for (var i = 0; i < vector.Length; i++)
             {
@@ -51,12 +47,12 @@ public sealed class FakeEmbeddingGenerator : IEmbeddingGenerator<string, Embeddi
             vector[0] = 1f;
         }
 
-        return vector;
+return vector;
     }
 
-    public object? GetService(Type serviceType, object? serviceKey = null) => null;
+public object? GetService(Type serviceType, object? serviceKey = null) => null;
 
-    public void Dispose()
+public void Dispose()
     {
     }
 }

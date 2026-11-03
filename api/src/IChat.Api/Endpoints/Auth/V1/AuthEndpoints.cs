@@ -15,7 +15,7 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/auth").WithTags("Auth");
 
-        group.MapPost("/login", LoginAsync)
+group.MapPost("/login", LoginAsync)
             .AllowAnonymous()
             .WithName("Login")
             .WithSummary("Sign in.")
@@ -24,7 +24,7 @@ public static class AuthEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        group.MapPost("/refresh", RefreshAsync)
+group.MapPost("/refresh", RefreshAsync)
             .AllowAnonymous()
             .WithName("RefreshSession")
             .WithSummary("Exchange the refresh cookie for a new access token.")
@@ -32,22 +32,22 @@ public static class AuthEndpoints
             .Produces<AuthResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        group.MapPost("/logout", LogoutAsync)
+group.MapPost("/logout", LogoutAsync)
             .WithName("Logout")
             .WithSummary("Sign out.")
             .WithDescription("Revokes the refresh token and clears its cookie.")
             .Produces(StatusCodes.Status204NoContent);
 
-        group.MapGet("/me", GetProfileAsync)
+group.MapGet("/me", GetProfileAsync)
             .WithName("GetProfile")
             .WithSummary("The signed-in account.")
             .Produces<UserResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized);
 
-        return app;
+return app;
     }
 
-    private static async Task<IResult> LoginAsync(
+private static async Task<IResult> LoginAsync(
         LoginDto dto,
         IValidator<LoginDto> validator,
         IAuthService authService,
@@ -56,47 +56,47 @@ public static class AuthEndpoints
     {
         var validation = await validator.ValidateAsync(dto, cancellationToken);
 
-        if (!validation.IsValid)
+if (!validation.IsValid)
         {
             return validation.ToValidationProblem();
         }
 
-        var result = await authService.LoginAsync(dto.ToServiceRequest(), cancellationToken);
+var result = await authService.LoginAsync(dto.ToServiceRequest(), cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Ok(httpContext, result.Value);
+return Ok(httpContext, result.Value);
     }
 
-    private static async Task<IResult> RefreshAsync(
+private static async Task<IResult> RefreshAsync(
         IAuthService authService,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
         var refreshToken = RefreshTokenCookie.Read(httpContext);
 
-        if (string.IsNullOrWhiteSpace(refreshToken))
+if (string.IsNullOrWhiteSpace(refreshToken))
         {
             return Error.Unauthorized("There is no active session.").ToProblemResult();
         }
 
-        var result = await authService.RefreshAsync(refreshToken, cancellationToken);
+var result = await authService.RefreshAsync(refreshToken, cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
-            // A broken cookie is deleted outright, so the client does not repeat a pointless refresh loop.
-            RefreshTokenCookie.Delete(httpContext);
 
-            return result.Error.ToProblemResult();
+RefreshTokenCookie.Delete(httpContext);
+
+return result.Error.ToProblemResult();
         }
 
-        return Ok(httpContext, result.Value);
+return Ok(httpContext, result.Value);
     }
 
-    private static async Task<IResult> LogoutAsync(
+private static async Task<IResult> LogoutAsync(
         IAuthService authService,
         HttpContext httpContext,
         CancellationToken cancellationToken)
@@ -104,10 +104,10 @@ public static class AuthEndpoints
         await authService.LogoutAsync(RefreshTokenCookie.Read(httpContext), cancellationToken);
         RefreshTokenCookie.Delete(httpContext);
 
-        return Results.NoContent();
+return Results.NoContent();
     }
 
-    private static async Task<IResult> GetProfileAsync(
+private static async Task<IResult> GetProfileAsync(
         IAuthService authService,
         ICurrentUser currentUser,
         CancellationToken cancellationToken)
@@ -117,20 +117,20 @@ public static class AuthEndpoints
             return Error.Unauthorized("There is no active session.").ToProblemResult();
         }
 
-        var result = await authService.GetProfileAsync(userId, cancellationToken);
+var result = await authService.GetProfileAsync(userId, cancellationToken);
 
-        if (result.IsFailure)
+if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-        return Results.Ok(result.Value.ToResponse());
+return Results.Ok(result.Value.ToResponse());
     }
 
-    private static IResult Ok(HttpContext httpContext, AuthResult result)
+private static IResult Ok(HttpContext httpContext, AuthResult result)
     {
         RefreshTokenCookie.Append(httpContext, result.RefreshToken, result.RefreshTokenExpiresAt);
 
-        return Results.Ok(result.ToResponse());
+return Results.Ok(result.ToResponse());
     }
 }

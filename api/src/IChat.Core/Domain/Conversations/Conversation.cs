@@ -4,24 +4,23 @@ public sealed class Conversation
 {
     private readonly List<Message> _messages = [];
 
-    private Conversation()
+private Conversation()
     {
     }
 
-    public Guid Id { get; private set; }
+public Guid Id { get; private set; }
 
-    /// <summary>Foreign key to users; always taken from the access token, never from the client.</summary>
-    public Guid UserId { get; private set; }
+public Guid UserId { get; private set; }
 
-    public string Title { get; private set; } = string.Empty;
+public string Title { get; private set; } = string.Empty;
 
-    public DateTimeOffset CreatedAt { get; private set; }
+public DateTimeOffset CreatedAt { get; private set; }
 
-    public DateTimeOffset UpdatedAt { get; private set; }
+public DateTimeOffset UpdatedAt { get; private set; }
 
-    public IReadOnlyList<Message> Messages => _messages;
+public IReadOnlyList<Message> Messages => _messages;
 
-    public static Conversation Create(Guid userId, string title, DateTimeOffset createdAt)
+public static Conversation Create(Guid userId, string title, DateTimeOffset createdAt)
     {
         return new Conversation
         {
@@ -33,13 +32,13 @@ public sealed class Conversation
         };
     }
 
-    public void Rename(string title, DateTimeOffset updatedAt)
+public void Rename(string title, DateTimeOffset updatedAt)
     {
         Title = title;
         UpdatedAt = updatedAt;
     }
 
-    public void Touch(DateTimeOffset updatedAt)
+public void Touch(DateTimeOffset updatedAt)
     {
         UpdatedAt = updatedAt;
     }

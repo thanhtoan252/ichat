@@ -8,21 +8,13 @@ using IChat.Core.Rag;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-/// Calls the model and emits each piece of text. Everything about streaming a response lives here:
-/// ChatOptions, timeout, the telemetry span, and how every kind of ending is funnelled into one path.
-/// </summary>
 public sealed class AnswerGenerator(
     IChatClient chatClient,
     IModelCatalog modelCatalog,
     ILogger<AnswerGenerator> logger)
 {
-    /// <summary>
-    /// Emits each piece of text OpenAI returns, and at the end an "error" event if generation failed.
-    /// It is split out because C# does not allow `yield return` inside try/catch: the loop has to call
-    /// MoveNextAsync and catch errors by hand, and that is the knottiest part of the whole chat flow.
-    /// </summary>
-    public async IAsyncEnumerable<SseEvent> StreamAsync(
+
+public async IAsyncEnumerable<SseEvent> StreamAsync(
         IReadOnlyList<ChatMessage> prompt,
         string? requestedModel,
         AnswerBuffer buffer,
@@ -30,24 +22,21 @@ public sealed class AnswerGenerator(
     {
         var options = BuildChatOptions(requestedModel);
 
-        using var generationActivity = StartGenerationActivity(options);
+using var generationActivity = StartGenerationActivity(options);
 
-        // The timeout has to be enforced here: the SDK is constructed directly by a factory, so it
-        // never passes through our HttpClient pipeline, and a hung request would hold the SSE connection
-        // open forever.
-        using var generationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+using var generationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         generationCts.CancelAfter(TimeSpan.FromSeconds(modelCatalog.ChatTimeoutSeconds));
         var generationToken = generationCts.Token;
 
-        var stream = chatClient.GetStreamingResponseAsync(prompt, options, generationToken).GetAsyncEnumerator(generationToken);
+var stream = chatClient.GetStreamingResponseAsync(prompt, options, generationToken).GetAsyncEnumerator(generationToken);
 
-        try
+try
         {
             while (true)
             {
                 var step = await ReadNextUpdateAsync(stream);
 
-                if (step.Update is null)
+if (step.Update is null)
                 {
                     if (step.Error is not null)
                     {
@@ -58,18 +47,18 @@ public sealed class AnswerGenerator(
                         buffer.MarkInterrupted();
                     }
 
-                    break;
+break;
                 }
 
-                buffer.AddUsage(step.Update);
+buffer.AddUsage(step.Update);
 
-                var text = step.Update.Text;
+var text = step.Update.Text;
 
-                if (!string.IsNullOrEmpty(text))
+if (!string.IsNullOrEmpty(text))
                 {
                     buffer.AppendText(text);
 
-                    yield return SseEvent.Delta(text);
+yield return SseEvent.Delta(text);
                 }
             }
         }
@@ -78,43 +67,36 @@ public sealed class AnswerGenerator(
             await stream.DisposeAsync();
         }
 
-        if (buffer.Error is not null)
+if (buffer.Error is not null)
         {
             yield return SseEvent.Failure(buffer.Error);
         }
     }
 
-    private ChatOptions BuildChatOptions(string? requestedModel)
+private ChatOptions BuildChatOptions(string? requestedModel)
     {
         return new ChatOptions
         {
             ModelId = requestedModel,
 
-            // Not configured means not sent: the reasoning-family models reject any temperature other than
-            // OpenAI's default with an HTTP 400.
-            Temperature = (float?)modelCatalog.ChatTemperature,
+Temperature = (float?)modelCatalog.ChatTemperature,
 
-            MaxOutputTokens = modelCatalog.ChatMaxOutputTokens
+MaxOutputTokens = modelCatalog.ChatMaxOutputTokens
         };
     }
 
-    /// <summary>Theo OpenTelemetry semantic convention cho GenAI.</summary>
-    private Activity? StartGenerationActivity(ChatOptions options)
+private Activity? StartGenerationActivity(ChatOptions options)
     {
         var activity = RetrievalPipeline.ActivitySource.StartActivity("rag.generate");
 
-        activity?.SetTag("gen_ai.system", modelCatalog.GetSnapshot().Chat.Provider);
+activity?.SetTag("gen_ai.system", modelCatalog.GetSnapshot().Chat.Provider);
         activity?.SetTag("gen_ai.request.model", options.ModelId);
         activity?.SetTag("gen_ai.request.max_tokens", modelCatalog.ChatMaxOutputTokens);
 
-        return activity;
+return activity;
     }
 
-    /// <summary>
-    /// Reads one update and funnels every way of ending into the same return type: the stream ran out,
-    /// the client disconnected midway, or generation failed.
-    /// </summary>
-    private async Task<StreamStep> ReadNextUpdateAsync(IAsyncEnumerator<ChatResponseUpdate> stream)
+private async Task<StreamStep> ReadNextUpdateAsync(IAsyncEnumerator<ChatResponseUpdate> stream)
     {
         try
         {
@@ -124,15 +106,15 @@ public sealed class AnswerGenerator(
         }
         catch (OperationCanceledException)
         {
-            // The client closed the tab midway: what was generated is still persisted, marked [interrupted].
-            return new StreamStep { Interrupted = true };
+
+return new StreamStep { Interrupted = true };
         }
         catch (Exception exception)
         {
-            // The SDK's own error message never reaches the client: it can leak configuration details.
-            logger.LogError(exception, "OpenAI failed while streaming the answer.");
 
-            return new StreamStep
+logger.LogError(exception, "OpenAI failed while streaming the answer.");
+
+return new StreamStep
             {
                 Error = new ErrorPayload
                 {
@@ -143,13 +125,12 @@ public sealed class AnswerGenerator(
         }
     }
 
-    /// <summary>One read from the stream: a null Update means it ended, for one reason or another.</summary>
-    private readonly record struct StreamStep
+private readonly record struct StreamStep
     {
         public ChatResponseUpdate? Update { get; init; }
 
-        public bool Interrupted { get; init; }
+public bool Interrupted { get; init; }
 
-        public ErrorPayload? Error { get; init; }
+public ErrorPayload? Error { get; init; }
     }
 }

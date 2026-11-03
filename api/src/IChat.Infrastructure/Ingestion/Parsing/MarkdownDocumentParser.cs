@@ -10,39 +10,39 @@ public sealed class MarkdownDocumentParser : IDocumentParser
 {
     public const string MarkdownContentType = "text/markdown";
 
-    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .Build();
 
-    public DocumentFormat Format { get; } = new()
+public DocumentFormat Format { get; } = new()
     {
         ContentType = MarkdownContentType,
         Extensions = [".md", ".markdown"]
     };
 
-    public async Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
+public async Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(content, leaveOpen: true);
         var source = await reader.ReadToEndAsync(cancellationToken);
 
-        var document = Markdown.Parse(source, Pipeline);
+var document = Markdown.Parse(source, Pipeline);
         var blocks = new List<DocumentBlock>();
         var order = 0;
 
-        foreach (var block in document)
+foreach (var block in document)
         {
             cancellationToken.ThrowIfCancellationRequested();
             AppendBlock(block, source, blocks, ref order);
         }
 
-        return new ParsedDocument
+return new ParsedDocument
         {
             Blocks = blocks,
             Metadata = new Dictionary<string, string> { ["format"] = "markdown" }
         };
     }
 
-    private static void AppendBlock(Block block, string source, List<DocumentBlock> blocks, ref int order)
+private static void AppendBlock(Block block, string source, List<DocumentBlock> blocks, ref int order)
     {
         switch (block)
         {
@@ -50,7 +50,7 @@ public sealed class MarkdownDocumentParser : IDocumentParser
             {
                 var text = Slice(source, heading).TrimStart('#').Trim();
 
-                if (text.Length > 0)
+if (text.Length > 0)
                 {
                     blocks.Add(new DocumentBlock
                     {
@@ -61,15 +61,14 @@ public sealed class MarkdownDocumentParser : IDocumentParser
                     });
                 }
 
-                break;
+break;
             }
 
-            // A markdown table is kept whole and never split.
-            case Table table:
+case Table table:
             {
                 var text = Slice(source, table).Trim();
 
-                if (text.Length > 0)
+if (text.Length > 0)
                 {
                     blocks.Add(new DocumentBlock
                     {
@@ -80,16 +79,16 @@ public sealed class MarkdownDocumentParser : IDocumentParser
                     });
                 }
 
-                break;
+break;
             }
 
-            case ListBlock list:
+case ListBlock list:
             {
                 foreach (var item in list)
                 {
                     var text = Slice(source, item).Trim();
 
-                    if (text.Length > 0)
+if (text.Length > 0)
                     {
                         blocks.Add(new DocumentBlock
                         {
@@ -101,14 +100,14 @@ public sealed class MarkdownDocumentParser : IDocumentParser
                     }
                 }
 
-                break;
+break;
             }
 
-            case QuoteBlock quote:
+case QuoteBlock quote:
             {
                 var text = Slice(source, quote).Trim();
 
-                if (text.Length > 0)
+if (text.Length > 0)
                 {
                     blocks.Add(new DocumentBlock
                     {
@@ -118,14 +117,14 @@ public sealed class MarkdownDocumentParser : IDocumentParser
                     });
                 }
 
-                break;
+break;
             }
 
-            case CodeBlock code:
+case CodeBlock code:
             {
                 var text = Slice(source, code).Trim();
 
-                if (text.Length > 0)
+if (text.Length > 0)
                 {
                     blocks.Add(new DocumentBlock
                     {
@@ -135,14 +134,14 @@ public sealed class MarkdownDocumentParser : IDocumentParser
                     });
                 }
 
-                break;
+break;
             }
 
-            case ParagraphBlock paragraph:
+case ParagraphBlock paragraph:
             {
                 var text = Slice(source, paragraph).Trim();
 
-                if (text.Length > 0)
+if (text.Length > 0)
                 {
                     blocks.Add(new DocumentBlock
                     {
@@ -152,17 +151,16 @@ public sealed class MarkdownDocumentParser : IDocumentParser
                     });
                 }
 
-                break;
+break;
             }
         }
     }
 
-    /// <summary>Slices by the AST span to preserve the original markdown (which matters for tables and code).</summary>
-    private static string Slice(string source, Block block)
+private static string Slice(string source, Block block)
     {
         var start = Math.Clamp(block.Span.Start, 0, source.Length);
         var end = Math.Clamp(block.Span.End + 1, start, source.Length);
 
-        return source[start..end];
+return source[start..end];
     }
 }

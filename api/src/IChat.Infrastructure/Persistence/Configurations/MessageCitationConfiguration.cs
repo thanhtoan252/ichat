@@ -10,12 +10,12 @@ public sealed class MessageCitationConfiguration : IEntityTypeConfiguration<Mess
     {
         builder.ToTable("message_citations");
 
-        builder.HasKey(citation => new { citation.MessageId, citation.ChunkId });
+builder.HasKey(citation => new { citation.MessageId, citation.ChunkId });
 
-        builder.Property(citation => citation.MarkerIndex).IsRequired();
+builder.Property(citation => citation.MarkerIndex).IsRequired();
         builder.Property(citation => citation.Score).IsRequired();
 
-        builder.HasOne(citation => citation.Chunk)
+builder.HasOne(citation => citation.Chunk)
             .WithMany()
             .HasForeignKey(citation => citation.ChunkId)
             .OnDelete(DeleteBehavior.Cascade);

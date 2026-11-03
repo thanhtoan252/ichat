@@ -13,17 +13,16 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             return true;
         }
 
-        var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
+var traceId = Activity.Current?.Id ?? httpContext.TraceIdentifier;
 
-        logger.LogError(
+logger.LogError(
             exception,
             "Unhandled error while processing {RequestMethod} {RequestPath}. TraceId={TraceId}",
             httpContext.Request.Method,
             httpContext.Request.Path.Value,
             traceId);
 
-        // The SDK's own message never reaches the client: it can leak configuration details.
-        var problemDetails = new ProblemDetails
+var problemDetails = new ProblemDetails
         {
             Status = StatusCodes.Status500InternalServerError,
             Title = "Unexpected",
@@ -31,9 +30,9 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             Extensions = { ["traceId"] = traceId }
         };
 
-        httpContext.Response.StatusCode = problemDetails.Status.Value;
+httpContext.Response.StatusCode = problemDetails.Status.Value;
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
-        return true;
+return true;
     }
 }
