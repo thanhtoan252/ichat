@@ -12,16 +12,16 @@ public static class EndpointRouteBuilderExtensions
     public static IEndpointRouteBuilder MapIChatEndpoints(this IEndpointRouteBuilder app)
     {
 
-app.MapHealthEndpoints();
+        app.MapHealthEndpoints();
 
-var v1 = app.MapGroup("/api/v1").RequireAuthorization();
+        var v1 = app.MapGroup("/api/v1").RequireAuthorization();
 
-v1.MapAuthV1Endpoints();
+        v1.MapAuthV1Endpoints();
         v1.MapAdminV1Endpoints();
         v1.MapDocumentV1Endpoints();
         v1.MapSearchV1Endpoints();
         v1.MapConversationV1Endpoints();
 
-return app;
+        return app;
     }
 }

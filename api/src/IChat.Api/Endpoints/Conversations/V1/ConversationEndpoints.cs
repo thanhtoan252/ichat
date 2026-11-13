@@ -16,105 +16,105 @@ public static class ConversationEndpoints
     {
         var group = app.MapGroup("/conversations").WithTags("Conversations");
 
-group.MapPost("/", CreateConversationAsync)
-            .WithName("CreateConversation")
-            .WithSummary("Create a conversation.")
-            .WithDescription("An empty title is replaced with the default name.")
-            .Produces<ConversationResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem();
+        group.MapPost("/", CreateConversationAsync)
+                    .WithName("CreateConversation")
+                    .WithSummary("Create a conversation.")
+                    .WithDescription("An empty title is replaced with the default name.")
+                    .Produces<ConversationResponse>(StatusCodes.Status201Created)
+                    .ProducesValidationProblem();
 
-group.MapGet("/", GetConversationsAsync)
-            .WithName("GetConversations")
-            .WithSummary("List conversations.")
-            .WithDescription("Paged, most recently updated first. Scoped to the caller; an administrator sees every conversation.")
-            .Produces<PagedResponse<ConversationResponse>>();
+        group.MapGet("/", GetConversationsAsync)
+                    .WithName("GetConversations")
+                    .WithSummary("List conversations.")
+                    .WithDescription("Paged, most recently updated first. Scoped to the caller; an administrator sees every conversation.")
+                    .Produces<PagedResponse<ConversationResponse>>();
 
-group.MapGet("/{id:guid}/messages", GetConversationMessagesAsync)
-            .WithName("GetConversationMessages")
-            .WithSummary("Message history of a conversation.")
-            .WithDescription("Oldest first, including the marker-verified citations of each answer.")
-            .Produces<PagedResponse<MessageResponse>>()
-            .ProducesProblem(StatusCodes.Status404NotFound);
+        group.MapGet("/{id:guid}/messages", GetConversationMessagesAsync)
+                    .WithName("GetConversationMessages")
+                    .WithSummary("Message history of a conversation.")
+                    .WithDescription("Oldest first, including the marker-verified citations of each answer.")
+                    .Produces<PagedResponse<MessageResponse>>()
+                    .ProducesProblem(StatusCodes.Status404NotFound);
 
-group.MapPost("/{id:guid}/messages", SendMessage)
-            .RequireRateLimiting("chat")
-            .WithName("SendMessage")
-            .WithSummary("RAG question answering, streamed over SSE.")
-            .WithDescription("Four event types: status, sources, delta, done. Business errors come back as an error event with HTTP 200 rather than a different status code.")
-            .Produces<SseItem<object>>(StatusCodes.Status200OK, "text/event-stream");
+        group.MapPost("/{id:guid}/messages", SendMessage)
+                    .RequireRateLimiting("chat")
+                    .WithName("SendMessage")
+                    .WithSummary("RAG question answering, streamed over SSE.")
+                    .WithDescription("Four event types: status, sources, delta, done. Business errors come back as an error event with HTTP 200 rather than a different status code.")
+                    .Produces<SseItem<object>>(StatusCodes.Status200OK, "text/event-stream");
 
-return app;
+        return app;
     }
 
-private static async Task<IResult> CreateConversationAsync(
-        CreateConversationDto dto,
-        IValidator<CreateConversationDto> validator,
-        IConversationService conversationService,
-        CancellationToken cancellationToken)
+    private static async Task<IResult> CreateConversationAsync(
+            CreateConversationDto dto,
+            IValidator<CreateConversationDto> validator,
+            IConversationService conversationService,
+            CancellationToken cancellationToken)
     {
         var validation = await validator.ValidateAsync(dto, cancellationToken);
 
-if (!validation.IsValid)
+        if (!validation.IsValid)
         {
             return validation.ToValidationProblem();
         }
 
-var result = await conversationService.CreateAsync(dto.ToServiceRequest(), cancellationToken);
+        var result = await conversationService.CreateAsync(dto.ToServiceRequest(), cancellationToken);
 
-if (result.IsFailure)
+        if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-var response = result.Value.ToResponse();
+        var response = result.Value.ToResponse();
 
-return Results.Created($"/api/v1/conversations/{response.Id}", response);
+        return Results.Created($"/api/v1/conversations/{response.Id}", response);
     }
 
-private static async Task<IResult> GetConversationsAsync(
-        [AsParameters] GetConversationsQuery query,
-        IConversationService conversationService,
-        CancellationToken cancellationToken)
+    private static async Task<IResult> GetConversationsAsync(
+            [AsParameters] GetConversationsQuery query,
+            IConversationService conversationService,
+            CancellationToken cancellationToken)
     {
         var result = await conversationService.GetListAsync(query.Offset, query.Limit, cancellationToken);
 
-if (result.IsFailure)
+        if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
+        return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
     }
 
-private static async Task<IResult> GetConversationMessagesAsync(
-        Guid id,
-        [AsParameters] GetMessagesQuery query,
-        IConversationService conversationService,
-        CancellationToken cancellationToken)
+    private static async Task<IResult> GetConversationMessagesAsync(
+            Guid id,
+            [AsParameters] GetMessagesQuery query,
+            IConversationService conversationService,
+            CancellationToken cancellationToken)
     {
         var result = await conversationService.GetMessagesAsync(id, query.Offset, query.Limit, cancellationToken);
 
-if (result.IsFailure)
+        if (result.IsFailure)
         {
             return result.Error.ToProblemResult();
         }
 
-return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
+        return Results.Ok(result.Value.ToPagedResponse(ConversationMapper.ToResponse));
     }
 
-private static IResult SendMessage(
-        Guid id,
-        SendMessageDto dto,
-        IChatService chatService,
-        CancellationToken cancellationToken)
+    private static IResult SendMessage(
+            Guid id,
+            SendMessageDto dto,
+            IChatService chatService,
+            CancellationToken cancellationToken)
     {
         return TypedResults.ServerSentEvents(Stream(chatService, dto.ToServiceRequest(id), cancellationToken));
     }
 
-private static async IAsyncEnumerable<SseItem<object>> Stream(
-        IChatService chatService,
-        SendMessageRequest request,
-        [EnumeratorCancellation] CancellationToken cancellationToken)
+    private static async IAsyncEnumerable<SseItem<object>> Stream(
+            IChatService chatService,
+            SendMessageRequest request,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         await foreach (var sseEvent in chatService.StreamAnswerAsync(request, cancellationToken))
         {

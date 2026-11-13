@@ -3,14 +3,14 @@ namespace IChat.Core.Rag;
 public static class NeighborExpansion
 {
 
-public static IReadOnlyList<(Guid DocumentId, int ChunkIndex)> PlanNeighborKeys(IReadOnlyList<ScoredChunk> selected, int before, int after)
+    public static IReadOnlyList<(Guid DocumentId, int ChunkIndex)> PlanNeighborKeys(IReadOnlyList<ScoredChunk> selected, int before, int after)
     {
         ArgumentNullException.ThrowIfNull(selected);
 
-var wanted = new HashSet<(Guid, int)>();
+        var wanted = new HashSet<(Guid, int)>();
         var anchors = selected.Select(chunk => (chunk.DocumentId, chunk.ChunkIndex)).ToHashSet();
 
-foreach (var chunk in selected)
+        foreach (var chunk in selected)
         {
             for (var offset = -before; offset <= after; offset++)
             {
@@ -20,7 +20,7 @@ foreach (var chunk in selected)
                     continue;
                 }
 
-var key = (chunk.DocumentId, index);
+                var key = (chunk.DocumentId, index);
                 if (!anchors.Contains(key))
                 {
                     wanted.Add(key);
@@ -28,37 +28,37 @@ var key = (chunk.DocumentId, index);
             }
         }
 
-return wanted.OrderBy(key => key.Item1).ThenBy(key => key.Item2).ToList();
+        return wanted.OrderBy(key => key.Item1).ThenBy(key => key.Item2).ToList();
     }
 
-public static IReadOnlyList<ExpandedContext> Expand(
-        IReadOnlyList<ScoredChunk> selected,
-        IReadOnlyList<NeighborChunk> neighbors,
-        int before,
-        int after)
+    public static IReadOnlyList<ExpandedContext> Expand(
+            IReadOnlyList<ScoredChunk> selected,
+            IReadOnlyList<NeighborChunk> neighbors,
+            int before,
+            int after)
     {
         ArgumentNullException.ThrowIfNull(selected);
         ArgumentNullException.ThrowIfNull(neighbors);
 
-if (selected.Count == 0)
+        if (selected.Count == 0)
         {
             return [];
         }
 
-var contentByKey = new Dictionary<(Guid, int), string>();
+        var contentByKey = new Dictionary<(Guid, int), string>();
         foreach (var neighbor in neighbors)
         {
             contentByKey[(neighbor.DocumentId, neighbor.ChunkIndex)] = neighbor.Content;
         }
 
-foreach (var chunk in selected)
+        foreach (var chunk in selected)
         {
             contentByKey[(chunk.DocumentId, chunk.ChunkIndex)] = chunk.Content;
         }
 
-var groups = new List<Group>();
+        var groups = new List<Group>();
 
-foreach (var documentGroup in selected.GroupBy(chunk => chunk.DocumentId))
+        foreach (var documentGroup in selected.GroupBy(chunk => chunk.DocumentId))
         {
             var spans = documentGroup
                 .Select(chunk => new Span
@@ -71,7 +71,7 @@ foreach (var documentGroup in selected.GroupBy(chunk => chunk.DocumentId))
                 .ThenBy(span => span.End)
                 .ToList();
 
-var current = new Group
+            var current = new Group
             {
                 DocumentId = documentGroup.Key,
                 Start = spans[0].Start,
@@ -79,11 +79,11 @@ var current = new Group
                 Anchors = [spans[0].Anchor]
             };
 
-for (var i = 1; i < spans.Count; i++)
+            for (var i = 1; i < spans.Count; i++)
             {
                 var span = spans[i];
 
-if (span.Start <= current.End + 1)
+                if (span.Start <= current.End + 1)
                 {
                     current = new Group
                     {
@@ -106,37 +106,37 @@ if (span.Start <= current.End + 1)
                 }
             }
 
-groups.Add(current);
+            groups.Add(current);
         }
 
-var results = new List<ExpandedContext>(groups.Count);
+        var results = new List<ExpandedContext>(groups.Count);
 
-foreach (var group in groups)
+        foreach (var group in groups)
         {
             var parts = new List<string>();
             int? actualStart = null;
             var actualEnd = group.Start;
 
-for (var index = group.Start; index <= group.End; index++)
+            for (var index = group.Start; index <= group.End; index++)
             {
                 if (!contentByKey.TryGetValue((group.DocumentId, index), out var content) || string.IsNullOrWhiteSpace(content))
                 {
                     continue;
                 }
 
-actualStart ??= index;
+                actualStart ??= index;
                 actualEnd = index;
                 parts.Add(content);
             }
 
-if (parts.Count == 0)
+            if (parts.Count == 0)
             {
                 continue;
             }
 
-var best = group.Anchors.OrderByDescending(anchor => anchor.Score).First();
+            var best = group.Anchors.OrderByDescending(anchor => anchor.Score).First();
 
-results.Add(new ExpandedContext
+            results.Add(new ExpandedContext
             {
                 CitationChunkId = best.ChunkId,
                 DocumentId = group.DocumentId,
@@ -149,21 +149,21 @@ results.Add(new ExpandedContext
             });
         }
 
-return results.OrderByDescending(result => result.Score).ToList();
+        return results.OrderByDescending(result => result.Score).ToList();
     }
 
-public static string JoinTrimmingOverlap(IReadOnlyList<string> parts)
+    public static string JoinTrimmingOverlap(IReadOnlyList<string> parts)
     {
         ArgumentNullException.ThrowIfNull(parts);
 
-if (parts.Count == 0)
+        if (parts.Count == 0)
         {
             return string.Empty;
         }
 
-var builder = new System.Text.StringBuilder(parts[0].Trim());
+        var builder = new System.Text.StringBuilder(parts[0].Trim());
 
-for (var i = 1; i < parts.Count; i++)
+        for (var i = 1; i < parts.Count; i++)
         {
             var next = parts[i].Trim();
             if (next.Length == 0)
@@ -171,21 +171,21 @@ for (var i = 1; i < parts.Count; i++)
                 continue;
             }
 
-var previous = builder.ToString();
+            var previous = builder.ToString();
             var overlap = LongestSuffixPrefixOverlap(previous, next);
             builder.Append("\n\n").Append(next.AsSpan(overlap));
         }
 
-return builder.ToString().Trim();
+        return builder.ToString().Trim();
     }
 
-private const int MaxOverlapScan = 4000;
+    private const int MaxOverlapScan = 4000;
 
-private static int LongestSuffixPrefixOverlap(string previous, string next)
+    private static int LongestSuffixPrefixOverlap(string previous, string next)
     {
         var max = Math.Min(Math.Min(previous.Length, next.Length), MaxOverlapScan);
 
-for (var length = max; length >= 24; length--)
+        for (var length = max; length >= 24; length--)
         {
             if (string.CompareOrdinal(previous, previous.Length - length, next, 0, length) == 0)
             {
@@ -193,26 +193,26 @@ for (var length = max; length >= 24; length--)
             }
         }
 
-return 0;
+        return 0;
     }
 
-private readonly struct Span
+    private readonly struct Span
     {
         public required int Start { get; init; }
 
-public required int End { get; init; }
+        public required int End { get; init; }
 
-public required ScoredChunk Anchor { get; init; }
+        public required ScoredChunk Anchor { get; init; }
     }
 
-private sealed class Group
+    private sealed class Group
     {
         public required Guid DocumentId { get; init; }
 
-public required int Start { get; init; }
+        public required int Start { get; init; }
 
-public required int End { get; init; }
+        public required int End { get; init; }
 
-public required IReadOnlyList<ScoredChunk> Anchors { get; init; }
+        public required IReadOnlyList<ScoredChunk> Anchors { get; init; }
     }
 }

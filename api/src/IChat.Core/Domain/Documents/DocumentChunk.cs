@@ -6,44 +6,44 @@ public sealed class DocumentChunk
     {
     }
 
-public Guid Id { get; private set; }
+    public Guid Id { get; private set; }
 
-public Guid DocumentId { get; private set; }
+    public Guid DocumentId { get; private set; }
 
-public Document? Document { get; private set; }
+    public Document? Document { get; private set; }
 
-public int ChunkIndex { get; private set; }
+    public int ChunkIndex { get; private set; }
 
-public string Content { get; private set; } = string.Empty;
+    public string Content { get; private set; } = string.Empty;
 
-public string? HeadingPath { get; private set; }
+    public string? HeadingPath { get; private set; }
 
-public string EmbeddedText { get; private set; } = string.Empty;
+    public string EmbeddedText { get; private set; } = string.Empty;
 
-public int TokenCount { get; private set; }
+    public int TokenCount { get; private set; }
 
-public float[] Embedding { get; private set; } = [];
+    public float[] Embedding { get; private set; } = [];
 
-public string EmbeddingModel { get; private set; } = string.Empty;
+    public string EmbeddingModel { get; private set; } = string.Empty;
 
-public int EmbeddingDimensions { get; private set; }
+    public int EmbeddingDimensions { get; private set; }
 
-public string Metadata { get; private set; } = "{}";
+    public string Metadata { get; private set; } = "{}";
 
-public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
-public static DocumentChunk Create(
-        Guid documentId,
-        int chunkIndex,
-        string content,
-        string? headingPath,
-        string embeddedText,
-        int tokenCount,
-        float[] embedding,
-        string embeddingModel,
-        int embeddingDimensions,
-        string metadataJson,
-        DateTimeOffset createdAt)
+    public static DocumentChunk Create(
+            Guid documentId,
+            int chunkIndex,
+            string content,
+            string? headingPath,
+            string embeddedText,
+            int tokenCount,
+            float[] embedding,
+            string embeddingModel,
+            int embeddingDimensions,
+            string metadataJson,
+            DateTimeOffset createdAt)
     {
         return new DocumentChunk
         {

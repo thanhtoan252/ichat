@@ -7,19 +7,19 @@ public sealed class UploadDocumentDtoValidator : AbstractValidator<UploadDocumen
 {
     public const long MaxSizeInBytes = 50 * 1024 * 1024;
 
-public UploadDocumentDtoValidator()
+    public UploadDocumentDtoValidator()
     {
         RuleFor(dto => dto.File.FileName)
             .NotEmpty().WithMessage("File name is required.")
             .WithName("file").OverridePropertyName("file");
 
-RuleFor(dto => dto.File.Length)
-            .GreaterThan(0).WithMessage("The file is empty.")
-            .LessThanOrEqualTo(MaxSizeInBytes).WithMessage("The file exceeds the 50MB limit.")
-            .WithName("file").OverridePropertyName("file");
+        RuleFor(dto => dto.File.Length)
+                    .GreaterThan(0).WithMessage("The file is empty.")
+                    .LessThanOrEqualTo(MaxSizeInBytes).WithMessage("The file exceeds the 50MB limit.")
+                    .WithName("file").OverridePropertyName("file");
 
-RuleFor(dto => dto.Title)
-            .MaximumLength(300)
-            .WithName("title");
+        RuleFor(dto => dto.Title)
+                    .MaximumLength(300)
+                    .WithName("title");
     }
 }

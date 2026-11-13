@@ -10,67 +10,67 @@ public sealed class UtilityChatFallbackTests
 {
     private const string PresentKey = "sk-present";
 
-[Test]
+    [Test]
     public void Snapshot_UtilityProvider_InheritsFromChat_WhenNotConfigured()
     {
 
-var options = OptionsFor();
+        var options = OptionsFor();
 
-var snapshot = new ModelCatalog(options).GetSnapshot();
+        var snapshot = new ModelCatalog(options).GetSnapshot();
 
-snapshot.UtilityChat.Provider.Should().Be("OpenAI");
+        snapshot.UtilityChat.Provider.Should().Be("OpenAI");
     }
 
-[Test]
+    [Test]
     public void Snapshot_UtilityApiKey_InheritsFromChat_SoAvailabilityIsNotAFalseAlarm()
     {
 
-var options = OptionsFor(chatApiKey: PresentKey, utilityApiKey: null);
+        var options = OptionsFor(chatApiKey: PresentKey, utilityApiKey: null);
 
-var snapshot = new ModelCatalog(options).GetSnapshot();
+        var snapshot = new ModelCatalog(options).GetSnapshot();
 
-snapshot.UtilityChat.Available.Should().BeTrue();
+        snapshot.UtilityChat.Available.Should().BeTrue();
         snapshot.UtilityChat.Reason.Should().BeNull();
     }
 
-[Test]
+    [Test]
     public void Snapshot_UtilityApiKey_MissingOnBothSides_ReportsTheReason()
     {
 
-var options = OptionsFor(chatApiKey: null, utilityApiKey: null);
+        var options = OptionsFor(chatApiKey: null, utilityApiKey: null);
 
-var snapshot = new ModelCatalog(options).GetSnapshot();
+        var snapshot = new ModelCatalog(options).GetSnapshot();
 
-snapshot.UtilityChat.Available.Should().BeFalse();
+        snapshot.UtilityChat.Available.Should().BeFalse();
         snapshot.UtilityChat.Reason.Should().Be("No API key is configured.");
     }
 
-[Test]
+    [Test]
     public void Validator_ReportsTheUtilitySection_WhenTheInheritedApiKeyIsMissing()
     {
 
-var options = OptionsFor(chatApiKey: null, utilityApiKey: null).Value;
+        var options = OptionsFor(chatApiKey: null, utilityApiKey: null).Value;
 
-var result = new AiOptionsValidator().Validate(name: null, options);
+        var result = new AiOptionsValidator().Validate(name: null, options);
 
-result.Failed.Should().BeTrue();
+        result.Failed.Should().BeTrue();
         result.Failures.Should().Contain(failure => failure.Contains("Ai:UtilityChat"));
     }
 
-[Test]
+    [Test]
     public void Validator_AcceptsTheUtilitySection_WhenTheKeyIsInheritedFromChat()
     {
 
-var options = OptionsFor(chatApiKey: PresentKey, utilityApiKey: null).Value;
+        var options = OptionsFor(chatApiKey: PresentKey, utilityApiKey: null).Value;
 
-var result = new AiOptionsValidator().Validate(name: null, options);
+        var result = new AiOptionsValidator().Validate(name: null, options);
 
-result.Succeeded.Should().BeTrue();
+        result.Succeeded.Should().BeTrue();
     }
 
-private static IOptions<AiOptions> OptionsFor(
-        string? chatApiKey = null,
-        string? utilityApiKey = null)
+    private static IOptions<AiOptions> OptionsFor(
+            string? chatApiKey = null,
+            string? utilityApiKey = null)
     {
         return Options.Create(new AiOptions
         {

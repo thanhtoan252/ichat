@@ -13,175 +13,175 @@ public sealed partial class DocxDocumentParser : IDocumentParser
 {
     public const string DocxContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-public DocumentFormat Format { get; } = new()
+    public DocumentFormat Format { get; } = new()
     {
         ContentType = DocxContentType,
 
-Extensions = [".docx"],
+        Extensions = [".docx"],
         MagicBytes = [[0x50, 0x4B, 0x03, 0x04]],
         RejectOnMagicMismatch = true
     };
 
-[GeneratedRegex(@"^Heading([1-9])$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^Heading([1-9])$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex HeadingStyleRegex { get; }
 
-[GeneratedRegex(@"^TOC\d*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"^TOC\d*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex TocStyleRegex { get; }
 
-public Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
+    public Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(content);
 
-using var buffer = new MemoryStream();
+        using var buffer = new MemoryStream();
         content.CopyTo(buffer);
         buffer.Position = 0;
 
-using var wordDocument = WordprocessingDocument.Open(buffer, false);
+        using var wordDocument = WordprocessingDocument.Open(buffer, false);
         var mainPart = wordDocument.MainDocumentPart
             ?? throw new InvalidOperationException("The docx file has no MainDocumentPart.");
 
-var body = mainPart.Document?.Body
-            ?? throw new InvalidOperationException("The docx file has no body.");
+        var body = mainPart.Document?.Body
+                    ?? throw new InvalidOperationException("The docx file has no body.");
 
-var styleOutlineLevels = BuildStyleOutlineLevels(mainPart);
+        var styleOutlineLevels = BuildStyleOutlineLevels(mainPart);
         var numberingFormats = BuildNumberingFormats(mainPart);
         var footnotes = BuildFootnotes(mainPart);
 
-var blocks = new List<DocumentBlock>();
+        var blocks = new List<DocumentBlock>();
         var order = 0;
 
-foreach (var element in body.ChildElements)
+        foreach (var element in body.ChildElements)
         {
             cancellationToken.ThrowIfCancellationRequested();
             AppendElement(element, blocks, ref order, styleOutlineLevels, numberingFormats, footnotes, insideTextBox: false);
         }
 
-foreach (var textBox in body.Descendants<TextBoxContent>())
+        foreach (var textBox in body.Descendants<TextBoxContent>())
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-foreach (var element in textBox.ChildElements)
+            foreach (var element in textBox.ChildElements)
             {
                 AppendElement(element, blocks, ref order, styleOutlineLevels, numberingFormats, footnotes, insideTextBox: true);
             }
         }
 
-var metadata = new Dictionary<string, string> { ["format"] = "docx" };
+        var metadata = new Dictionary<string, string> { ["format"] = "docx" };
 
-return Task.FromResult(new ParsedDocument { Blocks = blocks, Metadata = metadata });
+        return Task.FromResult(new ParsedDocument { Blocks = blocks, Metadata = metadata });
     }
 
-private static void AppendElement(
-        OpenXmlElement element,
-        List<DocumentBlock> blocks,
-        ref int order,
-        IReadOnlyDictionary<string, int> styleOutlineLevels,
-        IReadOnlyDictionary<string, bool> numberingFormats,
-        IReadOnlyDictionary<string, string> footnotes,
-        bool insideTextBox)
+    private static void AppendElement(
+            OpenXmlElement element,
+            List<DocumentBlock> blocks,
+            ref int order,
+            IReadOnlyDictionary<string, int> styleOutlineLevels,
+            IReadOnlyDictionary<string, bool> numberingFormats,
+            IReadOnlyDictionary<string, string> footnotes,
+            bool insideTextBox)
     {
         switch (element)
         {
             case Paragraph paragraph:
-            {
-                var block = BuildParagraphBlock(paragraph, order, styleOutlineLevels, numberingFormats, footnotes, insideTextBox);
-
-if (block is not null)
                 {
-                    blocks.Add(block);
-                    order++;
-                }
+                    var block = BuildParagraphBlock(paragraph, order, styleOutlineLevels, numberingFormats, footnotes, insideTextBox);
 
-break;
-            }
-
-case Table table:
-            {
-                var block = BuildTableBlock(table, order, insideTextBox);
-
-if (block is not null)
-                {
-                    blocks.Add(block);
-                    order++;
-                }
-
-break;
-            }
-
-case SdtBlock sdtBlock:
-            {
-
-if (IsTableOfContents(sdtBlock))
-                {
-                    break;
-                }
-
-foreach (var child in sdtBlock.Descendants<Paragraph>())
-                {
-                    var block = BuildParagraphBlock(child, order, styleOutlineLevels, numberingFormats, footnotes, insideTextBox);
-
-if (block is not null)
+                    if (block is not null)
                     {
                         blocks.Add(block);
                         order++;
                     }
+
+                    break;
                 }
 
-break;
-            }
+            case Table table:
+                {
+                    var block = BuildTableBlock(table, order, insideTextBox);
+
+                    if (block is not null)
+                    {
+                        blocks.Add(block);
+                        order++;
+                    }
+
+                    break;
+                }
+
+            case SdtBlock sdtBlock:
+                {
+
+                    if (IsTableOfContents(sdtBlock))
+                    {
+                        break;
+                    }
+
+                    foreach (var child in sdtBlock.Descendants<Paragraph>())
+                    {
+                        var block = BuildParagraphBlock(child, order, styleOutlineLevels, numberingFormats, footnotes, insideTextBox);
+
+                        if (block is not null)
+                        {
+                            blocks.Add(block);
+                            order++;
+                        }
+                    }
+
+                    break;
+                }
         }
     }
 
-private static DocumentBlock? BuildParagraphBlock(
-        Paragraph paragraph,
-        int order,
-        IReadOnlyDictionary<string, int> styleOutlineLevels,
-        IReadOnlyDictionary<string, bool> numberingFormats,
-        IReadOnlyDictionary<string, string> footnotes,
-        bool insideTextBox)
+    private static DocumentBlock? BuildParagraphBlock(
+            Paragraph paragraph,
+            int order,
+            IReadOnlyDictionary<string, int> styleOutlineLevels,
+            IReadOnlyDictionary<string, bool> numberingFormats,
+            IReadOnlyDictionary<string, string> footnotes,
+            bool insideTextBox)
     {
         var styleId = paragraph.ParagraphProperties?.ParagraphStyleId?.Val?.Value;
 
-if (styleId is not null && TocStyleRegex.IsMatch(styleId))
+        if (styleId is not null && TocStyleRegex.IsMatch(styleId))
         {
             return null;
         }
 
-if (paragraph.Descendants<FieldCode>().Any(field => field.Text?.Contains("TOC", StringComparison.OrdinalIgnoreCase) == true))
+        if (paragraph.Descendants<FieldCode>().Any(field => field.Text?.Contains("TOC", StringComparison.OrdinalIgnoreCase) == true))
         {
             return null;
         }
 
-var text = ExtractText(paragraph, excludeTextBoxDescendants: !insideTextBox);
+        var text = ExtractText(paragraph, excludeTextBoxDescendants: !insideTextBox);
         var altText = ExtractImageAltText(paragraph);
 
-if (!string.IsNullOrWhiteSpace(altText))
+        if (!string.IsNullOrWhiteSpace(altText))
         {
             text = string.IsNullOrWhiteSpace(text) ? altText : $"{text}\n{altText}";
         }
 
-var metadata = new Dictionary<string, string>();
+        var metadata = new Dictionary<string, string>();
 
-var footnoteText = ExtractFootnotes(paragraph, footnotes);
+        var footnoteText = ExtractFootnotes(paragraph, footnotes);
         if (!string.IsNullOrWhiteSpace(footnoteText))
         {
             text = $"{text}\n{footnoteText}";
             metadata["hasFootnote"] = "true";
         }
 
-if (string.IsNullOrWhiteSpace(text))
+        if (string.IsNullOrWhiteSpace(text))
         {
             return null;
         }
 
-if (insideTextBox)
+        if (insideTextBox)
         {
             metadata["source"] = "textbox";
         }
 
-var headingLevel = ResolveHeadingLevel(paragraph, styleId, styleOutlineLevels);
+        var headingLevel = ResolveHeadingLevel(paragraph, styleId, styleOutlineLevels);
 
-if (headingLevel is not null)
+        if (headingLevel is not null)
         {
             return new DocumentBlock
             {
@@ -193,9 +193,9 @@ if (headingLevel is not null)
             };
         }
 
-var numbering = paragraph.ParagraphProperties?.NumberingProperties;
+        var numbering = paragraph.ParagraphProperties?.NumberingProperties;
 
-if (numbering is not null)
+        if (numbering is not null)
         {
             var listLevel = numbering.NumberingLevelReference?.Val?.Value ?? 0;
             var numberingId = numbering.NumberingId?.Val?.Value;
@@ -203,10 +203,10 @@ if (numbering is not null)
                 || !numberingFormats.TryGetValue($"{numberingId}:{listLevel}", out var bullet)
                 || bullet;
 
-var marker = isBullet ? "- " : "1. ";
+            var marker = isBullet ? "- " : "1. ";
             var indent = new string(' ', listLevel * 2);
 
-return new DocumentBlock
+            return new DocumentBlock
             {
                 Kind = BlockKind.ListItem,
                 Text = $"{indent}{marker}{text}",
@@ -216,7 +216,7 @@ return new DocumentBlock
             };
         }
 
-return new DocumentBlock
+        return new DocumentBlock
         {
             Kind = BlockKind.Paragraph,
             Text = text,
@@ -225,48 +225,48 @@ return new DocumentBlock
         };
     }
 
-private static DocumentBlock? BuildTableBlock(Table table, int order, bool insideTextBox)
+    private static DocumentBlock? BuildTableBlock(Table table, int order, bool insideTextBox)
     {
         var rows = new List<IReadOnlyList<string>>();
 
-foreach (var row in table.Elements<TableRow>())
+        foreach (var row in table.Elements<TableRow>())
         {
             var cells = new List<string>();
 
-foreach (var cell in row.Elements<TableCell>())
+            foreach (var cell in row.Elements<TableCell>())
             {
                 var cellText = string.Join(
                     " ",
                     cell.Descendants<Paragraph>().Select(ExtractText).Where(value => !string.IsNullOrWhiteSpace(value)));
 
-cells.Add(cellText);
+                cells.Add(cellText);
 
-var span = cell.TableCellProperties?.GridSpan?.Val?.Value ?? 1;
+                var span = cell.TableCellProperties?.GridSpan?.Val?.Value ?? 1;
                 for (var i = 1; i < span; i++)
                 {
                     cells.Add(string.Empty);
                 }
             }
 
-if (cells.Count > 0)
+            if (cells.Count > 0)
             {
                 rows.Add(cells);
             }
         }
 
-if (rows.Count == 0)
+        if (rows.Count == 0)
         {
             return null;
         }
 
-var metadata = new Dictionary<string, string> { ["containsTable"] = "true" };
+        var metadata = new Dictionary<string, string> { ["containsTable"] = "true" };
 
-if (insideTextBox)
+        if (insideTextBox)
         {
             metadata["source"] = "textbox";
         }
 
-return new DocumentBlock
+        return new DocumentBlock
         {
             Kind = BlockKind.Table,
             Text = TableToMarkdown.Render(rows),
@@ -275,35 +275,35 @@ return new DocumentBlock
         };
     }
 
-private static string ExtractText(Paragraph paragraph)
+    private static string ExtractText(Paragraph paragraph)
     {
         return ExtractText(paragraph, excludeTextBoxDescendants: true);
     }
 
-private static string ExtractText(Paragraph paragraph, bool excludeTextBoxDescendants)
+    private static string ExtractText(Paragraph paragraph, bool excludeTextBoxDescendants)
     {
         var builder = new StringBuilder();
 
-foreach (var text in paragraph.Descendants<Text>())
+        foreach (var text in paragraph.Descendants<Text>())
         {
 
-if (HasAncestor<DeletedRun>(text) || HasAncestor<Deleted>(text))
+            if (HasAncestor<DeletedRun>(text) || HasAncestor<Deleted>(text))
             {
                 continue;
             }
 
-if (excludeTextBoxDescendants && HasAncestor<TextBoxContent>(text))
+            if (excludeTextBoxDescendants && HasAncestor<TextBoxContent>(text))
             {
                 continue;
             }
 
-builder.Append(text.Text);
+            builder.Append(text.Text);
         }
 
-return builder.ToString().Trim();
+        return builder.ToString().Trim();
     }
 
-private static bool HasAncestor<TElement>(OpenXmlElement element) where TElement : OpenXmlElement
+    private static bool HasAncestor<TElement>(OpenXmlElement element) where TElement : OpenXmlElement
     {
         for (var parent = element.Parent; parent is not null; parent = parent.Parent)
         {
@@ -313,184 +313,184 @@ private static bool HasAncestor<TElement>(OpenXmlElement element) where TElement
             }
         }
 
-return false;
+        return false;
     }
 
-private static string ExtractImageAltText(Paragraph paragraph)
+    private static string ExtractImageAltText(Paragraph paragraph)
     {
         var descriptions = paragraph.Descendants<DrawingWp.DocProperties>()
             .Select(properties => properties.Description?.Value)
             .Where(description => !string.IsNullOrWhiteSpace(description))
             .ToList();
 
-return descriptions.Count == 0 ? string.Empty : string.Join(" ", descriptions);
+        return descriptions.Count == 0 ? string.Empty : string.Join(" ", descriptions);
     }
 
-private static string ExtractFootnotes(Paragraph paragraph, IReadOnlyDictionary<string, string> footnotes)
+    private static string ExtractFootnotes(Paragraph paragraph, IReadOnlyDictionary<string, string> footnotes)
     {
         var parts = new List<string>();
 
-foreach (var reference in paragraph.Descendants<FootnoteReference>())
+        foreach (var reference in paragraph.Descendants<FootnoteReference>())
         {
             var id = reference.Id?.Value.ToString();
 
-if (id is not null && footnotes.TryGetValue(id, out var footnoteText) && !string.IsNullOrWhiteSpace(footnoteText))
+            if (id is not null && footnotes.TryGetValue(id, out var footnoteText) && !string.IsNullOrWhiteSpace(footnoteText))
             {
                 parts.Add(footnoteText);
             }
         }
 
-return parts.Count == 0 ? string.Empty : string.Join(" ", parts);
+        return parts.Count == 0 ? string.Empty : string.Join(" ", parts);
     }
 
-private static int? ResolveHeadingLevel(Paragraph paragraph, string? styleId, IReadOnlyDictionary<string, int> styleOutlineLevels)
+    private static int? ResolveHeadingLevel(Paragraph paragraph, string? styleId, IReadOnlyDictionary<string, int> styleOutlineLevels)
     {
         if (styleId is not null)
         {
             var match = HeadingStyleRegex.Match(styleId);
 
-if (match.Success)
+            if (match.Success)
             {
                 return int.Parse(match.Groups[1].ValueSpan);
             }
         }
 
-var directOutlineLevel = paragraph.ParagraphProperties?.OutlineLevel?.Val?.Value;
+        var directOutlineLevel = paragraph.ParagraphProperties?.OutlineLevel?.Val?.Value;
 
-if (directOutlineLevel is >= 0 and <= 8)
+        if (directOutlineLevel is >= 0 and <= 8)
         {
             return directOutlineLevel.Value + 1;
         }
 
-if (styleId is not null && styleOutlineLevels.TryGetValue(styleId, out var level))
+        if (styleId is not null && styleOutlineLevels.TryGetValue(styleId, out var level))
         {
             return level;
         }
 
-return null;
+        return null;
     }
 
-private static Dictionary<string, int> BuildStyleOutlineLevels(MainDocumentPart mainPart)
+    private static Dictionary<string, int> BuildStyleOutlineLevels(MainDocumentPart mainPart)
     {
         var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var styles = mainPart.StyleDefinitionsPart?.Styles;
 
-if (styles is null)
+        if (styles is null)
         {
             return result;
         }
 
-foreach (var style in styles.Elements<Style>())
+        foreach (var style in styles.Elements<Style>())
         {
             var styleId = style.StyleId?.Value;
 
-if (styleId is null)
+            if (styleId is null)
             {
                 continue;
             }
 
-var outlineLevel = style.StyleParagraphProperties?.OutlineLevel?.Val?.Value;
+            var outlineLevel = style.StyleParagraphProperties?.OutlineLevel?.Val?.Value;
 
-if (outlineLevel is >= 0 and <= 8)
+            if (outlineLevel is >= 0 and <= 8)
             {
                 result[styleId] = outlineLevel.Value + 1;
             }
         }
 
-return result;
+        return result;
     }
 
-private static Dictionary<string, bool> BuildNumberingFormats(MainDocumentPart mainPart)
+    private static Dictionary<string, bool> BuildNumberingFormats(MainDocumentPart mainPart)
     {
         var result = new Dictionary<string, bool>(StringComparer.Ordinal);
         var numbering = mainPart.NumberingDefinitionsPart?.Numbering;
 
-if (numbering is null)
+        if (numbering is null)
         {
             return result;
         }
 
-var abstractFormats = new Dictionary<string, Dictionary<int, bool>>(StringComparer.Ordinal);
+        var abstractFormats = new Dictionary<string, Dictionary<int, bool>>(StringComparer.Ordinal);
 
-foreach (var abstractNum in numbering.Elements<AbstractNum>())
+        foreach (var abstractNum in numbering.Elements<AbstractNum>())
         {
             var abstractId = abstractNum.AbstractNumberId?.Value.ToString();
 
-if (abstractId is null)
+            if (abstractId is null)
             {
                 continue;
             }
 
-var levels = new Dictionary<int, bool>();
+            var levels = new Dictionary<int, bool>();
 
-foreach (var level in abstractNum.Elements<Level>())
+            foreach (var level in abstractNum.Elements<Level>())
             {
                 var levelIndex = level.LevelIndex?.Value ?? 0;
                 var format = level.NumberingFormat?.Val?.Value;
                 levels[levelIndex] = format == NumberFormatValues.Bullet;
             }
 
-abstractFormats[abstractId] = levels;
+            abstractFormats[abstractId] = levels;
         }
 
-foreach (var numberingInstance in numbering.Elements<NumberingInstance>())
+        foreach (var numberingInstance in numbering.Elements<NumberingInstance>())
         {
             var numberId = numberingInstance.NumberID?.Value.ToString();
             var abstractId = numberingInstance.AbstractNumId?.Val?.Value.ToString();
 
-if (numberId is null || abstractId is null || !abstractFormats.TryGetValue(abstractId, out var levels))
+            if (numberId is null || abstractId is null || !abstractFormats.TryGetValue(abstractId, out var levels))
             {
                 continue;
             }
 
-foreach (var (levelIndex, isBullet) in levels)
+            foreach (var (levelIndex, isBullet) in levels)
             {
                 result[$"{numberId}:{levelIndex}"] = isBullet;
             }
         }
 
-return result;
+        return result;
     }
 
-private static Dictionary<string, string> BuildFootnotes(MainDocumentPart mainPart)
+    private static Dictionary<string, string> BuildFootnotes(MainDocumentPart mainPart)
     {
         var result = new Dictionary<string, string>(StringComparer.Ordinal);
         var footnotes = mainPart.FootnotesPart?.Footnotes;
 
-if (footnotes is null)
+        if (footnotes is null)
         {
             return result;
         }
 
-foreach (var footnote in footnotes.Elements<Footnote>())
+        foreach (var footnote in footnotes.Elements<Footnote>())
         {
             var id = footnote.Id?.Value.ToString();
 
-if (id is null)
+            if (id is null)
             {
                 continue;
             }
 
-var text = string.Join(" ", footnote.Descendants<Paragraph>().Select(ExtractText).Where(value => !string.IsNullOrWhiteSpace(value)));
+            var text = string.Join(" ", footnote.Descendants<Paragraph>().Select(ExtractText).Where(value => !string.IsNullOrWhiteSpace(value)));
 
-if (!string.IsNullOrWhiteSpace(text))
+            if (!string.IsNullOrWhiteSpace(text))
             {
                 result[id] = text;
             }
         }
 
-return result;
+        return result;
     }
 
-private static bool IsTableOfContents(SdtBlock sdtBlock)
+    private static bool IsTableOfContents(SdtBlock sdtBlock)
     {
         var gallery = sdtBlock.SdtProperties?.GetFirstChild<SdtContentDocPartObject>()?.DocPartGallery?.Val?.Value;
 
-if (gallery?.Contains("Table of Contents", StringComparison.OrdinalIgnoreCase) == true)
+        if (gallery?.Contains("Table of Contents", StringComparison.OrdinalIgnoreCase) == true)
         {
             return true;
         }
 
-return sdtBlock.Descendants<FieldCode>().Any(field => field.Text?.Contains("TOC", StringComparison.OrdinalIgnoreCase) == true);
+        return sdtBlock.Descendants<FieldCode>().Any(field => field.Text?.Contains("TOC", StringComparison.OrdinalIgnoreCase) == true);
     }
 }

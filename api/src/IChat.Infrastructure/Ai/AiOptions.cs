@@ -6,20 +6,20 @@ public sealed class AiOptions
 {
     public const string SectionName = "Ai";
 
-[Required]
+    [Required]
     public ChatModelOptions Chat { get; set; } = new();
 
-[Required]
+    [Required]
     public UtilityChatOptions UtilityChat { get; set; } = new();
 
-[Required]
+    [Required]
     public EmbeddingOptions Embedding { get; set; } = new();
 
-public PipelineOptions Pipeline { get; set; } = new();
+    public PipelineOptions Pipeline { get; set; } = new();
 
-public IList<string> AllowedChatModels { get; set; } = [];
+    public IList<string> AllowedChatModels { get; set; } = [];
 
-public ResolvedChatSettings ResolveChat()
+    public ResolvedChatSettings ResolveChat()
     {
         return new ResolvedChatSettings
         {
@@ -30,7 +30,7 @@ public ResolvedChatSettings ResolveChat()
         };
     }
 
-public ResolvedChatSettings ResolveUtilityChat()
+    public ResolvedChatSettings ResolveUtilityChat()
     {
         return new ResolvedChatSettings
         {

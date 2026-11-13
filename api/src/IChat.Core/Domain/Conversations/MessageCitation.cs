@@ -8,19 +8,19 @@ public sealed class MessageCitation
     {
     }
 
-public Guid MessageId { get; private set; }
+    public Guid MessageId { get; private set; }
 
-public Message? Message { get; private set; }
+    public Message? Message { get; private set; }
 
-public Guid ChunkId { get; private set; }
+    public Guid ChunkId { get; private set; }
 
-public DocumentChunk? Chunk { get; private set; }
+    public DocumentChunk? Chunk { get; private set; }
 
-public int MarkerIndex { get; private set; }
+    public int MarkerIndex { get; private set; }
 
-public double Score { get; private set; }
+    public double Score { get; private set; }
 
-public static MessageCitation Create(Guid messageId, Guid chunkId, int markerIndex, double score)
+    public static MessageCitation Create(Guid messageId, Guid chunkId, int markerIndex, double score)
     {
         return new MessageCitation
         {

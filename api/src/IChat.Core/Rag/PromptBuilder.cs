@@ -14,31 +14,31 @@ Mandatory rules:
         - Answer in the same language as the user's question.
         """;
 
-public const string NoContextSystemPrompt = """
+    public const string NoContextSystemPrompt = """
         You are an assistant that answers questions from internal documents.
         No document relevant to this question was found.
         Tell the user plainly that you did not find the information in the documents. Never invent an answer.
         """;
 
-public const string QueryRewriteSystemPrompt = """
+    public const string QueryRewriteSystemPrompt = """
         Rewrite the last question as a standalone, self-contained question,
         replacing every pronoun and reference with the concrete noun from the history.
         Keep the original language. Return only the question, no explanation,
         no surrounding quotes.
         """;
 
-public static IReadOnlyList<ChatMessage> BuildAnswerPrompt(
-        AssembledContext context,
-        IReadOnlyList<ChatMessage> normalizedHistory,
-        string originalUserQuestion,
-        bool supportsMultipleSystemMessages)
+    public static IReadOnlyList<ChatMessage> BuildAnswerPrompt(
+            AssembledContext context,
+            IReadOnlyList<ChatMessage> normalizedHistory,
+            string originalUserQuestion,
+            bool supportsMultipleSystemMessages)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(normalizedHistory);
 
-var messages = new List<ChatMessage>();
+        var messages = new List<ChatMessage>();
 
-if (!context.HasContext)
+        if (!context.HasContext)
         {
             messages.Add(new ChatMessage(ChatRole.System, NoContextSystemPrompt));
         }
@@ -52,9 +52,9 @@ if (!context.HasContext)
             messages.Add(new ChatMessage(ChatRole.System, $"{AnswerSystemPrompt}\n\nCONTEXT:\n{context.RenderedContext}"));
         }
 
-messages.AddRange(normalizedHistory);
+        messages.AddRange(normalizedHistory);
         messages.Add(new ChatMessage(ChatRole.User, originalUserQuestion));
 
-return messages;
+        return messages;
     }
 }

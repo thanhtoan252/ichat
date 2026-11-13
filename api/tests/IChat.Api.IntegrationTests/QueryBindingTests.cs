@@ -16,100 +16,100 @@ public class QueryBindingTests
         TQuery? bound = null;
         var factoryResult = RequestDelegateFactory.Create(([AsParameters] TQuery query) => bound = query);
 
-var context = new DefaultHttpContext
+        var context = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection().BuildServiceProvider()
         };
         context.Request.QueryString = new QueryString(queryString);
         context.Response.Body = Stream.Null;
 
-await factoryResult.RequestDelegate(context);
+        await factoryResult.RequestDelegate(context);
 
-context.Response.StatusCode.Should().Be(
-            StatusCodes.Status200OK,
-            $"{typeof(TQuery).Name} must bind from '{queryString}'");
+        context.Response.StatusCode.Should().Be(
+                    StatusCodes.Status200OK,
+                    $"{typeof(TQuery).Name} must bind from '{queryString}'");
 
-return bound!;
+        return bound!;
     }
 
-[Fact]
+    [Fact]
     public async Task GetDocumentsQuery_OmittedValues_UseDefaults()
     {
         var query = await BindAsync<GetDocumentsQuery>(string.Empty);
 
-query.Status.Should().BeNull();
+        query.Status.Should().BeNull();
         query.Offset.Should().Be(0);
         query.Limit.Should().Be(20);
     }
 
-[Fact]
+    [Fact]
     public async Task GetDocumentsQuery_ReadsQueryString()
     {
         var query = await BindAsync<GetDocumentsQuery>("?status=Indexed&offset=40&limit=5");
 
-query.Status.Should().Be(DocumentStatusFilter.Indexed);
+        query.Status.Should().Be(DocumentStatusFilter.Indexed);
         query.Offset.Should().Be(40);
         query.Limit.Should().Be(5);
     }
 
-[Fact]
+    [Fact]
     public async Task GetDocumentChunksQuery_OmittedValues_UseDefaults()
     {
         var query = await BindAsync<GetDocumentChunksQuery>(string.Empty);
 
-query.Offset.Should().Be(0);
+        query.Offset.Should().Be(0);
         query.Limit.Should().Be(50);
     }
 
-[Fact]
+    [Fact]
     public async Task GetConversationsQuery_OmittedValues_UseDefaults()
     {
         var query = await BindAsync<GetConversationsQuery>(string.Empty);
 
-query.Offset.Should().Be(0);
+        query.Offset.Should().Be(0);
         query.Limit.Should().Be(20);
     }
 
-[Fact]
+    [Fact]
     public async Task GetMessagesQuery_OmittedValues_UseDefaults()
     {
         var query = await BindAsync<GetMessagesQuery>(string.Empty);
 
-query.Offset.Should().Be(0);
+        query.Offset.Should().Be(0);
         query.Limit.Should().Be(50);
     }
 
-[Fact]
+    [Fact]
     public async Task GetDocumentsQuery_LimitAboveTheCap_IsClampedToTheCap()
     {
         var query = await BindAsync<GetDocumentsQuery>("?limit=500");
 
-query.Limit.Should().Be(100);
+        query.Limit.Should().Be(100);
     }
 
-[Fact]
+    [Fact]
     public async Task GetDocumentChunksQuery_LimitAboveTheCap_IsClampedToTheCap()
     {
         var query = await BindAsync<GetDocumentChunksQuery>("?limit=999");
 
-query.Limit.Should().Be(200);
+        query.Limit.Should().Be(200);
     }
 
-[Fact]
+    [Fact]
     public async Task NonsensicalPaging_FallsBackToDefaults()
     {
         var query = await BindAsync<GetMessagesQuery>("?offset=-5&limit=0");
 
-query.Offset.Should().Be(0);
+        query.Offset.Should().Be(0);
         query.Limit.Should().Be(50);
     }
 
-[Fact]
+    [Fact]
     public async Task GetMessagesQuery_ReadsQueryString()
     {
         var query = await BindAsync<GetMessagesQuery>("?offset=100&limit=25");
 
-query.Offset.Should().Be(100);
+        query.Offset.Should().Be(100);
         query.Limit.Should().Be(25);
     }
 }

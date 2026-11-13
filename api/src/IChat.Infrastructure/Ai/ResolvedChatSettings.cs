@@ -4,15 +4,15 @@ public sealed record ResolvedChatSettings
 {
     public required string Model { get; init; }
 
-public required int MaxOutputTokens { get; init; }
+    public required int MaxOutputTokens { get; init; }
 
-public required int TimeoutSeconds { get; init; }
+    public required int TimeoutSeconds { get; init; }
 
-public string? ApiKey { get; init; }
+    public string? ApiKey { get; init; }
 
-public string Label => "OpenAI";
+    public string Label => "OpenAI";
 
-public string RequireApiKey()
+    public string RequireApiKey()
     {
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
@@ -21,6 +21,6 @@ public string RequireApiKey()
                 "as an environment variable, in user secrets, or in a secret store.");
         }
 
-return ApiKey;
+        return ApiKey;
     }
 }

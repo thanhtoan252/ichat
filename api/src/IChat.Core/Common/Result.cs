@@ -9,26 +9,26 @@ public class Result
             throw new ArgumentException("Successful results must not include an error.", nameof(error));
         }
 
-if (!isSuccess && error.Type == ErrorType.None)
+        if (!isSuccess && error.Type == ErrorType.None)
         {
             throw new ArgumentException("Failure results must include an error.", nameof(error));
         }
 
-IsSuccess = isSuccess;
+        IsSuccess = isSuccess;
         Error = error;
     }
 
-public bool IsSuccess { get; }
+    public bool IsSuccess { get; }
 
-public bool IsFailure => !IsSuccess;
+    public bool IsFailure => !IsSuccess;
 
-public Error Error { get; }
+    public Error Error { get; }
 
-public static Result Success() => new(true, Error.None);
+    public static Result Success() => new(true, Error.None);
 
-public static Result Failure(Error error) => new(false, error);
+    public static Result Failure(Error error) => new(false, error);
 
-public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
+    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
 
-public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
+    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
 }

@@ -11,25 +11,25 @@ public sealed class ConversationConfiguration : IEntityTypeConfiguration<Convers
     {
         builder.ToTable("conversations");
 
-builder.HasKey(conversation => conversation.Id);
+        builder.HasKey(conversation => conversation.Id);
 
-builder.Property(conversation => conversation.Title).IsRequired();
+        builder.Property(conversation => conversation.Title).IsRequired();
         builder.Property(conversation => conversation.CreatedAt).IsRequired();
         builder.Property(conversation => conversation.UpdatedAt).IsRequired();
 
-builder.HasOne<User>()
-            .WithMany()
-            .HasForeignKey(conversation => conversation.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(conversation => conversation.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
-builder.HasMany(conversation => conversation.Messages)
-            .WithOne(message => message.Conversation)
-            .HasForeignKey(message => message.ConversationId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(conversation => conversation.Messages)
+                    .WithOne(message => message.Conversation)
+                    .HasForeignKey(message => message.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
-builder.HasIndex(conversation => conversation.UpdatedAt);
+        builder.HasIndex(conversation => conversation.UpdatedAt);
         builder.HasIndex(conversation => conversation.UserId);
 
-builder.Navigation(conversation => conversation.Messages).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Navigation(conversation => conversation.Messages).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

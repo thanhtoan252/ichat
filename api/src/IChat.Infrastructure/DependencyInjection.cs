@@ -20,41 +20,41 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("Default")
             ?? throw new InvalidOperationException("Missing ConnectionStrings:Default.");
 
-services.AddIChatPersistence(connectionString);
+        services.AddIChatPersistence(connectionString);
         services.AddIChatAi(configuration);
 
-services.AddOptions<StorageOptions>()
-            .BindConfiguration(StorageOptions.SectionName)
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+        services.AddOptions<StorageOptions>()
+                    .BindConfiguration(StorageOptions.SectionName)
+                    .ValidateDataAnnotations()
+                    .ValidateOnStart();
 
-services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
+        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
-services.AddHostedService<IdentitySeeder>();
+        services.AddHostedService<IdentitySeeder>();
 
-services.AddSingleton<IFileStorage, LocalFileStorage>();
+        services.AddSingleton<IFileStorage, LocalFileStorage>();
         services.AddScoped<ContextAssembler>();
 
-services.AddSingleton<IUnsupportedFormatDetector, LegacyDocFormatDetector>();
+        services.AddSingleton<IUnsupportedFormatDetector, LegacyDocFormatDetector>();
 
-services.AddSingleton<IDocumentParser, DocxDocumentParser>();
+        services.AddSingleton<IDocumentParser, DocxDocumentParser>();
         services.AddSingleton<IDocumentParser, PdfDocumentParser>();
         services.AddSingleton<IDocumentParser, MarkdownDocumentParser>();
         services.AddSingleton<IDocumentParser, PlainTextDocumentParser>();
         services.AddSingleton<IDocumentParserResolver, DocumentParserResolver>();
 
-services.AddScoped<IStructuredChunker, HeadingAwareChunker>();
+        services.AddScoped<IStructuredChunker, HeadingAwareChunker>();
 
-services.AddScoped<PostgresChunkStore>();
+        services.AddScoped<PostgresChunkStore>();
         services.AddScoped<IChunkSearch>(provider => provider.GetRequiredService<PostgresChunkStore>());
         services.AddScoped<IChunkLoader>(provider => provider.GetRequiredService<PostgresChunkStore>());
 
-services.AddScoped<IRetrievalBranch, VectorSearchBranch>();
+        services.AddScoped<IRetrievalBranch, VectorSearchBranch>();
         services.AddScoped<IRetrievalBranch, FullTextSearchBranch>();
         services.AddScoped<IRetrievalBranch, TrigramSearchBranch>();
         services.AddSingleton<IDocumentIngestionQueue, DocumentIngestionQueue>();
         services.AddHostedService<DocumentIngestionWorker>();
 
-return services;
+        return services;
     }
 }

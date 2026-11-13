@@ -14,68 +14,68 @@ public class RetrievalStageOrderTests
     private static readonly Guid VectorChunk = Guid.Parse("00000000-0000-0000-0000-0000000000a1");
     private static readonly Guid FullTextChunk = Guid.Parse("00000000-0000-0000-0000-0000000000b2");
 
-private static readonly string[] PublishedStageOrder = ["vector", "fulltext", "trigram", "fused", "afterMmr", "final"];
+    private static readonly string[] PublishedStageOrder = ["vector", "fulltext", "trigram", "fused", "afterMmr", "final"];
 
-[Test]
+    [Test]
     public async Task Execute_EmitsStagesInThePublishedOrder()
     {
 
-var pipeline = Pipeline();
+        var pipeline = Pipeline();
 
-var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
 
-outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
+        outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
     }
 
-[Test]
+    [Test]
     public async Task Execute_DisabledBranch_StillEmitsAnEmptyStage()
     {
 
-var pipeline = Pipeline(trigramEnabled: false);
+        var pipeline = Pipeline(trigramEnabled: false);
 
-var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
 
-outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
+        outcome.Stages.Select(stage => stage.Name).Should().Equal(PublishedStageOrder);
         outcome.Stages.Single(stage => stage.Name == "trigram").Count.Should().Be(0);
     }
 
-[Test]
+    [Test]
     public async Task Execute_ModeSelectsOneBranch_StillEmitsEveryBranchStage()
     {
 
-var pipeline = Pipeline();
+        var pipeline = Pipeline();
 
-var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Vector), CancellationToken.None);
+        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Vector), CancellationToken.None);
 
-outcome.Stages.Select(stage => stage.Name).Should().Contain(["vector", "fulltext", "trigram"]);
+        outcome.Stages.Select(stage => stage.Name).Should().Contain(["vector", "fulltext", "trigram"]);
         outcome.Stages.Single(stage => stage.Name == "fulltext").Count.Should().Be(0);
     }
 
-[Test]
+    [Test]
     public async Task Execute_BranchReportsDegraded_MarksTheWholeOutcomeDegraded()
     {
 
-var pipeline = Pipeline(vectorDegraded: true);
+        var pipeline = Pipeline(vectorDegraded: true);
 
-var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
 
-outcome.Degraded.Should().BeTrue();
+        outcome.Degraded.Should().BeTrue();
     }
 
-[Test]
+    [Test]
     public async Task Execute_CandidatesAfterFusion_HaveNoSingleSource()
     {
 
-var pipeline = Pipeline();
+        var pipeline = Pipeline();
 
-var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
+        var outcome = await pipeline.ExecuteAsync(Request(SearchMode.Hybrid), CancellationToken.None);
 
-outcome.Stages.Single(stage => stage.Name == "fused").Top.Should().OnlyContain(candidate => candidate.Source == null);
+        outcome.Stages.Single(stage => stage.Name == "fused").Top.Should().OnlyContain(candidate => candidate.Source == null);
         outcome.Stages.Single(stage => stage.Name == "vector").Top.Should().OnlyContain(candidate => candidate.Source == RetrievalSource.Vector);
         outcome.Stages.Single(stage => stage.Name == "fulltext").Top.Should().OnlyContain(candidate => candidate.Source == RetrievalSource.FullText);
     }
 
-private static RetrievalPipeline Pipeline(bool trigramEnabled = true, bool vectorDegraded = false)
+    private static RetrievalPipeline Pipeline(bool trigramEnabled = true, bool vectorDegraded = false)
     {
         IRetrievalBranch[] branches =
         [
@@ -84,19 +84,19 @@ private static RetrievalPipeline Pipeline(bool trigramEnabled = true, bool vecto
             Branch(RetrievalStageName.Trigram, trigramEnabled ? [SearchMode.Hybrid, SearchMode.Trigram] : [], [])
         ];
 
-return new RetrievalPipeline(
-            branches,
-            ChunkLoader(VectorChunk, FullTextChunk),
-            PassThroughRewriter(),
-            PassThroughReranker(),
-            Options.Create(new RagOptions()));
+        return new RetrievalPipeline(
+                    branches,
+                    ChunkLoader(VectorChunk, FullTextChunk),
+                    PassThroughRewriter(),
+                    PassThroughReranker(),
+                    Options.Create(new RagOptions()));
     }
 
-private static IRetrievalBranch Branch(
-        string stageName,
-        IReadOnlyList<SearchMode> enabledModes,
-        IReadOnlyList<RetrievalCandidate> candidates,
-        bool degraded = false)
+    private static IRetrievalBranch Branch(
+            string stageName,
+            IReadOnlyList<SearchMode> enabledModes,
+            IReadOnlyList<RetrievalCandidate> candidates,
+            bool degraded = false)
     {
         var branch = new Mock<IRetrievalBranch>();
         branch.SetupGet(b => b.StageName).Returns(stageName);
@@ -110,10 +110,10 @@ private static IRetrievalBranch Branch(
                 Degraded = degraded
             });
 
-return branch.Object;
+        return branch.Object;
     }
 
-private static IChunkLoader ChunkLoader(params Guid[] known)
+    private static IChunkLoader ChunkLoader(params Guid[] known)
     {
         var loader = new Mock<IChunkLoader>();
         loader
@@ -133,41 +133,41 @@ private static IChunkLoader ChunkLoader(params Guid[] known)
                     })
                 ];
 
-return chunks;
+                return chunks;
             });
         loader
             .Setup(l => l.LoadNeighborsAsync(It.IsAny<IReadOnlyList<(Guid DocumentId, int ChunkIndex)>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync([]);
 
-return loader.Object;
+        return loader.Object;
     }
 
-private static IQueryRewriter PassThroughRewriter()
+    private static IQueryRewriter PassThroughRewriter()
     {
         var rewriter = new Mock<IQueryRewriter>();
         rewriter
             .Setup(r => r.RewriteAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string originalQuestion, IReadOnlyList<ChatMessage> _, CancellationToken _) => originalQuestion);
 
-return rewriter.Object;
+        return rewriter.Object;
     }
 
-private static IReranker PassThroughReranker()
+    private static IReranker PassThroughReranker()
     {
         var reranker = new Mock<IReranker>();
         reranker
             .Setup(r => r.RerankAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<ScoredChunk>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string _, IReadOnlyList<ScoredChunk> candidates, CancellationToken _) => candidates);
 
-return reranker.Object;
+        return reranker.Object;
     }
 
-private static RetrievalRequest Request(SearchMode mode)
+    private static RetrievalRequest Request(SearchMode mode)
     {
         return new RetrievalRequest { Query = "cau hoi", Mode = mode, Rewrite = false, Rerank = false };
     }
 
-private static RetrievalCandidate Candidate(Guid id, RetrievalSource source)
+    private static RetrievalCandidate Candidate(Guid id, RetrievalSource source)
     {
         return new RetrievalCandidate
         {

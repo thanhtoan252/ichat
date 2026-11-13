@@ -16,7 +16,7 @@ public class HeadingAwareChunkerTests
     public void Chunk_NeverMergesAcrossHeadingBoundary()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[]
         {
             Heading("Phan A", 1, 0),
@@ -25,18 +25,18 @@ var chunker = Build(minTokens: 0);
             Paragraph("noi dung B", 3)
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Should().HaveCount(2);
+        chunks.Should().HaveCount(2);
         chunks[0].Content.Should().Contain("noi dung A").And.NotContain("noi dung B");
         chunks[1].Content.Should().Contain("noi dung B").And.NotContain("noi dung A");
     }
 
-[Test]
+    [Test]
     public void Chunk_BuildsMultiLevelHeadingPath()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[]
         {
             Heading("Cai dat", 1, 0),
@@ -45,17 +45,17 @@ var chunker = Build(minTokens: 0);
             Paragraph("noi dung sau cung", 3)
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Should().ContainSingle();
+        chunks.Should().ContainSingle();
         chunks[0].HeadingPath.Should().Be("Cai dat > Cau hinh > Bien moi truong");
     }
 
-[Test]
+    [Test]
     public void Chunk_PopsHeadingStackWhenLevelGoesBackUp()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[]
         {
             Heading("A", 1, 0),
@@ -65,30 +65,30 @@ var chunker = Build(minTokens: 0);
             Paragraph("trong B", 4)
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Single(chunk => chunk.Content.Contains("trong A1")).HeadingPath.Should().Be("A > A1");
+        chunks.Single(chunk => chunk.Content.Contains("trong A1")).HeadingPath.Should().Be("A > A1");
         chunks.Single(chunk => chunk.Content.Contains("trong B")).HeadingPath.Should().Be("B");
     }
 
-[Test]
+    [Test]
     public void Chunk_DocumentWithoutAnyHeading_StillProducesChunks()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[] { Paragraph("chi co doan van", 0), Paragraph("khong heading nao", 1) };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Should().NotBeEmpty();
+        chunks.Should().NotBeEmpty();
         chunks.Should().OnlyContain(chunk => chunk.HeadingPath == null);
     }
 
-[Test]
+    [Test]
     public void Chunk_TableIsNeverSplit_EvenWhenLargerThanTarget()
     {
 
-var chunker = Build(targetTokens: 100, minTokens: 0);
+        var chunker = Build(targetTokens: 100, minTokens: 0);
         var bigTable = "| a | b |\n| --- | --- |\n" + string.Join("\n", Enumerable.Range(0, 400).Select(i => $"| row{i} | val{i} |"));
         var blocks = new[]
         {
@@ -101,19 +101,19 @@ var chunker = Build(targetTokens: 100, minTokens: 0);
             }
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-var tableChunks = chunks.Where(chunk => chunk.Content.Contains("row399")).ToList();
+        var tableChunks = chunks.Where(chunk => chunk.Content.Contains("row399")).ToList();
         tableChunks.Should().ContainSingle("a table is an atomic unit");
         tableChunks[0].Content.Should().Contain("| a | b |", "half a table without its column header is meaningless");
         tableChunks[0].Content.Should().Contain("row0");
     }
 
-[Test]
+    [Test]
     public void Chunk_TableKeepsContainsTableMetadata()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[]
         {
             new DocumentBlock
@@ -124,16 +124,16 @@ var chunker = Build(minTokens: 0);
             }
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks[0].Metadata["containsTable"].Should().Be(true);
+        chunks[0].Metadata["containsTable"].Should().Be(true);
     }
 
-[Test]
+    [Test]
     public void Chunk_MergesChunksBelowMinTokens()
     {
 
-var chunker = Build(targetTokens: 8, minTokens: 500);
+        var chunker = Build(targetTokens: 8, minTokens: 500);
         var blocks = new[]
         {
             Heading("Phan", 1, 0),
@@ -142,99 +142,99 @@ var chunker = Build(targetTokens: 8, minTokens: 500);
             Paragraph("ngan ba", 3)
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Should().ContainSingle("every piece is below MinTokens, so they must be merged");
+        chunks.Should().ContainSingle("every piece is below MinTokens, so they must be merged");
     }
 
-[Test]
+    [Test]
     public void Chunk_SplitsSectionLongerThanTargetTokens()
     {
 
-var chunker = Build(targetTokens: 200, overlapTokens: 20, minTokens: 0);
+        var chunker = Build(targetTokens: 200, overlapTokens: 20, minTokens: 0);
         var blocks = new[] { Heading("Phan dai", 1, 0), Paragraph(LongText(3000), 1) };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Count.Should().BeGreaterThan(1);
+        chunks.Count.Should().BeGreaterThan(1);
         chunks.Should().OnlyContain(chunk => chunk.HeadingPath == "Phan dai", "splitting inside a section must not lose the heading path");
     }
 
-[Test]
+    [Test]
     public void Chunk_ConsecutiveChunksOverlap()
     {
 
-var chunker = Build(targetTokens: 200, overlapTokens: 60, minTokens: 0);
+        var chunker = Build(targetTokens: 200, overlapTokens: 60, minTokens: 0);
         var blocks = new[] { Paragraph(LongText(2000), 0) };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Count.Should().BeGreaterThan(1);
+        chunks.Count.Should().BeGreaterThan(1);
 
-var firstTail = chunks[0].Content[^50..];
+        var firstTail = chunks[0].Content[^50..];
         chunks[1].Content.Should().Contain(firstTail[..20], "adjacent chunks must overlap so an answer straddling the boundary is not lost");
     }
 
-[Test]
+    [Test]
     public void Chunk_EmbeddedTextCarriesTitleAndHeadingPath()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[] { Heading("Cai dat", 1, 0), Heading("Cau hinh", 2, 1), Paragraph("noi dung", 2) };
 
-var chunks = chunker.Chunk(blocks, "So tay ky thuat");
+        var chunks = chunker.Chunk(blocks, "So tay ky thuat");
 
-chunks[0].EmbeddedText.Should().StartWith("So tay ky thuat > Cai dat > Cau hinh");
+        chunks[0].EmbeddedText.Should().StartWith("So tay ky thuat > Cai dat > Cau hinh");
         chunks[0].EmbeddedText.Should().Contain("noi dung");
         chunks[0].Content.Should().Be("noi dung", "content stays verbatim for display and carries no heading prefix");
     }
 
-[Test]
+    [Test]
     public void Chunk_PrependHeadingPathDisabled_EmbeddedTextEqualsContent()
     {
 
-var chunker = Build(minTokens: 0, prepend: false);
+        var chunker = Build(minTokens: 0, prepend: false);
         var blocks = new[] { Heading("Cai dat", 1, 0), Paragraph("noi dung", 1) };
 
-var chunks = chunker.Chunk(blocks, "So tay");
+        var chunks = chunker.Chunk(blocks, "So tay");
 
-chunks[0].EmbeddedText.Should().Be(chunks[0].Content);
+        chunks[0].EmbeddedText.Should().Be(chunks[0].Content);
     }
 
-[Test]
+    [Test]
     public void Chunk_IndexesAreSequentialFromZero()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[]
         {
             Heading("A", 1, 0), Paragraph(LongText(100), 1),
             Heading("B", 1, 2), Paragraph(LongText(100), 3)
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks.Select(chunk => chunk.Index).Should().Equal(Enumerable.Range(0, chunks.Count));
+        chunks.Select(chunk => chunk.Index).Should().Equal(Enumerable.Range(0, chunks.Count));
     }
 
-[Test]
+    [Test]
     public void Chunk_DocxBlocksNeverGetFabricatedPageNumber()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[] { Heading("A", 1, 0), Paragraph("noi dung docx", 1) };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks[0].Metadata["page"].Should().BeNull("DOCX has no fixed pages until it is rendered");
+        chunks[0].Metadata["page"].Should().BeNull("DOCX has no fixed pages until it is rendered");
         chunks[0].Metadata["startBlockIndex"].Should().Be(1);
     }
 
-[Test]
+    [Test]
     public void Chunk_PdfBlockKeepsPageNumber()
     {
 
-var chunker = Build(minTokens: 0);
+        var chunker = Build(minTokens: 0);
         var blocks = new[]
         {
             new DocumentBlock
@@ -246,23 +246,23 @@ var chunker = Build(minTokens: 0);
             }
         };
 
-var chunks = chunker.Chunk(blocks, "Tai lieu");
+        var chunks = chunker.Chunk(blocks, "Tai lieu");
 
-chunks[0].Metadata["page"].Should().Be(7);
+        chunks[0].Metadata["page"].Should().Be(7);
     }
 
-[Test]
+    [Test]
     public void Chunk_EmptyInput_ReturnsEmpty()
     {
 
-var chunker = Build();
+        var chunker = Build();
 
-var chunks = chunker.Chunk([], "Tai lieu");
+        var chunks = chunker.Chunk([], "Tai lieu");
 
-chunks.Should().BeEmpty();
+        chunks.Should().BeEmpty();
     }
 
-private static HeadingAwareChunker Build(int targetTokens = 800, int overlapTokens = 120, int minTokens = 80, bool prepend = true)
+    private static HeadingAwareChunker Build(int targetTokens = 800, int overlapTokens = 120, int minTokens = 80, bool prepend = true)
     {
         var options = Options.Create(new RagOptions
         {
@@ -275,10 +275,10 @@ private static HeadingAwareChunker Build(int targetTokens = 800, int overlapToke
             }
         });
 
-return new HeadingAwareChunker(options, new SimpleTokenEstimator());
+        return new HeadingAwareChunker(options, new SimpleTokenEstimator());
     }
 
-private static DocumentBlock Heading(string text, int level, int order)
+    private static DocumentBlock Heading(string text, int level, int order)
     {
         return new DocumentBlock
         {
@@ -289,7 +289,7 @@ private static DocumentBlock Heading(string text, int level, int order)
         };
     }
 
-private static DocumentBlock Paragraph(string text, int order)
+    private static DocumentBlock Paragraph(string text, int order)
     {
         return new DocumentBlock
         {
@@ -299,7 +299,7 @@ private static DocumentBlock Paragraph(string text, int order)
         };
     }
 
-private static string LongText(int words)
+    private static string LongText(int words)
     {
         return string.Join(" ", Enumerable.Repeat("word", words));
     }

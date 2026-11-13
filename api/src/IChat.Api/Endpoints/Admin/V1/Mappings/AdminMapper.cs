@@ -15,19 +15,19 @@ public static class AdminMapper
             AllowedChatModels = snapshot.AllowedChatModels
         };
 
-public static ReindexResponse ToResponse(this ReindexResult result) =>
-        new()
-        {
-            DocumentCount = result.DocumentCount
-        };
+    public static ReindexResponse ToResponse(this ReindexResult result) =>
+            new()
+            {
+                DocumentCount = result.DocumentCount
+            };
 
-private static ProviderResponse ToResponse(this ProviderDescriptor descriptor) =>
-        new()
-        {
-            Kind = descriptor.Kind,
-            Provider = descriptor.Provider,
-            Model = descriptor.Model,
-            Available = descriptor.Available,
-            Reason = descriptor.Reason
-        };
+    private static ProviderResponse ToResponse(this ProviderDescriptor descriptor) =>
+            new()
+            {
+                Kind = descriptor.Kind,
+                Provider = descriptor.Provider,
+                Model = descriptor.Model,
+                Available = descriptor.Available,
+                Reason = descriptor.Reason
+            };
 }

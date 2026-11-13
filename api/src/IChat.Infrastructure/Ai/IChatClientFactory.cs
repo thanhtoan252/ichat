@@ -6,6 +6,6 @@ public interface IChatClientFactory
 {
     IChatClient Create();
 
-IChatClient CreateUtility();
+    IChatClient CreateUtility();
 
 }

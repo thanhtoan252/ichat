@@ -18,18 +18,18 @@ public sealed class PostgresChunkStore(IDbContextFactory<IChatDbContext> dbConte
             return new SearchBranchResult { Candidates = [], ElapsedMs = 0 };
         }
 
-var stopwatch = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
-await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using var connection = await OpenConnectionAsync(dbContext, cancellationToken);
 
-await using (var tuning = connection.CreateCommand())
+        await using (var tuning = connection.CreateCommand())
         {
             tuning.CommandText = "SET hnsw.ef_search = 100;";
             await tuning.ExecuteNonQueryAsync(cancellationToken);
         }
 
-await using var command = connection.CreateCommand();
+        await using var command = connection.CreateCommand();
         command.CommandText = """
             SELECT c.id, c.document_id, c.content, c.heading_path, c.chunk_index,
                    1 - (c.embedding <=> @queryEmbedding) AS score
@@ -39,32 +39,32 @@ await using var command = connection.CreateCommand();
             LIMIT @limit;
             """;
 
-command.Parameters.Add(new NpgsqlParameter("queryEmbedding", new Vector(queryEmbedding)));
+        command.Parameters.Add(new NpgsqlParameter("queryEmbedding", new Vector(queryEmbedding)));
         command.Parameters.AddWithValue("minSimilarity", minSimilarity);
         command.Parameters.AddWithValue("limit", limit);
 
-var candidates = await ReadCandidatesAsync(command, RetrievalSource.Vector, cancellationToken);
+        var candidates = await ReadCandidatesAsync(command, RetrievalSource.Vector, cancellationToken);
 
-return new SearchBranchResult { Candidates = candidates, ElapsedMs = stopwatch.ElapsedMilliseconds };
+        return new SearchBranchResult { Candidates = candidates, ElapsedMs = stopwatch.ElapsedMilliseconds };
     }
 
-public async Task<SearchBranchResult> SearchFullTextAsync(string query, int limit, double minRank, CancellationToken cancellationToken)
+    public async Task<SearchBranchResult> SearchFullTextAsync(string query, int limit, double minRank, CancellationToken cancellationToken)
     {
         var tsQuery = TsQueryBuilder.Build(query);
 
-if (limit <= 0 || tsQuery is null)
+        if (limit <= 0 || tsQuery is null)
         {
 
-return new SearchBranchResult { Candidates = [], ElapsedMs = 0, TsQuery = tsQuery };
+            return new SearchBranchResult { Candidates = [], ElapsedMs = 0, TsQuery = tsQuery };
         }
 
-var stopwatch = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
-await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using var connection = await OpenConnectionAsync(dbContext, cancellationToken);
         await using var command = connection.CreateCommand();
 
-command.CommandText = """
+        command.CommandText = """
             SELECT c.id, c.document_id, c.content, c.heading_path, c.chunk_index,
                    ts_rank_cd(c.content_tsv, q.tsq) AS score
             FROM document_chunks c,
@@ -75,13 +75,13 @@ command.CommandText = """
             LIMIT @limit;
             """;
 
-command.Parameters.AddWithValue("tsQuery", tsQuery);
+        command.Parameters.AddWithValue("tsQuery", tsQuery);
         command.Parameters.AddWithValue("minRank", minRank);
         command.Parameters.AddWithValue("limit", limit);
 
-var candidates = await ReadCandidatesAsync(command, RetrievalSource.FullText, cancellationToken);
+        var candidates = await ReadCandidatesAsync(command, RetrievalSource.FullText, cancellationToken);
 
-return new SearchBranchResult
+        return new SearchBranchResult
         {
             Candidates = candidates,
             ElapsedMs = stopwatch.ElapsedMilliseconds,
@@ -89,20 +89,20 @@ return new SearchBranchResult
         };
     }
 
-public async Task<SearchBranchResult> SearchTrigramAsync(string query, int limit, CancellationToken cancellationToken)
+    public async Task<SearchBranchResult> SearchTrigramAsync(string query, int limit, CancellationToken cancellationToken)
     {
         if (limit <= 0 || string.IsNullOrWhiteSpace(query))
         {
             return new SearchBranchResult { Candidates = [], ElapsedMs = 0 };
         }
 
-var stopwatch = Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
-await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using var connection = await OpenConnectionAsync(dbContext, cancellationToken);
         await using var command = connection.CreateCommand();
 
-command.CommandText = """
+        command.CommandText = """
             SELECT c.id, c.document_id, c.content, c.heading_path, c.chunk_index,
                    similarity(c.content, @query) AS score
             FROM document_chunks c
@@ -111,87 +111,87 @@ command.CommandText = """
             LIMIT @limit;
             """;
 
-command.Parameters.AddWithValue("query", query);
+        command.Parameters.AddWithValue("query", query);
         command.Parameters.AddWithValue("limit", limit);
 
-var candidates = await ReadCandidatesAsync(command, RetrievalSource.Trigram, cancellationToken);
+        var candidates = await ReadCandidatesAsync(command, RetrievalSource.Trigram, cancellationToken);
 
-return new SearchBranchResult { Candidates = candidates, ElapsedMs = stopwatch.ElapsedMilliseconds };
+        return new SearchBranchResult { Candidates = candidates, ElapsedMs = stopwatch.ElapsedMilliseconds };
     }
 
-public async Task<IReadOnlyList<ScoredChunk>> LoadChunksAsync(IReadOnlyList<Guid> chunkIds, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ScoredChunk>> LoadChunksAsync(IReadOnlyList<Guid> chunkIds, CancellationToken cancellationToken)
     {
         if (chunkIds.Count == 0)
         {
             return [];
         }
 
-await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-var rows = await dbContext.DocumentChunks
-            .AsNoTracking()
-            .Where(chunk => chunkIds.Contains(chunk.Id))
-            .Select(chunk => new
-            {
-                chunk.Id,
-                chunk.DocumentId,
-                DocumentTitle = chunk.Document!.Title,
-                chunk.Content,
-                chunk.HeadingPath,
-                chunk.ChunkIndex,
-                chunk.Embedding
-            })
-            .ToListAsync(cancellationToken);
+        var rows = await dbContext.DocumentChunks
+                    .AsNoTracking()
+                    .Where(chunk => chunkIds.Contains(chunk.Id))
+                    .Select(chunk => new
+                    {
+                        chunk.Id,
+                        chunk.DocumentId,
+                        DocumentTitle = chunk.Document!.Title,
+                        chunk.Content,
+                        chunk.HeadingPath,
+                        chunk.ChunkIndex,
+                        chunk.Embedding
+                    })
+                    .ToListAsync(cancellationToken);
 
-return rows
-            .Select(row => new ScoredChunk
-            {
-                ChunkId = row.Id,
-                DocumentId = row.DocumentId,
-                DocumentTitle = row.DocumentTitle,
-                Content = row.Content,
-                HeadingPath = row.HeadingPath,
-                ChunkIndex = row.ChunkIndex,
-                Score = 0,
-                Embedding = row.Embedding
-            })
-            .ToList();
+        return rows
+                    .Select(row => new ScoredChunk
+                    {
+                        ChunkId = row.Id,
+                        DocumentId = row.DocumentId,
+                        DocumentTitle = row.DocumentTitle,
+                        Content = row.Content,
+                        HeadingPath = row.HeadingPath,
+                        ChunkIndex = row.ChunkIndex,
+                        Score = 0,
+                        Embedding = row.Embedding
+                    })
+                    .ToList();
     }
 
-public async Task<IReadOnlyList<NeighborChunk>> LoadNeighborsAsync(
-        IReadOnlyList<(Guid DocumentId, int ChunkIndex)> keys,
-        CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<NeighborChunk>> LoadNeighborsAsync(
+            IReadOnlyList<(Guid DocumentId, int ChunkIndex)> keys,
+            CancellationToken cancellationToken)
     {
         if (keys.Count == 0)
         {
             return [];
         }
 
-await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync(cancellationToken);
         await using var connection = await OpenConnectionAsync(dbContext, cancellationToken);
         await using var command = connection.CreateCommand();
 
-command.CommandText = """
+        command.CommandText = """
             SELECT c.document_id, c.chunk_index, c.content
             FROM document_chunks c
             JOIN unnest(@documentIds, @chunkIndexes) AS wanted(document_id, chunk_index)
               ON c.document_id = wanted.document_id AND c.chunk_index = wanted.chunk_index;
             """;
 
-command.Parameters.Add(new NpgsqlParameter("documentIds", NpgsqlDbType.Array | NpgsqlDbType.Uuid)
+        command.Parameters.Add(new NpgsqlParameter("documentIds", NpgsqlDbType.Array | NpgsqlDbType.Uuid)
         {
             Value = keys.Select(key => key.DocumentId).ToArray()
         });
 
-command.Parameters.Add(new NpgsqlParameter("chunkIndexes", NpgsqlDbType.Array | NpgsqlDbType.Integer)
+        command.Parameters.Add(new NpgsqlParameter("chunkIndexes", NpgsqlDbType.Array | NpgsqlDbType.Integer)
         {
             Value = keys.Select(key => key.ChunkIndex).ToArray()
         });
 
-var neighbors = new List<NeighborChunk>();
+        var neighbors = new List<NeighborChunk>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-while (await reader.ReadAsync(cancellationToken))
+        while (await reader.ReadAsync(cancellationToken))
         {
             neighbors.Add(new NeighborChunk
             {
@@ -201,30 +201,30 @@ while (await reader.ReadAsync(cancellationToken))
             });
         }
 
-return neighbors;
+        return neighbors;
     }
 
-private static async Task<NpgsqlConnection> OpenConnectionAsync(IChatDbContext dbContext, CancellationToken cancellationToken)
+    private static async Task<NpgsqlConnection> OpenConnectionAsync(IChatDbContext dbContext, CancellationToken cancellationToken)
     {
         var connection = (NpgsqlConnection)dbContext.Database.GetDbConnection();
 
-if (connection.State != System.Data.ConnectionState.Open)
+        if (connection.State != System.Data.ConnectionState.Open)
         {
             await connection.OpenAsync(cancellationToken);
         }
 
-return connection;
+        return connection;
     }
 
-private static async Task<List<RetrievalCandidate>> ReadCandidatesAsync(
-        NpgsqlCommand command,
-        RetrievalSource source,
-        CancellationToken cancellationToken)
+    private static async Task<List<RetrievalCandidate>> ReadCandidatesAsync(
+            NpgsqlCommand command,
+            RetrievalSource source,
+            CancellationToken cancellationToken)
     {
         var candidates = new List<RetrievalCandidate>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
-while (await reader.ReadAsync(cancellationToken))
+        while (await reader.ReadAsync(cancellationToken))
         {
             candidates.Add(new RetrievalCandidate
             {
@@ -238,6 +238,6 @@ while (await reader.ReadAsync(cancellationToken))
             });
         }
 
-return candidates;
+        return candidates;
     }
 }

@@ -13,18 +13,18 @@ public sealed class JwtAccessTokenService(
 {
     private readonly JwtOptions _options = options.Value;
 
-public TimeSpan RefreshTokenLifetime => TimeSpan.FromDays(_options.RefreshTokenDays);
+    public TimeSpan RefreshTokenLifetime => TimeSpan.FromDays(_options.RefreshTokenDays);
 
-public AccessToken Create(UserView user)
+    public AccessToken Create(UserView user)
     {
         var now = timeProvider.GetUtcNow();
         var expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
 
-var credentials = new SigningCredentials(
-            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey)),
-            SecurityAlgorithms.HmacSha256);
+        var credentials = new SigningCredentials(
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey)),
+                    SecurityAlgorithms.HmacSha256);
 
-var descriptor = new SecurityTokenDescriptor
+        var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _options.Issuer,
             Audience = _options.Audience,
@@ -40,7 +40,7 @@ var descriptor = new SecurityTokenDescriptor
             }
         };
 
-return new AccessToken
+        return new AccessToken
         {
             Value = new JsonWebTokenHandler().CreateToken(descriptor),
             ExpiresAt = expiresAt

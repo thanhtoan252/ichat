@@ -37,130 +37,130 @@ public sealed class DocumentIngestionWorker(
         }
     }
 
-private async Task ProcessAsync(Guid documentId, CancellationToken cancellationToken)
+    private async Task ProcessAsync(Guid documentId, CancellationToken cancellationToken)
     {
 
-using var scope = scopeFactory.CreateScope();
+        using var scope = scopeFactory.CreateScope();
         var services = IngestionServices.From(scope.ServiceProvider);
 
-var document = await services.DbContext.Documents
-            .SingleOrDefaultAsync(item => item.Id == documentId, cancellationToken);
+        var document = await services.DbContext.Documents
+                    .SingleOrDefaultAsync(item => item.Id == documentId, cancellationToken);
 
-if (document is null)
+        if (document is null)
         {
             logger.LogWarning("Document {DocumentId} no longer exists, skipping.", documentId);
 
-return;
+            return;
         }
 
-document.MarkProcessing();
+        document.MarkProcessing();
         await services.DbContext.SaveChangesAsync(cancellationToken);
 
-var parsed = await ParseAsync(services, document, cancellationToken);
+        var parsed = await ParseAsync(services, document, cancellationToken);
 
-if (parsed is null)
+        if (parsed is null)
         {
             return;
         }
 
-var chunks = services.Chunker.Chunk(parsed.Blocks, document.Title);
+        var chunks = services.Chunker.Chunk(parsed.Blocks, document.Title);
         var now = timeProvider.GetUtcNow();
 
-if (chunks.Count == 0)
+        if (chunks.Count == 0)
         {
             document.MarkIndexed(0, now);
             await services.DbContext.SaveChangesAsync(cancellationToken);
             logger.LogWarning("Document {DocumentId} produced no chunks.", documentId);
 
-return;
+            return;
         }
 
-var entities = await BuildChunkEntitiesAsync(services, document, chunks, now, cancellationToken);
+        var entities = await BuildChunkEntitiesAsync(services, document, chunks, now, cancellationToken);
         await ReplaceChunksAsync(services.DbContext, document, entities, now, cancellationToken);
 
-logger.LogInformation(
-            "Indexed document {DocumentId} into {ChunkCount} chunks using {EmbeddingModel}.",
-            documentId,
-            entities.Count,
-            services.EmbeddingService.QualifiedModel);
+        logger.LogInformation(
+                    "Indexed document {DocumentId} into {ChunkCount} chunks using {EmbeddingModel}.",
+                    documentId,
+                    entities.Count,
+                    services.EmbeddingService.QualifiedModel);
     }
 
-private static async Task<ParsedDocument?> ParseAsync(
-        IngestionServices services,
-        Document document,
-        CancellationToken cancellationToken)
+    private static async Task<ParsedDocument?> ParseAsync(
+            IngestionServices services,
+            Document document,
+            CancellationToken cancellationToken)
     {
 
-var header = new byte[IDocumentParserResolver.MagicHeaderLength];
+        var header = new byte[IDocumentParserResolver.MagicHeaderLength];
 
-await using (var probeStream = await services.FileStorage.OpenReadAsync(document.StoragePath, cancellationToken))
+        await using (var probeStream = await services.FileStorage.OpenReadAsync(document.StoragePath, cancellationToken))
         {
             _ = await probeStream.ReadAsync(header, cancellationToken);
         }
 
-var parserResult = services.ParserResolver.Resolve(document.FileName, document.ContentType, header);
+        var parserResult = services.ParserResolver.Resolve(document.FileName, document.ContentType, header);
 
-if (parserResult.IsFailure)
+        if (parserResult.IsFailure)
         {
             document.MarkFailed(parserResult.Error.Message);
             await services.DbContext.SaveChangesAsync(cancellationToken);
 
-return null;
+            return null;
         }
 
-await using var contentStream = await services.FileStorage.OpenReadAsync(document.StoragePath, cancellationToken);
+        await using var contentStream = await services.FileStorage.OpenReadAsync(document.StoragePath, cancellationToken);
 
-return await parserResult.Value.ParseAsync(contentStream, cancellationToken);
+        return await parserResult.Value.ParseAsync(contentStream, cancellationToken);
     }
 
-private static async Task<List<DocumentChunk>> BuildChunkEntitiesAsync(
-        IngestionServices services,
-        Document document,
-        IReadOnlyList<TextChunk> chunks,
-        DateTimeOffset createdAt,
-        CancellationToken cancellationToken)
+    private static async Task<List<DocumentChunk>> BuildChunkEntitiesAsync(
+            IngestionServices services,
+            Document document,
+            IReadOnlyList<TextChunk> chunks,
+            DateTimeOffset createdAt,
+            CancellationToken cancellationToken)
     {
         var embeddings = await services.EmbeddingService.EmbedAsync(
             chunks.Select(chunk => chunk.EmbeddedText).ToList(),
             cancellationToken);
 
-return chunks
-            .Select((chunk, index) => DocumentChunk.Create(
-                document.Id,
-                chunk.Index,
-                chunk.Content,
-                chunk.HeadingPath,
-                chunk.EmbeddedText,
-                chunk.TokenCount,
-                embeddings[index],
-                services.EmbeddingService.QualifiedModel,
-                services.EmbeddingService.Dimensions,
-                JsonSerializer.Serialize(chunk.Metadata),
-                createdAt))
-            .ToList();
+        return chunks
+                    .Select((chunk, index) => DocumentChunk.Create(
+                        document.Id,
+                        chunk.Index,
+                        chunk.Content,
+                        chunk.HeadingPath,
+                        chunk.EmbeddedText,
+                        chunk.TokenCount,
+                        embeddings[index],
+                        services.EmbeddingService.QualifiedModel,
+                        services.EmbeddingService.Dimensions,
+                        JsonSerializer.Serialize(chunk.Metadata),
+                        createdAt))
+                    .ToList();
     }
 
-private static async Task ReplaceChunksAsync(
-        IChatDbContext dbContext,
-        Document document,
-        List<DocumentChunk> entities,
-        DateTimeOffset indexedAt,
-        CancellationToken cancellationToken)
+    private static async Task ReplaceChunksAsync(
+            IChatDbContext dbContext,
+            Document document,
+            List<DocumentChunk> entities,
+            DateTimeOffset indexedAt,
+            CancellationToken cancellationToken)
     {
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-await dbContext.DocumentChunks
-            .Where(chunk => chunk.DocumentId == document.Id)
-            .ExecuteDeleteAsync(cancellationToken);
+        await dbContext.DocumentChunks
+                    .Where(chunk => chunk.DocumentId == document.Id)
+                    .ExecuteDeleteAsync(cancellationToken);
 
-dbContext.DocumentChunks.AddRange(entities);
+        dbContext.DocumentChunks.AddRange(entities);
         document.MarkIndexed(entities.Count, indexedAt);
 
-await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
-private async Task TryMarkFailedAsync(Guid documentId, string errorMessage, CancellationToken cancellationToken)
+    private async Task TryMarkFailedAsync(Guid documentId, string errorMessage, CancellationToken cancellationToken)
     {
         try
         {
@@ -168,7 +168,7 @@ private async Task TryMarkFailedAsync(Guid documentId, string errorMessage, Canc
             var dbContext = scope.ServiceProvider.GetRequiredService<IChatDbContext>();
             var document = await dbContext.Documents.SingleOrDefaultAsync(item => item.Id == documentId, cancellationToken);
 
-if (document is not null)
+            if (document is not null)
             {
                 document.MarkFailed(errorMessage);
                 await dbContext.SaveChangesAsync(cancellationToken);
@@ -180,12 +180,12 @@ if (document is not null)
         }
     }
 
-private sealed record IngestionServices(
-        IChatDbContext DbContext,
-        IFileStorage FileStorage,
-        IDocumentParserResolver ParserResolver,
-        IStructuredChunker Chunker,
-        BatchingEmbeddingService EmbeddingService)
+    private sealed record IngestionServices(
+            IChatDbContext DbContext,
+            IFileStorage FileStorage,
+            IDocumentParserResolver ParserResolver,
+            IStructuredChunker Chunker,
+            BatchingEmbeddingService EmbeddingService)
     {
         public static IngestionServices From(IServiceProvider services)
         {

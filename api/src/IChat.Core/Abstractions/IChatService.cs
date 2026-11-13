@@ -5,5 +5,5 @@ using IChat.Core.Contracts.Conversations;
 public interface IChatService
 {
 
-IAsyncEnumerable<SseEvent> StreamAnswerAsync(SendMessageRequest request, CancellationToken cancellationToken);
+    IAsyncEnumerable<SseEvent> StreamAnswerAsync(SendMessageRequest request, CancellationToken cancellationToken);
 }

@@ -11,71 +11,71 @@ public class MaximalMarginalRelevanceTests
     public void Select_EmptyCandidates_ReturnsEmpty()
     {
 
-var selected = MaximalMarginalRelevance.Select([], 0.7, 3, 8);
+        var selected = MaximalMarginalRelevance.Select([], 0.7, 3, 8);
 
-selected.Should().BeEmpty();
+        selected.Should().BeEmpty();
     }
 
-[Test]
+    [Test]
     public void Select_SingleCandidate_ReturnsIt()
     {
 
-var only = Chunk("1", 0.9, [1f, 0f]);
+        var only = Chunk("1", 0.9, [1f, 0f]);
 
-var selected = MaximalMarginalRelevance.Select([only], 0.7, 3, 8);
+        var selected = MaximalMarginalRelevance.Select([only], 0.7, 3, 8);
 
-selected.Should().ContainSingle().Which.ChunkId.Should().Be(only.ChunkId);
+        selected.Should().ContainSingle().Which.ChunkId.Should().Be(only.ChunkId);
     }
 
-[Test]
+    [Test]
     public void Select_LambdaOne_DegeneratesToPureRelevanceRanking()
     {
 
-var candidates = new[]
-        {
+        var candidates = new[]
+                {
             Chunk("1", 0.5, [1f, 0f]),
             Chunk("2", 0.9, [1f, 0f]),
             Chunk("3", 0.7, [1f, 0f])
         };
 
-var selected = MaximalMarginalRelevance.Select(candidates, lambda: 1.0, maxChunksPerDocument: 10, finalTopK: 3);
+        var selected = MaximalMarginalRelevance.Select(candidates, lambda: 1.0, maxChunksPerDocument: 10, finalTopK: 3);
 
-selected.Select(chunk => chunk.Score).Should().Equal(0.9, 0.7, 0.5);
+        selected.Select(chunk => chunk.Score).Should().Equal(0.9, 0.7, 0.5);
     }
 
-[Test]
+    [Test]
     public void Select_AllCandidatesIdentical_StillReturnsRequestedCount()
     {
 
-var candidates = Enumerable.Range(1, 5)
-            .Select(i => Chunk(i.ToString(), 0.8, [1f, 0f]))
-            .ToList();
+        var candidates = Enumerable.Range(1, 5)
+                    .Select(i => Chunk(i.ToString(), 0.8, [1f, 0f]))
+                    .ToList();
 
-var selected = MaximalMarginalRelevance.Select(candidates, 0.7, maxChunksPerDocument: 10, finalTopK: 3);
+        var selected = MaximalMarginalRelevance.Select(candidates, 0.7, maxChunksPerDocument: 10, finalTopK: 3);
 
-selected.Should().HaveCount(3);
+        selected.Should().HaveCount(3);
         selected.Select(chunk => chunk.ChunkId).Should().OnlyHaveUniqueItems();
     }
 
-[Test]
+    [Test]
     public void Select_PrefersDiverseCandidateOverNearDuplicate()
     {
 
-var anchor = Chunk("1", 0.90, [1f, 0f]);
+        var anchor = Chunk("1", 0.90, [1f, 0f]);
         var duplicate = Chunk("2", 0.89, [1f, 0f]);
         var diverse = Chunk("3", 0.70, [0f, 1f]);
 
-var selected = MaximalMarginalRelevance.Select([anchor, duplicate, diverse], lambda: 0.5, maxChunksPerDocument: 10, finalTopK: 2);
+        var selected = MaximalMarginalRelevance.Select([anchor, duplicate, diverse], lambda: 0.5, maxChunksPerDocument: 10, finalTopK: 2);
 
-selected[0].ChunkId.Should().Be(anchor.ChunkId);
+        selected[0].ChunkId.Should().Be(anchor.ChunkId);
         selected[1].ChunkId.Should().Be(diverse.ChunkId, "MMR must penalise candidates that duplicate an already selected one");
     }
 
-[Test]
+    [Test]
     public void Select_EnforcesMaxChunksPerDocument()
     {
 
-var docOne = Guid.Parse("00000000-0000-0000-0000-00000000dddd");
+        var docOne = Guid.Parse("00000000-0000-0000-0000-00000000dddd");
         var docTwo = Guid.Parse("00000000-0000-0000-0000-00000000eeee");
         var candidates = new[]
         {
@@ -85,29 +85,29 @@ var docOne = Guid.Parse("00000000-0000-0000-0000-00000000dddd");
             Chunk("4", 0.10, [0f, 1f], docTwo)
         };
 
-var selected = MaximalMarginalRelevance.Select(candidates, 1.0, maxChunksPerDocument: 2, finalTopK: 4);
+        var selected = MaximalMarginalRelevance.Select(candidates, 1.0, maxChunksPerDocument: 2, finalTopK: 4);
 
-selected.Should().HaveCount(3);
+        selected.Should().HaveCount(3);
         selected.Count(chunk => chunk.DocumentId == docOne).Should().Be(2);
         selected.Count(chunk => chunk.DocumentId == docTwo).Should().Be(1);
     }
 
-[Test]
+    [Test]
     public void CosineSimilarity_HandlesNullAndMismatchedLengths()
     {
 
-var nullVector = MaximalMarginalRelevance.CosineSimilarity(null, [1f]);
+        var nullVector = MaximalMarginalRelevance.CosineSimilarity(null, [1f]);
         var mismatchedLength = MaximalMarginalRelevance.CosineSimilarity([1f, 0f], [1f]);
         var zeroVector = MaximalMarginalRelevance.CosineSimilarity([0f, 0f], [1f, 0f]);
         var identical = MaximalMarginalRelevance.CosineSimilarity([1f, 0f], [1f, 0f]);
 
-nullVector.Should().Be(0);
+        nullVector.Should().Be(0);
         mismatchedLength.Should().Be(0);
         zeroVector.Should().Be(0);
         identical.Should().BeApproximately(1.0, 1e-9);
     }
 
-private static ScoredChunk Chunk(string id, double score, float[] embedding, Guid? documentId = null)
+    private static ScoredChunk Chunk(string id, double score, float[] embedding, Guid? documentId = null)
     {
         return new ScoredChunk
         {

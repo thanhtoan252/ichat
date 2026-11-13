@@ -13,31 +13,31 @@ switch (command)
     case "seed":
         await SeedAsync();
 
-break;
+        break;
 
-case "compare":
+    case "compare":
         await CompareAsync();
 
-break;
+        break;
 
-default:
+    default:
         await RunAndPrintAsync("default", rewrite: true, prependNote: null);
 
-break;
+        break;
 }
 
 async Task SeedAsync()
 {
     var corpusDirectory = Path.Combine(AppContext.BaseDirectory, "corpus");
 
-if (!Directory.Exists(corpusDirectory))
+    if (!Directory.Exists(corpusDirectory))
     {
         Console.Error.WriteLine($"Corpus directory not found: {corpusDirectory}");
 
-return;
+        return;
     }
 
-foreach (var path in Directory.GetFiles(corpusDirectory, "*.md").OrderBy(path => path))
+    foreach (var path in Directory.GetFiles(corpusDirectory, "*.md").OrderBy(path => path))
     {
         using var form = new MultipartFormDataContent();
         var content = new ByteArrayContent(await File.ReadAllBytesAsync(path));
@@ -45,33 +45,33 @@ foreach (var path in Directory.GetFiles(corpusDirectory, "*.md").OrderBy(path =>
         form.Add(content, "file", Path.GetFileName(path));
         form.Add(new StringContent(Path.GetFileNameWithoutExtension(path)), "title");
 
-var response = await client.PostAsync("/api/v1/documents", form);
+        var response = await client.PostAsync("/api/v1/documents", form);
         Console.WriteLine($"  {Path.GetFileName(path),-24} -> {(int)response.StatusCode}");
     }
 
-Console.WriteLine("Corpus seeded. Wait for the worker to finish indexing, then run `eval`.");
+    Console.WriteLine("Corpus seeded. Wait for the worker to finish indexing, then run `eval`.");
 }
 
 async Task CompareAsync()
 {
 
-var withRewriting = await RunAndPrintAsync("QueryRewriting ON", rewrite: true, prependNote: null);
+    var withRewriting = await RunAndPrintAsync("QueryRewriting ON", rewrite: true, prependNote: null);
     var withoutRewriting = await RunAndPrintAsync("QueryRewriting OFF", rewrite: false, prependNote: null);
 
-Console.WriteLine();
+    Console.WriteLine();
     Console.WriteLine("recall@8 compared by question group");
     Console.WriteLine(new string('─', 62));
     Console.WriteLine($"{"group",-14}{"on",10}{"off",10}{"delta",16}");
     Console.WriteLine(new string('─', 62));
 
-foreach (var tag in withRewriting.ByTag.Keys.OrderBy(tag => tag))
+    foreach (var tag in withRewriting.ByTag.Keys.OrderBy(tag => tag))
     {
         var on = withRewriting.ByTag[tag].Recall;
         var off = withoutRewriting.ByTag.TryGetValue(tag, out var value) ? value.Recall : 0;
         Console.WriteLine($"{tag,-14}{on,10:P0}{off,10:P0}{on - off,16:P0}");
     }
 
-Console.WriteLine(new string('─', 62));
+    Console.WriteLine(new string('─', 62));
 }
 
 async Task<EvalSummary> RunAndPrintAsync(string label, bool rewrite, string? prependNote)
@@ -80,9 +80,9 @@ async Task<EvalSummary> RunAndPrintAsync(string label, bool rewrite, string? pre
     var goldenSet = JsonSerializer.Deserialize<List<GoldenItem>>(await File.ReadAllTextAsync(goldenSetPath), jsonOptions)
         ?? throw new InvalidOperationException("Could not read golden-set.json.");
 
-var results = new List<ItemResult>();
+    var results = new List<ItemResult>();
 
-foreach (var item in goldenSet)
+    foreach (var item in goldenSet)
     {
         var request = new
         {
@@ -96,9 +96,9 @@ foreach (var item in goldenSet)
             rerank = true
         };
 
-var response = await client.PostAsJsonAsync("/api/v1/search", request, jsonOptions);
+        var response = await client.PostAsJsonAsync("/api/v1/search", request, jsonOptions);
 
-if (!response.IsSuccessStatusCode)
+        if (!response.IsSuccessStatusCode)
         {
             Console.Error.WriteLine($"  [error {(int)response.StatusCode}] {item.Question}");
             results.Add(new ItemResult
@@ -109,31 +109,31 @@ if (!response.IsSuccessStatusCode)
                 FullTextEmpty = false
             });
 
-continue;
+            continue;
         }
 
-var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
         var stages = payload.GetProperty("stages");
 
-var fullTextEmpty = stages.TryGetProperty("fulltext", out var fullText)
-            && fullText.GetProperty("count").GetInt32() == 0;
+        var fullTextEmpty = stages.TryGetProperty("fulltext", out var fullText)
+                    && fullText.GetProperty("count").GetInt32() == 0;
 
-var hits = stages.GetProperty("final").GetProperty("top").EnumerateArray()
-            .Select(hit => hit.GetProperty("snippet").GetString() ?? string.Empty)
-            .ToList();
+        var hits = stages.GetProperty("final").GetProperty("top").EnumerateArray()
+                    .Select(hit => hit.GetProperty("snippet").GetString() ?? string.Empty)
+                    .ToList();
 
-var rank = 0;
+        var rank = 0;
         for (var i = 0; i < hits.Count; i++)
         {
             if (item.ExpectedAnswerContains.Any(expected => hits[i].Contains(expected, StringComparison.OrdinalIgnoreCase)))
             {
                 rank = i + 1;
 
-break;
+                break;
             }
         }
 
-results.Add(new ItemResult
+        results.Add(new ItemResult
         {
             Tag = item.Tag,
             Found = rank > 0,
@@ -142,30 +142,30 @@ results.Add(new ItemResult
         });
     }
 
-var summary = Summarise(results);
+    var summary = Summarise(results);
 
-Console.WriteLine();
+    Console.WriteLine();
     Console.WriteLine($"╔══ Eval result: {label} ══");
     if (prependNote is not null)
     {
         Console.WriteLine($"║ {prependNote}");
     }
 
-Console.WriteLine($"║ questions                  : {results.Count}");
+    Console.WriteLine($"║ questions                  : {results.Count}");
     Console.WriteLine($"║ recall@8                   : {summary.Recall:P1}");
     Console.WriteLine($"║ MRR                        : {summary.Mrr:F3}");
     Console.WriteLine($"║ full-text empty rate       : {summary.FullTextEmptyRate:P1}");
     Console.WriteLine("╠══ by group ══");
     Console.WriteLine($"║ {"group",-14}{"recall@8",10}{"MRR",8}{"n",5}");
 
-foreach (var (tag, group) in summary.ByTag.OrderBy(entry => entry.Key))
+    foreach (var (tag, group) in summary.ByTag.OrderBy(entry => entry.Key))
     {
         Console.WriteLine($"║ {tag,-14}{group.Recall,10:P0}{group.Mrr,8:F3}{group.Count,5}");
     }
 
-Console.WriteLine("╚════════════════════════════");
+    Console.WriteLine("╚════════════════════════════");
 
-return summary;
+    return summary;
 }
 
 static EvalSummary Summarise(List<ItemResult> results)
@@ -177,21 +177,21 @@ static EvalSummary Summarise(List<ItemResult> results)
             return (0, 0, 0);
         }
 
-return (
-            items.Count(item => item.Found) / (double)items.Count,
-            items.Sum(item => item.Rank > 0 ? 1.0 / item.Rank : 0) / items.Count,
-            items.Count);
+        return (
+                    items.Count(item => item.Found) / (double)items.Count,
+                    items.Sum(item => item.Rank > 0 ? 1.0 / item.Rank : 0) / items.Count,
+                    items.Count);
     }
 
-var overall = Aggregate(results);
+    var overall = Aggregate(results);
 
-var byTag = results
-        .GroupBy(result => result.Tag)
-        .ToDictionary(group => group.Key, group => Aggregate(group.ToList()));
+    var byTag = results
+            .GroupBy(result => result.Tag)
+            .ToDictionary(group => group.Key, group => Aggregate(group.ToList()));
 
-var emptyRate = results.Count == 0 ? 0 : results.Count(result => result.FullTextEmpty) / (double)results.Count;
+    var emptyRate = results.Count == 0 ? 0 : results.Count(result => result.FullTextEmpty) / (double)results.Count;
 
-return new EvalSummary
+    return new EvalSummary
     {
         Recall = overall.Recall,
         Mrr = overall.Mrr,

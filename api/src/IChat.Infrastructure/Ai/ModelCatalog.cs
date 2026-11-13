@@ -9,27 +9,27 @@ public sealed class ModelCatalog : IModelCatalog
     private const string UtilityKind = "utility";
     private const string EmbeddingKind = "embedding";
 
-private readonly AiOptions _options;
+    private readonly AiOptions _options;
 
-private readonly IReadOnlyList<string> _allowedChatModels;
+    private readonly IReadOnlyList<string> _allowedChatModels;
     private readonly HashSet<string> _allowedChatModelLookup;
 
-public ModelCatalog(IOptions<AiOptions> options)
+    public ModelCatalog(IOptions<AiOptions> options)
     {
         _options = options.Value;
         _allowedChatModels = ResolveAllowedChatModels(_options);
         _allowedChatModelLookup = new HashSet<string>(_allowedChatModels, StringComparer.OrdinalIgnoreCase);
     }
 
-public bool SupportsMultipleSystemMessages => true;
+    public bool SupportsMultipleSystemMessages => true;
 
-public int ChatTimeoutSeconds => _options.Chat.TimeoutSeconds;
+    public int ChatTimeoutSeconds => _options.Chat.TimeoutSeconds;
 
-public int ChatMaxOutputTokens => _options.Chat.MaxOutputTokens;
+    public int ChatMaxOutputTokens => _options.Chat.MaxOutputTokens;
 
-public double? ChatTemperature => _options.Chat.Temperature;
+    public double? ChatTemperature => _options.Chat.Temperature;
 
-public ModelCatalogSnapshot GetSnapshot()
+    public ModelCatalogSnapshot GetSnapshot()
     {
         return new ModelCatalogSnapshot
         {
@@ -40,22 +40,22 @@ public ModelCatalogSnapshot GetSnapshot()
         };
     }
 
-public bool IsChatModelAllowed(string model)
+    public bool IsChatModelAllowed(string model)
     {
         return !string.IsNullOrWhiteSpace(model) && _allowedChatModelLookup.Contains(model);
     }
 
-private ModelEntry ChatEntry()
+    private ModelEntry ChatEntry()
     {
         return ToEntry(ChatKind, _options.ResolveChat());
     }
 
-private ModelEntry UtilityChatEntry()
+    private ModelEntry UtilityChatEntry()
     {
         return ToEntry(UtilityKind, _options.ResolveUtilityChat());
     }
 
-private static ModelEntry ToEntry(string kind, ResolvedChatSettings settings)
+    private static ModelEntry ToEntry(string kind, ResolvedChatSettings settings)
     {
         return new ModelEntry
         {
@@ -66,7 +66,7 @@ private static ModelEntry ToEntry(string kind, ResolvedChatSettings settings)
         };
     }
 
-private ModelEntry EmbeddingEntry()
+    private ModelEntry EmbeddingEntry()
     {
         var embedding = _options.Embedding;
         return new ModelEntry
@@ -78,11 +78,11 @@ private ModelEntry EmbeddingEntry()
         };
     }
 
-private static ProviderDescriptor Describe(ModelEntry entry)
+    private static ProviderDescriptor Describe(ModelEntry entry)
     {
         var reason = FindUnavailableReason(entry);
 
-return new ProviderDescriptor
+        return new ProviderDescriptor
         {
             Kind = entry.Kind,
             Provider = entry.Provider,
@@ -92,17 +92,17 @@ return new ProviderDescriptor
         };
     }
 
-private static string? FindUnavailableReason(ModelEntry entry)
+    private static string? FindUnavailableReason(ModelEntry entry)
     {
         if (string.IsNullOrWhiteSpace(entry.ApiKey))
         {
             return "No API key is configured.";
         }
 
-return null;
+        return null;
     }
 
-private static IReadOnlyList<string> ResolveAllowedChatModels(AiOptions options)
+    private static IReadOnlyList<string> ResolveAllowedChatModels(AiOptions options)
     {
         return new[] { options.Chat.Model }
             .Concat(options.AllowedChatModels)
@@ -111,14 +111,14 @@ private static IReadOnlyList<string> ResolveAllowedChatModels(AiOptions options)
             .ToList();
     }
 
-private sealed record ModelEntry
+    private sealed record ModelEntry
     {
         public required string Kind { get; init; }
 
-public required string Provider { get; init; }
+        public required string Provider { get; init; }
 
-public required string Model { get; init; }
+        public required string Model { get; init; }
 
-public string? ApiKey { get; init; }
+        public string? ApiKey { get; init; }
     }
 }

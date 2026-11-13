@@ -23,34 +23,34 @@ public static class SearchMapper
             Rerank = dto.Rerank
         };
 
-public static SearchResponse ToResponse(this SearchChunksResult result) =>
-        new()
-        {
-            OriginalQuery = result.OriginalQuery,
-            RewrittenQuery = result.RewrittenQuery,
-            Stages = result.Stages.ToDictionary(stage => stage.Key, stage => stage.Value.ToResponse()),
-            Degraded = result.Degraded,
-            ElapsedMs = result.ElapsedMs
-        };
+    public static SearchResponse ToResponse(this SearchChunksResult result) =>
+            new()
+            {
+                OriginalQuery = result.OriginalQuery,
+                RewrittenQuery = result.RewrittenQuery,
+                Stages = result.Stages.ToDictionary(stage => stage.Key, stage => stage.Value.ToResponse()),
+                Degraded = result.Degraded,
+                ElapsedMs = result.ElapsedMs
+            };
 
-private static SearchStageResponse ToResponse(this SearchStageView stage) =>
-        new()
-        {
-            Name = stage.Name,
-            Count = stage.Count,
-            ElapsedMs = stage.ElapsedMs,
-            TsQuery = stage.TsQuery,
-            Top = stage.Top.Select(ToResponse).ToArray()
-        };
+    private static SearchStageResponse ToResponse(this SearchStageView stage) =>
+            new()
+            {
+                Name = stage.Name,
+                Count = stage.Count,
+                ElapsedMs = stage.ElapsedMs,
+                TsQuery = stage.TsQuery,
+                Top = stage.Top.Select(ToResponse).ToArray()
+            };
 
-private static SearchHitResponse ToResponse(this SearchHit hit) =>
-        new()
-        {
-            ChunkId = hit.ChunkId,
-            DocumentId = hit.DocumentId,
-            HeadingPath = hit.HeadingPath,
-            Snippet = hit.Snippet,
-            ChunkIndex = hit.ChunkIndex,
-            Score = hit.Score
-        };
+    private static SearchHitResponse ToResponse(this SearchHit hit) =>
+            new()
+            {
+                ChunkId = hit.ChunkId,
+                DocumentId = hit.DocumentId,
+                HeadingPath = hit.HeadingPath,
+                Snippet = hit.Snippet,
+                ChunkIndex = hit.ChunkIndex,
+                Score = hit.Score
+            };
 }

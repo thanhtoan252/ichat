@@ -8,22 +8,22 @@ public sealed class AnswerBuffer
 {
     private const string InterruptedMarker = "\n\n[interrupted]";
 
-private readonly StringBuilder _text = new();
+    private readonly StringBuilder _text = new();
 
-public ErrorPayload? Error { get; private set; }
+    public ErrorPayload? Error { get; private set; }
 
-private bool Interrupted { get; set; }
+    private bool Interrupted { get; set; }
 
-private int? InputTokens { get; set; }
+    private int? InputTokens { get; set; }
 
-private int? OutputTokens { get; set; }
+    private int? OutputTokens { get; set; }
 
-public void AppendText(string text)
+    public void AppendText(string text)
     {
         _text.Append(text);
     }
 
-public void AddUsage(ChatResponseUpdate update)
+    public void AddUsage(ChatResponseUpdate update)
     {
         foreach (var content in update.Contents.OfType<UsageContent>())
         {
@@ -32,22 +32,22 @@ public void AddUsage(ChatResponseUpdate update)
         }
     }
 
-public void MarkInterrupted()
+    public void MarkInterrupted()
     {
         Interrupted = true;
     }
 
-public void MarkFailed(ErrorPayload error)
+    public void MarkFailed(ErrorPayload error)
     {
         Error = error;
         Interrupted = true;
     }
 
-public GeneratedAnswer ToAnswer()
+    public GeneratedAnswer ToAnswer()
     {
         var text = _text.ToString();
 
-return new GeneratedAnswer
+        return new GeneratedAnswer
         {
             Text = Interrupted ? text + InterruptedMarker : text,
             Interrupted = Interrupted,

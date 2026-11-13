@@ -7,9 +7,9 @@ public interface IAuthService
 {
     Task<Result<AuthResult>> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
 
-Task<Result<AuthResult>> RefreshAsync(string refreshToken, CancellationToken cancellationToken);
+    Task<Result<AuthResult>> RefreshAsync(string refreshToken, CancellationToken cancellationToken);
 
-Task<Result> LogoutAsync(string? refreshToken, CancellationToken cancellationToken);
+    Task<Result> LogoutAsync(string? refreshToken, CancellationToken cancellationToken);
 
-Task<Result<UserView>> GetProfileAsync(Guid userId, CancellationToken cancellationToken);
+    Task<Result<UserView>> GetProfileAsync(Guid userId, CancellationToken cancellationToken);
 }

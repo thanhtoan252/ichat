@@ -11,18 +11,18 @@ public sealed class AdminService(IApplicationDbContext dbContext, IDocumentInges
     {
         var documents = await dbContext.Documents.ToListAsync(cancellationToken);
 
-foreach (var document in documents)
+        foreach (var document in documents)
         {
             document.ResetForReindex();
         }
 
-await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-foreach (var document in documents)
+        foreach (var document in documents)
         {
             await ingestionQueue.EnqueueAsync(document.Id, cancellationToken);
         }
 
-return Result.Success(new ReindexResult { DocumentCount = documents.Count });
+        return Result.Success(new ReindexResult { DocumentCount = documents.Count });
     }
 }

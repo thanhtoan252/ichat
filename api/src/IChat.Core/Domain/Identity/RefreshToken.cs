@@ -6,23 +6,23 @@ public sealed class RefreshToken
     {
     }
 
-public Guid Id { get; private set; }
+    public Guid Id { get; private set; }
 
-public Guid UserId { get; private set; }
+    public Guid UserId { get; private set; }
 
-public User? User { get; private set; }
+    public User? User { get; private set; }
 
-public string TokenHash { get; private set; } = string.Empty;
+    public string TokenHash { get; private set; } = string.Empty;
 
-public DateTimeOffset ExpiresAt { get; private set; }
+    public DateTimeOffset ExpiresAt { get; private set; }
 
-public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
-public DateTimeOffset? RevokedAt { get; private set; }
+    public DateTimeOffset? RevokedAt { get; private set; }
 
-public string? ReplacedByTokenHash { get; private set; }
+    public string? ReplacedByTokenHash { get; private set; }
 
-public static RefreshToken Issue(Guid userId, string tokenHash, DateTimeOffset createdAt, DateTimeOffset expiresAt)
+    public static RefreshToken Issue(Guid userId, string tokenHash, DateTimeOffset createdAt, DateTimeOffset expiresAt)
     {
         return new RefreshToken
         {
@@ -34,9 +34,9 @@ public static RefreshToken Issue(Guid userId, string tokenHash, DateTimeOffset c
         };
     }
 
-public bool IsActiveAt(DateTimeOffset now) => RevokedAt is null && ExpiresAt > now;
+    public bool IsActiveAt(DateTimeOffset now) => RevokedAt is null && ExpiresAt > now;
 
-public void Revoke(DateTimeOffset revokedAt, string? replacedByTokenHash = null)
+    public void Revoke(DateTimeOffset revokedAt, string? replacedByTokenHash = null)
     {
         RevokedAt = revokedAt;
         ReplacedByTokenHash = replacedByTokenHash;
