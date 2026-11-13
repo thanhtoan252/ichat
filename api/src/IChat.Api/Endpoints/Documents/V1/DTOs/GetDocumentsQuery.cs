@@ -9,7 +9,7 @@ public sealed class GetDocumentsQuery(
 {
     public DocumentStatusFilter? Status { get; } = status;
 
-public int Offset { get; } = Math.Max(offset, 0);
+    public int Offset { get; } = Math.Max(offset, 0);
 
-public int Limit { get; } = limit <= 0 ? 20 : Math.Min(limit, 100);
+    public int Limit { get; } = limit <= 0 ? 20 : Math.Min(limit, 100);
 }

@@ -6,19 +6,19 @@ public sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
 
-[Required]
+    [Required]
     public string Issuer { get; set; } = string.Empty;
 
-[Required]
+    [Required]
     public string Audience { get; set; } = string.Empty;
 
-[Required]
+    [Required]
     [MinLength(32)]
     public string SigningKey { get; set; } = string.Empty;
 
-[Range(1, 1440)]
+    [Range(1, 1440)]
     public int AccessTokenMinutes { get; set; } = 15;
 
-[Range(1, 365)]
+    [Range(1, 365)]
     public int RefreshTokenDays { get; set; } = 14;
 }

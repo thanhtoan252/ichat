@@ -9,17 +9,17 @@ public interface IApplicationDbContext
 {
     DbSet<Document> Documents { get; }
 
-DbSet<DocumentChunk> DocumentChunks { get; }
+    DbSet<DocumentChunk> DocumentChunks { get; }
 
-DbSet<Conversation> Conversations { get; }
+    DbSet<Conversation> Conversations { get; }
 
-DbSet<Message> Messages { get; }
+    DbSet<Message> Messages { get; }
 
-DbSet<MessageCitation> MessageCitations { get; }
+    DbSet<MessageCitation> MessageCitations { get; }
 
-DbSet<User> Users { get; }
+    DbSet<User> Users { get; }
 
-DbSet<RefreshToken> RefreshTokens { get; }
+    DbSet<RefreshToken> RefreshTokens { get; }
 
-Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

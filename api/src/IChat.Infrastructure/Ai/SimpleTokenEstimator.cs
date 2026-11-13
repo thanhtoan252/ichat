@@ -11,7 +11,7 @@ public sealed class SimpleTokenEstimator : ITokenEstimator
             return 0;
         }
 
-var diacritics = 0;
+        var diacritics = 0;
         foreach (var character in text)
         {
             if (character > 127)
@@ -20,9 +20,9 @@ var diacritics = 0;
             }
         }
 
-var nonLatinRatio = (double)diacritics / text.Length;
+        var nonLatinRatio = (double)diacritics / text.Length;
         var charactersPerToken = nonLatinRatio > 0.05 ? 2.0 : 4.0;
 
-return Math.Max(1, (int)Math.Ceiling(text.Length / charactersPerToken));
+        return Math.Max(1, (int)Math.Ceiling(text.Length / charactersPerToken));
     }
 }

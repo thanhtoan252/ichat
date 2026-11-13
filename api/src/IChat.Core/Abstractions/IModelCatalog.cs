@@ -4,13 +4,13 @@ public interface IModelCatalog
 {
     ModelCatalogSnapshot GetSnapshot();
 
-bool IsChatModelAllowed(string model);
+    bool IsChatModelAllowed(string model);
 
-bool SupportsMultipleSystemMessages { get; }
+    bool SupportsMultipleSystemMessages { get; }
 
-int ChatTimeoutSeconds { get; }
+    int ChatTimeoutSeconds { get; }
 
-int ChatMaxOutputTokens { get; }
+    int ChatMaxOutputTokens { get; }
 
-double? ChatTemperature { get; }
+    double? ChatTemperature { get; }
 }

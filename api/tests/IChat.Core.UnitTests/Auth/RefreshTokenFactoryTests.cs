@@ -11,26 +11,26 @@ public class RefreshTokenFactoryTests
     public void CreateRawToken_IsUrlSafeAndUnique()
     {
 
-const int sampleSize = 100;
+        const int sampleSize = 100;
 
-var tokens = Enumerable.Range(0, sampleSize).Select(_ => RefreshTokenFactory.CreateRawToken()).ToList();
+        var tokens = Enumerable.Range(0, sampleSize).Select(_ => RefreshTokenFactory.CreateRawToken()).ToList();
 
-tokens.Should().OnlyHaveUniqueItems();
+        tokens.Should().OnlyHaveUniqueItems();
 
-tokens.Should().OnlyContain(token => token.All(character =>
-            char.IsAsciiLetterOrDigit(character) || character == '-' || character == '_'));
+        tokens.Should().OnlyContain(token => token.All(character =>
+                    char.IsAsciiLetterOrDigit(character) || character == '-' || character == '_'));
     }
 
-[Test]
+    [Test]
     public void Hash_IsDeterministicAndHidesTheToken()
     {
 
-var token = RefreshTokenFactory.CreateRawToken();
+        var token = RefreshTokenFactory.CreateRawToken();
         var otherToken = RefreshTokenFactory.CreateRawToken();
 
-var hash = RefreshTokenFactory.Hash(token);
+        var hash = RefreshTokenFactory.Hash(token);
 
-hash.Should().Be(RefreshTokenFactory.Hash(token));
+        hash.Should().Be(RefreshTokenFactory.Hash(token));
         hash.Should().HaveLength(64).And.NotContain(token);
         hash.Should().NotBe(RefreshTokenFactory.Hash(otherToken));
     }

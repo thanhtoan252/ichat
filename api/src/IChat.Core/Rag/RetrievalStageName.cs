@@ -4,15 +4,15 @@ public static class RetrievalStageName
 {
     public const string Vector = "vector";
 
-public const string FullText = "fulltext";
+    public const string FullText = "fulltext";
 
-public const string Trigram = "trigram";
+    public const string Trigram = "trigram";
 
-public const string Fused = "fused";
+    public const string Fused = "fused";
 
-public const string AfterMmr = "afterMmr";
+    public const string AfterMmr = "afterMmr";
 
-public const string Reranked = "reranked";
+    public const string Reranked = "reranked";
 
-public const string Final = "final";
+    public const string Final = "final";
 }

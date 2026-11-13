@@ -16,83 +16,83 @@ public sealed class LlmReranker(
 {
     private readonly RerankingOptions _reranking = ragOptions.Value.Reranking;
 
-public async Task<IReadOnlyList<ScoredChunk>> RerankAsync(string query, IReadOnlyList<ScoredChunk> candidates, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ScoredChunk>> RerankAsync(string query, IReadOnlyList<ScoredChunk> candidates, CancellationToken cancellationToken)
     {
         if (candidates.Count <= 1)
         {
             return candidates;
         }
 
-var input = candidates.Take(_reranking.InputTopK).ToList();
+        var input = candidates.Take(_reranking.InputTopK).ToList();
 
-try
+        try
         {
             var prompt = new StringBuilder();
             prompt.AppendLine($"Question: {query}").AppendLine().AppendLine("Passages:");
 
-for (var i = 0; i < input.Count; i++)
+            for (var i = 0; i < input.Count; i++)
             {
                 var snippet = input[i].Content.Length > 600 ? input[i].Content[..600] : input[i].Content;
                 prompt.AppendLine($"[{i}] {snippet}").AppendLine();
             }
 
-prompt.AppendLine("""
+            prompt.AppendLine("""
                 Score how relevant each passage is to the question, on a scale of 0 to 10.
                 Return ONLY JSON shaped like [{"index": 0, "score": 8}], with no further explanation.
                 """);
 
-var response = await utilityChatClient.GetResponseAsync(
-                [new ChatMessage(ChatRole.User, prompt.ToString())],
-                new ChatOptions { MaxOutputTokens = 512 },
-                cancellationToken);
+            var response = await utilityChatClient.GetResponseAsync(
+                            [new ChatMessage(ChatRole.User, prompt.ToString())],
+                            new ChatOptions { MaxOutputTokens = 512 },
+                            cancellationToken);
 
-var scores = ParseScores(response.Text, input.Count);
+            var scores = ParseScores(response.Text, input.Count);
 
-if (scores.Count == 0)
+            if (scores.Count == 0)
             {
                 logger.LogWarning("LlmReranker could not parse the scores, keeping the input order.");
 
-return candidates;
+                return candidates;
             }
 
-return input
-                .Select((chunk, index) => (chunk, score: scores.GetValueOrDefault(index, 0d)))
-                .OrderByDescending(item => item.score)
-                .Take(_reranking.OutputTopK)
-                .Select(item => item.chunk.WithScore(item.score / 10d))
-                .ToList();
+            return input
+                            .Select((chunk, index) => (chunk, score: scores.GetValueOrDefault(index, 0d)))
+                            .OrderByDescending(item => item.score)
+                            .Take(_reranking.OutputTopK)
+                            .Select(item => item.chunk.WithScore(item.score / 10d))
+                            .ToList();
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
 
-logger.LogWarning(exception, "LlmReranker failed, keeping the pre-rerank order.");
+            logger.LogWarning(exception, "LlmReranker failed, keeping the pre-rerank order.");
 
-return candidates;
+            return candidates;
         }
     }
 
-private static Dictionary<int, double> ParseScores(string? text, int candidateCount)
+    private static Dictionary<int, double> ParseScores(string? text, int candidateCount)
     {
         var result = new Dictionary<int, double>();
 
-if (string.IsNullOrWhiteSpace(text))
+        if (string.IsNullOrWhiteSpace(text))
         {
             return result;
         }
 
-var start = text.IndexOf('[');
+        var start = text.IndexOf('[');
         var end = text.LastIndexOf(']');
 
-if (start < 0 || end <= start)
+        if (start < 0 || end <= start)
         {
             return result;
         }
 
-try
+        try
         {
             using var document = JsonDocument.Parse(text[start..(end + 1)]);
 
-foreach (var element in document.RootElement.EnumerateArray())
+            foreach (var element in document.RootElement.EnumerateArray())
             {
                 if (!element.TryGetProperty("index", out var indexProperty) ||
                     !element.TryGetProperty("score", out var scoreProperty))
@@ -100,12 +100,12 @@ foreach (var element in document.RootElement.EnumerateArray())
                     continue;
                 }
 
-if (!indexProperty.TryGetInt32(out var index) || index < 0 || index >= candidateCount)
+                if (!indexProperty.TryGetInt32(out var index) || index < 0 || index >= candidateCount)
                 {
                     continue;
                 }
 
-if (scoreProperty.TryGetDouble(out var score))
+                if (scoreProperty.TryGetDouble(out var score))
                 {
                     result[index] = score;
                 }
@@ -116,6 +116,6 @@ if (scoreProperty.TryGetDouble(out var score))
             return [];
         }
 
-return result;
+        return result;
     }
 }

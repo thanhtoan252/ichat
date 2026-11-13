@@ -35,66 +35,66 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.ConfigureKestrel(options =>
-        options.Limits.MaxRequestBodySize = UploadDocumentDtoValidator.MaxSizeInBytes + 1024 * 1024);
+    builder.WebHost.ConfigureKestrel(options =>
+            options.Limits.MaxRequestBodySize = UploadDocumentDtoValidator.MaxSizeInBytes + 1024 * 1024);
 
-builder.Services.AddSerilog((services, configuration) => configuration
-        .ReadFrom.Configuration(builder.Configuration)
-        .ReadFrom.Services(services)
-        .Enrich.FromLogContext());
+    builder.Services.AddSerilog((services, configuration) => configuration
+            .ReadFrom.Configuration(builder.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext());
 
-builder.Services.AddSingleton(TimeProvider.System);
+    builder.Services.AddSingleton(TimeProvider.System);
     builder.Services.AddIChatCore();
 
-builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
+    builder.Services.AddValidatorsFromAssemblyContaining<Program>(ServiceLifetime.Scoped);
     builder.Services.AddIChatInfrastructure(builder.Configuration);
 
-builder.Services.AddOptions<JwtOptions>()
-        .BindConfiguration(JwtOptions.SectionName)
-        .ValidateDataAnnotations()
-        .ValidateOnStart();
+    builder.Services.AddOptions<JwtOptions>()
+            .BindConfiguration(JwtOptions.SectionName)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
-builder.Services.AddHttpContextAccessor();
+    builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ICurrentUser, HttpContextCurrentUser>();
     builder.Services.AddSingleton<IAccessTokenService, JwtAccessTokenService>();
 
-var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
-        ?? throw new InvalidOperationException($"Missing configuration section '{JwtOptions.SectionName}'.");
+    var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+            ?? throw new InvalidOperationException($"Missing configuration section '{JwtOptions.SectionName}'.");
 
-if (jwtOptions.SigningKey.Length < 32)
+    if (jwtOptions.SigningKey.Length < 32)
     {
         throw new InvalidOperationException(
             "Jwt:SigningKey must be at least 32 characters. Set it through user-secrets or the Jwt__SigningKey environment variable.");
     }
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options =>
-        {
-            options.TokenValidationParameters = new TokenValidationParameters
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                ValidateIssuer = true,
-                ValidIssuer = jwtOptions.Issuer,
-                ValidateAudience = true,
-                ValidAudience = jwtOptions.Audience,
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
-                ValidateLifetime = true,
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtOptions.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+                    ValidateLifetime = true,
 
-ClockSkew = TimeSpan.Zero,
-                RoleClaimType = ClaimNames.Role,
-                NameClaimType = ClaimNames.Name
-            };
+                    ClockSkew = TimeSpan.Zero,
+                    RoleClaimType = ClaimNames.Role,
+                    NameClaimType = ClaimNames.Name
+                };
 
-options.MapInboundClaims = false;
-        });
+                options.MapInboundClaims = false;
+            });
 
-builder.Services.AddAuthorization(options =>
-        options.AddPolicy(AuthPolicies.Admin, policy => policy.RequireRole(nameof(UserRole.Admin))));
+    builder.Services.AddAuthorization(options =>
+            options.AddPolicy(AuthPolicies.Admin, policy => policy.RequireRole(nameof(UserRole.Admin))));
 
-builder.Services.ConfigureHttpJsonOptions(options =>
-        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    builder.Services.ConfigureHttpJsonOptions(options =>
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-builder.Services.AddProblemDetails();
+    builder.Services.AddProblemDetails();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddOpenApi(options =>
     {
@@ -102,77 +102,77 @@ builder.Services.AddProblemDetails();
         options.AddOperationTransformer<AuthorizationOperationTransformer>();
     });
 
-builder.Services.AddHealthChecks()
-        .AddDbContextCheck<IChatDbContext>("postgres", tags: ["ready"])
-        .AddCheck<VectorExtensionHealthCheck>("pgvector", tags: ["ready"])
-        .AddCheck<ProviderHealthCheck>("ai-providers", tags: ["ready"]);
+    builder.Services.AddHealthChecks()
+            .AddDbContextCheck<IChatDbContext>("postgres", tags: ["ready"])
+            .AddCheck<VectorExtensionHealthCheck>("pgvector", tags: ["ready"])
+            .AddCheck<ProviderHealthCheck>("ai-providers", tags: ["ready"]);
 
-builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource => resource.AddService("IChat.Api"))
-        .WithTracing(tracing => tracing
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation()
-            .AddSource("IChat.Chat")
-            .AddSource("IChat.UtilityChat")
-            .AddSource("IChat.Embedding")
-            .AddSource(IChat.Api.Telemetry.RagActivitySource.Name))
-        .WithMetrics(metrics => metrics
-            .AddAspNetCoreInstrumentation()
-            .AddHttpClientInstrumentation());
+    builder.Services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService("IChat.Api"))
+            .WithTracing(tracing => tracing
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation()
+                .AddSource("IChat.Chat")
+                .AddSource("IChat.UtilityChat")
+                .AddSource("IChat.Embedding")
+                .AddSource(IChat.Api.Telemetry.RagActivitySource.Name))
+            .WithMetrics(metrics => metrics
+                .AddAspNetCoreInstrumentation()
+                .AddHttpClientInstrumentation());
 
-builder.Services.AddRateLimiter(options =>
-    {
-        options.AddFixedWindowLimiter("chat", limiter =>
+    builder.Services.AddRateLimiter(options =>
         {
-            limiter.PermitLimit = 30;
-            limiter.Window = TimeSpan.FromMinutes(1);
-            limiter.QueueLimit = 0;
+            options.AddFixedWindowLimiter("chat", limiter =>
+            {
+                limiter.PermitLimit = 30;
+                limiter.Window = TimeSpan.FromMinutes(1);
+                limiter.QueueLimit = 0;
+            });
         });
-    });
 
-var app = builder.Build();
+    var app = builder.Build();
 
-app.UseExceptionHandler();
+    app.UseExceptionHandler();
 
-app.UseSerilogRequestLogging(options =>
-    {
-        options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
-        options.GetLevel = GetRequestLogLevel;
-        options.EnrichDiagnosticContext = EnrichRequestLog;
-    });
+    app.UseSerilogRequestLogging(options =>
+        {
+            options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+            options.GetLevel = GetRequestLogLevel;
+            options.EnrichDiagnosticContext = EnrichRequestLog;
+        });
 
-app.UseRateLimiter();
+    app.UseRateLimiter();
 
-app.UseAuthentication();
+    app.UseAuthentication();
     app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment())
     {
         app.MapOpenApi();
 
-app.MapScalarApiReference("/docs", options => options
-            .WithTitle("IChat API")
+        app.MapScalarApiReference("/docs", options => options
+                    .WithTitle("IChat API")
 
-.AddPreferredSecuritySchemes(JwtBearerSecuritySchemeTransformer.SchemeName)
-            .EnablePersistentAuthentication());
+        .AddPreferredSecuritySchemes(JwtBearerSecuritySchemeTransformer.SchemeName)
+                    .EnablePersistentAuthentication());
     }
 
-app.MapIChatEndpoints();
+    app.MapIChatEndpoints();
 
-if (app.Configuration.GetValue<bool>("Database:AutoMigrate"))
+    if (app.Configuration.GetValue<bool>("Database:AutoMigrate"))
     {
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IChatDbContext>();
         await dbContext.Database.MigrateAsync();
     }
 
-await app.RunAsync();
+    await app.RunAsync();
 }
 catch (Exception exception) when (exception is not HostAbortedException)
 {
     Log.Fatal(exception, "Host terminated unexpectedly");
 
-return 1;
+    return 1;
 }
 finally
 {
@@ -188,19 +188,19 @@ static LogEventLevel GetRequestLogLevel(HttpContext httpContext, double elapsedM
         return LogEventLevel.Error;
     }
 
-if (httpContext.Request.Path.StartsWithSegments("/health"))
+    if (httpContext.Request.Path.StartsWithSegments("/health"))
     {
         return LogEventLevel.Debug;
     }
 
-return LogEventLevel.Information;
+    return LogEventLevel.Information;
 }
 
 static void EnrichRequestLog(IDiagnosticContext diagnosticContext, HttpContext httpContext)
 {
     var request = httpContext.Request;
 
-diagnosticContext.Set("RequestHost", request.Host.Value);
+    diagnosticContext.Set("RequestHost", request.Host.Value);
     diagnosticContext.Set("RequestScheme", request.Scheme);
     diagnosticContext.Set("RequestProtocol", request.Protocol);
     diagnosticContext.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
@@ -208,19 +208,19 @@ diagnosticContext.Set("RequestHost", request.Host.Value);
     diagnosticContext.Set("TraceIdentifier", httpContext.TraceIdentifier);
     diagnosticContext.Set("UserId", httpContext.User.FindFirstValue(ClaimNames.Sub));
 
-if (request.QueryString.HasValue)
+    if (request.QueryString.HasValue)
     {
         diagnosticContext.Set("QueryString", request.QueryString.Value);
     }
 
-var endpoint = httpContext.GetEndpoint();
+    var endpoint = httpContext.GetEndpoint();
 
-if (endpoint is not null)
+    if (endpoint is not null)
     {
         diagnosticContext.Set("EndpointName", endpoint.DisplayName);
     }
 
-if (httpContext.Response.ContentType is { Length: > 0 } contentType)
+    if (httpContext.Response.ContentType is { Length: > 0 } contentType)
     {
         diagnosticContext.Set("ResponseContentType", contentType);
     }

@@ -7,45 +7,45 @@ public sealed class LocalFileStorage(IOptions<StorageOptions> options) : IFileSt
 {
     private readonly string _rootPath = options.Value.RootPath;
 
-public async Task<string> SaveAsync(Stream content, string fileName, CancellationToken cancellationToken)
+    public async Task<string> SaveAsync(Stream content, string fileName, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(_rootPath);
 
-var safeName = Path.GetFileName(fileName);
+        var safeName = Path.GetFileName(fileName);
         var storedName = $"{Guid.CreateVersion7():N}_{safeName}";
         var fullPath = Path.Combine(_rootPath, storedName);
 
-await using (var target = File.Create(fullPath))
+        await using (var target = File.Create(fullPath))
         {
             await content.CopyToAsync(target, cancellationToken);
         }
 
-return storedName;
+        return storedName;
     }
 
-public Task<Stream> OpenReadAsync(string storagePath, CancellationToken cancellationToken)
+    public Task<Stream> OpenReadAsync(string storagePath, CancellationToken cancellationToken)
     {
         var fullPath = Resolve(storagePath);
 
-return Task.FromResult<Stream>(File.OpenRead(fullPath));
+        return Task.FromResult<Stream>(File.OpenRead(fullPath));
     }
 
-public Task DeleteAsync(string storagePath, CancellationToken cancellationToken)
+    public Task DeleteAsync(string storagePath, CancellationToken cancellationToken)
     {
         var fullPath = Resolve(storagePath);
 
-if (File.Exists(fullPath))
+        if (File.Exists(fullPath))
         {
             File.Delete(fullPath);
         }
 
-return Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
-private string Resolve(string storagePath)
+    private string Resolve(string storagePath)
     {
         var name = Path.GetFileName(storagePath);
 
-return Path.Combine(_rootPath, name);
+        return Path.Combine(_rootPath, name);
     }
 }

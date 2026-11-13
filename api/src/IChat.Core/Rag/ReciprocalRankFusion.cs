@@ -8,35 +8,35 @@ public static class ReciprocalRankFusion
         ArgumentOutOfRangeException.ThrowIfLessThan(k, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(topK, 1);
 
-var scores = new Dictionary<Guid, double>();
+        var scores = new Dictionary<Guid, double>();
         var firstSeen = new Dictionary<Guid, int>();
         var order = 0;
 
-foreach (var list in rankedLists)
+        foreach (var list in rankedLists)
         {
             if (list is null)
             {
                 continue;
             }
 
-for (var rank = 0; rank < list.Count; rank++)
+            for (var rank = 0; rank < list.Count; rank++)
             {
                 var id = list[rank];
 
-scores[id] = scores.GetValueOrDefault(id) + 1.0 / (k + rank + 1);
+                scores[id] = scores.GetValueOrDefault(id) + 1.0 / (k + rank + 1);
 
-if (!firstSeen.ContainsKey(id))
+                if (!firstSeen.ContainsKey(id))
                 {
                     firstSeen[id] = order++;
                 }
             }
         }
 
-return scores
-            .OrderByDescending(pair => pair.Value)
-            .ThenBy(pair => firstSeen[pair.Key])
-            .Take(topK)
-            .Select(pair => (pair.Key, pair.Value))
-            .ToList();
+        return scores
+                    .OrderByDescending(pair => pair.Value)
+                    .ThenBy(pair => firstSeen[pair.Key])
+                    .Take(topK)
+                    .Select(pair => (pair.Key, pair.Value))
+                    .ToList();
     }
 }

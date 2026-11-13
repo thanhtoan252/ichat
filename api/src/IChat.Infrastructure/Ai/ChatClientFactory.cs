@@ -10,17 +10,17 @@ public sealed class ChatClientFactory(
 {
     private readonly AiOptions _options = options.Value;
 
-public IChatClient Create()
+    public IChatClient Create()
     {
         return Build(_options.ResolveChat());
     }
 
-public IChatClient CreateUtility()
+    public IChatClient CreateUtility()
     {
         return Build(_options.ResolveUtilityChat());
     }
 
-private IChatClient Build(ResolvedChatSettings settings)
+    private IChatClient Build(ResolvedChatSettings settings)
     {
         return openAi.Create(settings);
     }

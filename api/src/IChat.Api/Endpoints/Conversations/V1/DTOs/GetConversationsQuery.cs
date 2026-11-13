@@ -8,5 +8,5 @@ public sealed class GetConversationsQuery(
 {
     public int Offset { get; } = Math.Max(offset, 0);
 
-public int Limit { get; } = limit <= 0 ? 20 : Math.Min(limit, 100);
+    public int Limit { get; } = limit <= 0 ? 20 : Math.Min(limit, 100);
 }

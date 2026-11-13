@@ -11,21 +11,21 @@ public static class ProblemResultExtensions
             title: error.Code,
             extensions: new Dictionary<string, object?> { ["code"] = error.Code });
 
-private static int ToStatusCode(Error error)
+    private static int ToStatusCode(Error error)
     {
         if (error.Code == Error.UnsupportedMediaTypeCode)
         {
             return StatusCodes.Status415UnsupportedMediaType;
         }
 
-return error.Type switch
+        return error.Type switch
         {
             ErrorType.Validation => StatusCodes.Status400BadRequest,
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
 
-ErrorType.External => StatusCodes.Status502BadGateway,
+            ErrorType.External => StatusCodes.Status502BadGateway,
             _ => StatusCodes.Status500InternalServerError
         };
     }

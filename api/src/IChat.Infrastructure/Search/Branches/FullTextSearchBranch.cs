@@ -8,14 +8,14 @@ public sealed class FullTextSearchBranch(IChunkSearch chunkSearch, IOptions<RagO
 {
     private readonly RetrievalOptions _retrieval = ragOptions.Value.Retrieval;
 
-public string StageName => RetrievalStageName.FullText;
+    public string StageName => RetrievalStageName.FullText;
 
-public bool IsEnabledFor(SearchMode mode)
+    public bool IsEnabledFor(SearchMode mode)
     {
         return mode is SearchMode.Hybrid or SearchMode.FullText;
     }
 
-public Task<SearchBranchResult> SearchAsync(string query, CancellationToken cancellationToken)
+    public Task<SearchBranchResult> SearchAsync(string query, CancellationToken cancellationToken)
     {
         return chunkSearch.SearchFullTextAsync(
             query,

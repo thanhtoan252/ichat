@@ -12,20 +12,20 @@ public static class HealthEndpoints
             Predicate = _ => false
         });
 
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions
         {
             Predicate = check => check.Tags.Contains("ready"),
             ResponseWriter = WriteResponse
         });
 
-return app;
+        return app;
     }
 
-private static Task WriteResponse(HttpContext httpContext, HealthReport report)
+    private static Task WriteResponse(HttpContext httpContext, HealthReport report)
     {
         httpContext.Response.ContentType = "application/json";
 
-return httpContext.Response.WriteAsJsonAsync(new
+        return httpContext.Response.WriteAsJsonAsync(new
         {
             status = report.Status.ToString(),
             totalDurationMs = report.TotalDuration.TotalMilliseconds,

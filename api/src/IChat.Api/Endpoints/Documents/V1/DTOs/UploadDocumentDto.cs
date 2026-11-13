@@ -4,5 +4,5 @@ public sealed class UploadDocumentDto
 {
     public required IFormFile File { get; init; }
 
-public string? Title { get; init; }
+    public string? Title { get; init; }
 }

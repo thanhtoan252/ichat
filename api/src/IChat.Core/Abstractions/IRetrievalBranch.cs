@@ -5,9 +5,9 @@ using IChat.Core.Rag;
 public interface IRetrievalBranch
 {
 
-string StageName { get; }
+    string StageName { get; }
 
-bool IsEnabledFor(SearchMode mode);
+    bool IsEnabledFor(SearchMode mode);
 
-Task<SearchBranchResult> SearchAsync(string query, CancellationToken cancellationToken);
+    Task<SearchBranchResult> SearchAsync(string query, CancellationToken cancellationToken);
 }

@@ -4,9 +4,9 @@ public sealed class SseEvent
 {
     public required string EventType { get; init; }
 
-public required object Payload { get; init; }
+    public required object Payload { get; init; }
 
-public static SseEvent Status(string stage)
+    public static SseEvent Status(string stage)
     {
         return new SseEvent
         {
@@ -15,7 +15,7 @@ public static SseEvent Status(string stage)
         };
     }
 
-public static SseEvent Sources(IReadOnlyList<SourceView> sources)
+    public static SseEvent Sources(IReadOnlyList<SourceView> sources)
     {
         return new SseEvent
         {
@@ -24,7 +24,7 @@ public static SseEvent Sources(IReadOnlyList<SourceView> sources)
         };
     }
 
-public static SseEvent Delta(string text)
+    public static SseEvent Delta(string text)
     {
         return new SseEvent
         {
@@ -33,7 +33,7 @@ public static SseEvent Delta(string text)
         };
     }
 
-public static SseEvent Done(DonePayload payload)
+    public static SseEvent Done(DonePayload payload)
     {
         return new SseEvent
         {
@@ -42,7 +42,7 @@ public static SseEvent Done(DonePayload payload)
         };
     }
 
-public static SseEvent Failure(ErrorPayload error)
+    public static SseEvent Failure(ErrorPayload error)
     {
         return new SseEvent
         {
@@ -51,7 +51,7 @@ public static SseEvent Failure(ErrorPayload error)
         };
     }
 
-public static SseEvent Failure(string code, string message)
+    public static SseEvent Failure(string code, string message)
     {
         return Failure(new ErrorPayload { Code = code, Message = message });
     }

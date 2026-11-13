@@ -6,7 +6,7 @@ using FluentValidation.Results;
 public static class ValidationExtensions
 {
 
-public static IResult ToValidationProblem(this ValidationResult validationResult)
+    public static IResult ToValidationProblem(this ValidationResult validationResult)
     {
         var errors = validationResult.Errors
             .GroupBy(failure => string.IsNullOrWhiteSpace(failure.PropertyName) ? "request" : ToCamelCase(failure.PropertyName))
@@ -14,16 +14,16 @@ public static IResult ToValidationProblem(this ValidationResult validationResult
                 group => group.Key,
                 group => group.Select(failure => failure.ErrorMessage).ToArray());
 
-return Results.ValidationProblem(
-            errors,
-            statusCode: StatusCodes.Status400BadRequest,
-            title: Error.ValidationCode,
-            detail: string.Join(" ", validationResult.Errors.Select(failure => failure.ErrorMessage)),
-            extensions: new Dictionary<string, object?> { ["code"] = Error.ValidationCode });
+        return Results.ValidationProblem(
+                    errors,
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: Error.ValidationCode,
+                    detail: string.Join(" ", validationResult.Errors.Select(failure => failure.ErrorMessage)),
+                    extensions: new Dictionary<string, object?> { ["code"] = Error.ValidationCode });
     }
 
-private static string ToCamelCase(string propertyName) =>
-        char.IsUpper(propertyName[0])
-            ? string.Concat(char.ToLowerInvariant(propertyName[0]), propertyName[1..])
-            : propertyName;
+    private static string ToCamelCase(string propertyName) =>
+            char.IsUpper(propertyName[0])
+                ? string.Concat(char.ToLowerInvariant(propertyName[0]), propertyName[1..])
+                : propertyName;
 }

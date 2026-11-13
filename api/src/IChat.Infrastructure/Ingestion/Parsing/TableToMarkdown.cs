@@ -8,57 +8,57 @@ public static class TableToMarkdown
     {
         ArgumentNullException.ThrowIfNull(rows);
 
-if (rows.Count == 0)
+        if (rows.Count == 0)
         {
             return string.Empty;
         }
 
-var columnCount = rows.Max(row => row.Count);
+        var columnCount = rows.Max(row => row.Count);
 
-if (columnCount == 0)
+        if (columnCount == 0)
         {
             return string.Empty;
         }
 
-var builder = new StringBuilder();
+        var builder = new StringBuilder();
 
-AppendRow(builder, rows[0], columnCount);
+        AppendRow(builder, rows[0], columnCount);
         builder.Append("| ").AppendJoin(" | ", Enumerable.Repeat("---", columnCount)).AppendLine(" |");
 
-for (var i = 1; i < rows.Count; i++)
+        for (var i = 1; i < rows.Count; i++)
         {
             AppendRow(builder, rows[i], columnCount);
         }
 
-return builder.ToString().TrimEnd();
+        return builder.ToString().TrimEnd();
     }
 
-private static void AppendRow(StringBuilder builder, IReadOnlyList<string> row, int columnCount)
+    private static void AppendRow(StringBuilder builder, IReadOnlyList<string> row, int columnCount)
     {
         builder.Append("| ");
 
-for (var column = 0; column < columnCount; column++)
+        for (var column = 0; column < columnCount; column++)
         {
 
-var cell = column < row.Count ? Sanitize(row[column]) : string.Empty;
+            var cell = column < row.Count ? Sanitize(row[column]) : string.Empty;
             builder.Append(cell);
             builder.Append(column == columnCount - 1 ? " |" : " | ");
         }
 
-builder.AppendLine();
+        builder.AppendLine();
     }
 
-private static string Sanitize(string? cell)
+    private static string Sanitize(string? cell)
     {
         if (string.IsNullOrWhiteSpace(cell))
         {
             return string.Empty;
         }
 
-return cell.Replace("|", "\\|", StringComparison.Ordinal)
-            .Replace("\r\n", " ", StringComparison.Ordinal)
-            .Replace('\n', ' ')
-            .Replace('\r', ' ')
-            .Trim();
+        return cell.Replace("|", "\\|", StringComparison.Ordinal)
+                    .Replace("\r\n", " ", StringComparison.Ordinal)
+                    .Replace('\n', ' ')
+                    .Replace('\r', ' ')
+                    .Trim();
     }
 }

@@ -8,14 +8,14 @@ public sealed class ProviderHealthCheck(IModelCatalog modelCatalog, TimeProvider
     private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
     private readonly Lock _gate = new();
 
-private HealthCheckResult? _cached;
+    private HealthCheckResult? _cached;
     private DateTimeOffset _cachedAt = DateTimeOffset.MinValue;
 
-public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+    public Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
     {
         var now = timeProvider.GetUtcNow();
 
-lock (_gate)
+        lock (_gate)
         {
             if (_cached is { } cached && now - _cachedAt < CacheDuration)
             {
@@ -23,21 +23,21 @@ lock (_gate)
             }
         }
 
-var snapshot = modelCatalog.GetSnapshot();
+        var snapshot = modelCatalog.GetSnapshot();
         var unavailable = new[] { snapshot.Chat, snapshot.UtilityChat, snapshot.Embedding }
             .Where(descriptor => !descriptor.Available)
             .ToList();
 
-var result = unavailable.Count == 0
-            ? HealthCheckResult.Healthy("Chat and embedding providers are fully configured.")
-            : HealthCheckResult.Unhealthy(string.Join(" | ", unavailable.Select(d => $"{d.Kind}/{d.Provider}: {d.Reason}")));
+        var result = unavailable.Count == 0
+                    ? HealthCheckResult.Healthy("Chat and embedding providers are fully configured.")
+                    : HealthCheckResult.Unhealthy(string.Join(" | ", unavailable.Select(d => $"{d.Kind}/{d.Provider}: {d.Reason}")));
 
-lock (_gate)
+        lock (_gate)
         {
             _cached = result;
             _cachedAt = now;
         }
 
-return Task.FromResult(result);
+        return Task.FromResult(result);
     }
 }

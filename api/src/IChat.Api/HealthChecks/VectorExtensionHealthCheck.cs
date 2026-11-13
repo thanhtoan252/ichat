@@ -12,19 +12,19 @@ public sealed class VectorExtensionHealthCheck(IChatDbContext dbContext) : IHeal
         {
             var connection = dbContext.Database.GetDbConnection();
 
-if (connection.State != System.Data.ConnectionState.Open)
+            if (connection.State != System.Data.ConnectionState.Open)
             {
                 await connection.OpenAsync(cancellationToken);
             }
 
-await using var command = connection.CreateCommand();
+            await using var command = connection.CreateCommand();
             command.CommandText = "SELECT count(*) FROM pg_extension WHERE extname = 'vector';";
 
-var found = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken));
+            var found = Convert.ToInt64(await command.ExecuteScalarAsync(cancellationToken));
 
-return found > 0
-                ? HealthCheckResult.Healthy("The vector extension is installed.")
-                : HealthCheckResult.Unhealthy("The vector extension is not installed in the database.");
+            return found > 0
+                            ? HealthCheckResult.Healthy("The vector extension is installed.")
+                            : HealthCheckResult.Unhealthy("The vector extension is not installed in the database.");
         }
         catch (Exception exception)
         {

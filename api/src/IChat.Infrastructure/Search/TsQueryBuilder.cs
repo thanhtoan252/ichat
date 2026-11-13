@@ -6,7 +6,7 @@ using System.Text;
 public static class TsQueryBuilder
 {
 
-private static readonly HashSet<string> StopWords = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> StopWords = new(StringComparer.Ordinal)
     {
 
 "va", "la", "cua", "cac", "mot", "cho", "voi", "trong", "den", "tu", "khi", "nay",
@@ -24,60 +24,60 @@ private static readonly HashSet<string> StopWords = new(StringComparer.Ordinal)
         "your", "his", "our", "their", "about", "into", "over", "under", "again", "more"
     };
 
-public static string? Build(string? query)
+    public static string? Build(string? query)
     {
         var lexemes = ExtractLexemes(query);
 
-return lexemes.Count == 0 ? null : string.Join(" | ", lexemes);
+        return lexemes.Count == 0 ? null : string.Join(" | ", lexemes);
     }
 
-public static IReadOnlyList<string> ExtractLexemes(string? query)
+    public static IReadOnlyList<string> ExtractLexemes(string? query)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
             return [];
         }
 
-var normalized = RemoveDiacritics(query).ToLowerInvariant();
+        var normalized = RemoveDiacritics(query).ToLowerInvariant();
         var builder = new StringBuilder(normalized.Length);
 
-foreach (var character in normalized)
+        foreach (var character in normalized)
         {
             builder.Append(char.IsLetterOrDigit(character) ? character : ' ');
         }
 
-var seen = new HashSet<string>(StringComparer.Ordinal);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
         var lexemes = new List<string>();
 
-foreach (var token in builder.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        foreach (var token in builder.ToString().Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
             if (token.Length <= 1 || StopWords.Contains(token))
             {
                 continue;
             }
 
-if (seen.Add(token))
+            if (seen.Add(token))
             {
                 lexemes.Add(token);
             }
         }
 
-return lexemes;
+        return lexemes;
     }
 
-private static string RemoveDiacritics(string text)
+    private static string RemoveDiacritics(string text)
     {
         var decomposed = text.Normalize(NormalizationForm.FormD);
         var builder = new StringBuilder(decomposed.Length);
 
-foreach (var character in decomposed)
+        foreach (var character in decomposed)
         {
             if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
             {
                 continue;
             }
 
-builder.Append(character switch
+            builder.Append(character switch
             {
                 'đ' => 'd',
                 'Đ' => 'D',
@@ -85,6 +85,6 @@ builder.Append(character switch
             });
         }
 
-return builder.ToString().Normalize(NormalizationForm.FormC);
+        return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 }

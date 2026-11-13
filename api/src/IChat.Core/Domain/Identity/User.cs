@@ -6,23 +6,23 @@ public sealed class User
     {
     }
 
-public Guid Id { get; private set; }
+    public Guid Id { get; private set; }
 
-public string UserName { get; private set; } = string.Empty;
+    public string UserName { get; private set; } = string.Empty;
 
-public string DisplayName { get; private set; } = string.Empty;
+    public string DisplayName { get; private set; } = string.Empty;
 
-public string PasswordHash { get; private set; } = string.Empty;
+    public string PasswordHash { get; private set; } = string.Empty;
 
-public UserRole Role { get; private set; }
+    public UserRole Role { get; private set; }
 
-public bool IsActive { get; private set; }
+    public bool IsActive { get; private set; }
 
-public DateTimeOffset CreatedAt { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
 
-public DateTimeOffset UpdatedAt { get; private set; }
+    public DateTimeOffset UpdatedAt { get; private set; }
 
-public static User Create(string userName, string displayName, string passwordHash, UserRole role, DateTimeOffset createdAt)
+    public static User Create(string userName, string displayName, string passwordHash, UserRole role, DateTimeOffset createdAt)
     {
         return new User
         {
@@ -37,21 +37,21 @@ public static User Create(string userName, string displayName, string passwordHa
         };
     }
 
-public static string Normalize(string userName) => userName.Trim().ToLowerInvariant();
+    public static string Normalize(string userName) => userName.Trim().ToLowerInvariant();
 
-public void ChangeRole(UserRole role, DateTimeOffset updatedAt)
+    public void ChangeRole(UserRole role, DateTimeOffset updatedAt)
     {
         Role = role;
         UpdatedAt = updatedAt;
     }
 
-public void SetActive(bool isActive, DateTimeOffset updatedAt)
+    public void SetActive(bool isActive, DateTimeOffset updatedAt)
     {
         IsActive = isActive;
         UpdatedAt = updatedAt;
     }
 
-public void ChangePasswordHash(string passwordHash, DateTimeOffset updatedAt)
+    public void ChangePasswordHash(string passwordHash, DateTimeOffset updatedAt)
     {
         PasswordHash = passwordHash;
         UpdatedAt = updatedAt;

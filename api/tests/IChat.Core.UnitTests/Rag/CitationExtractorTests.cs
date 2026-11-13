@@ -11,42 +11,42 @@ public class CitationExtractorTests
     public void Extract_NoMarkers_ReturnsEmpty()
     {
 
-const string answer = "Câu trả lời không có trích dẫn nào.";
+        const string answer = "Câu trả lời không có trích dẫn nào.";
 
-var citations = CitationExtractor.Extract(answer, 5, out var invalid);
+        var citations = CitationExtractor.Extract(answer, 5, out var invalid);
 
-citations.Should().BeEmpty();
+        citations.Should().BeEmpty();
         invalid.Should().BeEmpty();
     }
 
-[Test]
+    [Test]
     public void Extract_MarkerOutOfRange_IsDropped()
     {
 
-const string answer = "Theo tài liệu [1] và [99].";
+        const string answer = "Theo tài liệu [1] và [99].";
 
-var citations = CitationExtractor.Extract(answer, sourceCount: 3, out var invalid);
+        var citations = CitationExtractor.Extract(answer, sourceCount: 3, out var invalid);
 
-citations.Select(citation => citation.MarkerIndex).Should().Equal(1);
+        citations.Select(citation => citation.MarkerIndex).Should().Equal(1);
         invalid.Should().Equal(99);
     }
 
-[Test]
+    [Test]
     public void Extract_RepeatedMarker_RecordedOnce()
     {
 
-const string answer = "[2] nói vậy, và [2] cũng xác nhận, xem thêm [2].";
+        const string answer = "[2] nói vậy, và [2] cũng xác nhận, xem thêm [2].";
 
-var citations = CitationExtractor.Extract(answer, 3, out _);
+        var citations = CitationExtractor.Extract(answer, 3, out _);
 
-citations.Should().ContainSingle().Which.MarkerIndex.Should().Be(2);
+        citations.Should().ContainSingle().Which.MarkerIndex.Should().Be(2);
     }
 
-[Test]
+    [Test]
     public void Extract_MarkersInsideFencedCodeBlock_AreIgnored()
     {
 
-const string answer = """
+        const string answer = """
             Xem đoạn mã sau:
 
 ```csharp
@@ -58,75 +58,75 @@ const string answer = """
 Theo tài liệu [3].
             """;
 
-var citations = CitationExtractor.Extract(answer, 5, out _);
+        var citations = CitationExtractor.Extract(answer, 5, out _);
 
-citations.Select(citation => citation.MarkerIndex).Should().Equal(3);
+        citations.Select(citation => citation.MarkerIndex).Should().Equal(3);
     }
 
-[Test]
+    [Test]
     public void Extract_MarkersInsideInlineCode_AreIgnored()
     {
 
-const string answer = "Dùng `list[1]` để lấy phần tử. Theo [2].";
+        const string answer = "Dùng `list[1]` để lấy phần tử. Theo [2].";
 
-var citations = CitationExtractor.Extract(answer, 5, out _);
+        var citations = CitationExtractor.Extract(answer, 5, out _);
 
-citations.Select(citation => citation.MarkerIndex).Should().Equal(2);
+        citations.Select(citation => citation.MarkerIndex).Should().Equal(2);
     }
 
-[Test]
+    [Test]
     public void Extract_PreservesOrderOfFirstAppearance()
     {
 
-const string answer = "[3] rồi [1] rồi [2].";
+        const string answer = "[3] rồi [1] rồi [2].";
 
-var citations = CitationExtractor.Extract(answer, 5, out _);
+        var citations = CitationExtractor.Extract(answer, 5, out _);
 
-citations.Select(citation => citation.MarkerIndex).Should().Equal(3, 1, 2);
+        citations.Select(citation => citation.MarkerIndex).Should().Equal(3, 1, 2);
     }
 
-[Test]
+    [Test]
     public void Extract_SourceOrdinalIsZeroBased()
     {
 
-const string answer = "[1]";
+        const string answer = "[1]";
 
-var citations = CitationExtractor.Extract(answer, 3, out _);
+        var citations = CitationExtractor.Extract(answer, 3, out _);
 
-citations.Single().SourceOrdinal.Should().Be(0);
+        citations.Single().SourceOrdinal.Should().Be(0);
     }
 
-[TestCase(null)]
+    [TestCase(null)]
     [TestCase("")]
     [TestCase("   ")]
     public void Extract_EmptyAnswer_ReturnsEmpty(string? answer)
     {
 
-var citations = CitationExtractor.Extract(answer, 5, out _);
+        var citations = CitationExtractor.Extract(answer, 5, out _);
 
-citations.Should().BeEmpty();
+        citations.Should().BeEmpty();
     }
 
-[Test]
+    [Test]
     public void Extract_ZeroSources_ReturnsEmpty()
     {
 
-const string answer = "[1]";
+        const string answer = "[1]";
 
-var citations = CitationExtractor.Extract(answer, 0, out _);
+        var citations = CitationExtractor.Extract(answer, 0, out _);
 
-citations.Should().BeEmpty();
+        citations.Should().BeEmpty();
     }
 
-[Test]
+    [Test]
     public void Extract_MarkerZero_IsInvalid()
     {
 
-const string answer = "[0]";
+        const string answer = "[0]";
 
-var citations = CitationExtractor.Extract(answer, 3, out var invalid);
+        var citations = CitationExtractor.Extract(answer, 3, out var invalid);
 
-citations.Should().BeEmpty();
+        citations.Should().BeEmpty();
         invalid.Should().Equal(0);
     }
 }

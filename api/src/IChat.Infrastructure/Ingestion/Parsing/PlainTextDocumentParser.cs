@@ -7,30 +7,30 @@ public sealed class PlainTextDocumentParser : IDocumentParser
 {
     public const string PlainTextContentType = "text/plain";
 
-public DocumentFormat Format { get; } = new()
+    public DocumentFormat Format { get; } = new()
     {
         ContentType = PlainTextContentType,
         Extensions = [".txt"]
     };
 
-public async Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
+    public async Task<ParsedDocument> ParseAsync(Stream content, CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(content, leaveOpen: true);
         var text = await reader.ReadToEndAsync(cancellationToken);
 
-var blocks = new List<DocumentBlock>();
+        var blocks = new List<DocumentBlock>();
         var order = 0;
 
-foreach (var paragraph in text.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries))
+        foreach (var paragraph in text.Split(["\r\n\r\n", "\n\n"], StringSplitOptions.RemoveEmptyEntries))
         {
             var trimmed = paragraph.Trim();
 
-if (trimmed.Length == 0)
+            if (trimmed.Length == 0)
             {
                 continue;
             }
 
-blocks.Add(new DocumentBlock
+            blocks.Add(new DocumentBlock
             {
                 Kind = BlockKind.Paragraph,
                 Text = trimmed,
@@ -38,7 +38,7 @@ blocks.Add(new DocumentBlock
             });
         }
 
-return new ParsedDocument
+        return new ParsedDocument
         {
             Blocks = blocks,
             Metadata = new Dictionary<string, string> { ["format"] = "txt" }

@@ -14,13 +14,13 @@ public sealed class IdentitySeeder(
 {
     private sealed record DefaultAccount(string UserName, string Password, string DisplayName, UserRole Role);
 
-private static readonly DefaultAccount[] DefaultAccounts =
-    [
-        new("admin", "admin", "Administrator", UserRole.Admin),
+    private static readonly DefaultAccount[] DefaultAccounts =
+        [
+            new("admin", "admin", "Administrator", UserRole.Admin),
         new("user", "user", "Demo User", UserRole.User)
-    ];
+        ];
 
-protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
@@ -28,13 +28,13 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
             var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
             var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
-var existing = await dbContext.Users
-                .Select(user => user.UserName)
-                .ToListAsync(stoppingToken);
+            var existing = await dbContext.Users
+                            .Select(user => user.UserName)
+                            .ToListAsync(stoppingToken);
 
-var created = new List<string>();
+            var created = new List<string>();
 
-foreach (var account in DefaultAccounts.Where(item => !existing.Contains(item.UserName)))
+            foreach (var account in DefaultAccounts.Where(item => !existing.Contains(item.UserName)))
             {
                 dbContext.Users.Add(User.Create(
                     account.UserName,
@@ -43,24 +43,24 @@ foreach (var account in DefaultAccounts.Where(item => !existing.Contains(item.Us
                     account.Role,
                     timeProvider.GetUtcNow()));
 
-created.Add(account.UserName);
+                created.Add(account.UserName);
             }
 
-if (created.Count == 0)
+            if (created.Count == 0)
             {
                 return;
             }
 
-await dbContext.SaveChangesAsync(stoppingToken);
+            await dbContext.SaveChangesAsync(stoppingToken);
 
-logger.LogWarning(
-                "Seeded the default accounts {UserNames} with well-known showcase passwords. Change them before exposing this instance.",
-                string.Join(", ", created));
+            logger.LogWarning(
+                            "Seeded the default accounts {UserNames} with well-known showcase passwords. Change them before exposing this instance.",
+                            string.Join(", ", created));
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
 
-logger.LogError(exception, "Could not seed the default accounts.");
+            logger.LogError(exception, "Could not seed the default accounts.");
         }
     }
 }

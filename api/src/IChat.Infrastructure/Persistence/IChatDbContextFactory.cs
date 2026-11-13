@@ -10,11 +10,11 @@ public sealed class IChatDbContextFactory : IDesignTimeDbContextFactory<IChatDbC
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Default")
             ?? "Host=localhost;Port=5432;Database=ichat;Username=ichat;Password=ichat";
 
-var options = new DbContextOptionsBuilder<IChatDbContext>()
-            .UseNpgsql(connectionString, npgsql => npgsql.UseVector())
-            .UseSnakeCaseNamingConvention()
-            .Options;
+        var options = new DbContextOptionsBuilder<IChatDbContext>()
+                    .UseNpgsql(connectionString, npgsql => npgsql.UseVector())
+                    .UseSnakeCaseNamingConvention()
+                    .Options;
 
-return new IChatDbContext(options);
+        return new IChatDbContext(options);
     }
 }

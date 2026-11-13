@@ -15,76 +15,76 @@ public class ConversationTitleTests
     public void IsDefault_RecognisesThePlaceholder(string? title)
     {
 
-var isDefault = ConversationTitle.IsDefault(title);
+        var isDefault = ConversationTitle.IsDefault(title);
 
-isDefault.Should().BeTrue();
+        isDefault.Should().BeTrue();
     }
 
-[Test]
+    [Test]
     public void IsDefault_TitleChosenByTheCallerIsNotAPlaceholder()
     {
 
-const string title = "Cấu hình hệ thống";
+        const string title = "Cấu hình hệ thống";
 
-var isDefault = ConversationTitle.IsDefault(title);
+        var isDefault = ConversationTitle.IsDefault(title);
 
-isDefault.Should().BeFalse();
+        isDefault.Should().BeFalse();
     }
 
-[Test]
+    [Test]
     public void FromQuestion_CollapsesWhitespace()
     {
 
-const string question = "  timeout   mặc\n định là  bao nhiêu ";
+        const string question = "  timeout   mặc\n định là  bao nhiêu ";
 
-var title = ConversationTitle.FromQuestion(question);
+        var title = ConversationTitle.FromQuestion(question);
 
-title.Should().Be("timeout mặc định là bao nhiêu");
+        title.Should().Be("timeout mặc định là bao nhiêu");
     }
 
-[Test]
+    [Test]
     public void FromQuestion_LongQuestionIsCutToSixtyCharacters()
     {
 
-var question = new string('a', 200);
+        var question = new string('a', 200);
 
-var title = ConversationTitle.FromQuestion(question);
+        var title = ConversationTitle.FromQuestion(question);
 
-title.Should().HaveLength(58);
+        title.Should().HaveLength(58);
         title.Should().EndWith("…");
     }
 
-[Test]
+    [Test]
     public void FromQuestion_QuestionOfExactlySixtyCharactersIsKeptWhole()
     {
 
-var question = new string('a', 60);
+        var question = new string('a', 60);
 
-var title = ConversationTitle.FromQuestion(question);
+        var title = ConversationTitle.FromQuestion(question);
 
-title.Should().Be(question);
+        title.Should().Be(question);
     }
 
-[Test]
+    [Test]
     public void FromQuestion_DoesNotCutASurrogatePairInHalf()
     {
 
-var question = $"{new string('a', 56)}😀{new string('b', 60)}";
+        var question = $"{new string('a', 56)}😀{new string('b', 60)}";
 
-var title = ConversationTitle.FromQuestion(question);
+        var title = ConversationTitle.FromQuestion(question);
 
-char.IsSurrogate(title[^2]).Should().BeFalse();
+        char.IsSurrogate(title[^2]).Should().BeFalse();
         title.Should().Be($"{new string('a', 56)}…");
     }
 
-[Test]
+    [Test]
     public void FromQuestion_WhitespaceOnlyFallsBackToThePlaceholder()
     {
 
-const string question = "   ";
+        const string question = "   ";
 
-var title = ConversationTitle.FromQuestion(question);
+        var title = ConversationTitle.FromQuestion(question);
 
-title.Should().Be(ConversationTitle.Default);
+        title.Should().Be(ConversationTitle.Default);
     }
 }

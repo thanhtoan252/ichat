@@ -10,7 +10,7 @@ public sealed class EmbeddingGeneratorFactory(
 {
     private readonly EmbeddingOptions _embedding = options.Value.Embedding;
 
-public IEmbeddingGenerator<string, Embedding<float>> Create()
+    public IEmbeddingGenerator<string, Embedding<float>> Create()
     {
         return openAi.Create(_embedding, _embedding.Dimensions);
     }

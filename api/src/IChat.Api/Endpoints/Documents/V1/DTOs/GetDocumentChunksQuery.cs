@@ -8,5 +8,5 @@ public sealed class GetDocumentChunksQuery(
 {
     public int Offset { get; } = Math.Max(offset, 0);
 
-public int Limit { get; } = limit <= 0 ? 50 : Math.Min(limit, 200);
+    public int Limit { get; } = limit <= 0 ? 50 : Math.Min(limit, 200);
 }

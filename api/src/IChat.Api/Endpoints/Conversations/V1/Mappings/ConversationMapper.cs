@@ -11,49 +11,49 @@ public static class ConversationMapper
             Title = dto.Title
         };
 
-public static SendMessageRequest ToServiceRequest(this SendMessageDto dto, Guid conversationId) =>
-        new()
-        {
-            ConversationId = conversationId,
-            Content = dto.Content,
-            Model = dto.Model
-        };
+    public static SendMessageRequest ToServiceRequest(this SendMessageDto dto, Guid conversationId) =>
+            new()
+            {
+                ConversationId = conversationId,
+                Content = dto.Content,
+                Model = dto.Model
+            };
 
-public static ConversationResponse ToResponse(this ConversationView view) =>
-        new()
-        {
-            Id = view.Id,
-            Title = view.Title,
-            UserId = view.UserId,
-            CreatedAt = view.CreatedAt,
-            UpdatedAt = view.UpdatedAt
-        };
+    public static ConversationResponse ToResponse(this ConversationView view) =>
+            new()
+            {
+                Id = view.Id,
+                Title = view.Title,
+                UserId = view.UserId,
+                CreatedAt = view.CreatedAt,
+                UpdatedAt = view.UpdatedAt
+            };
 
-public static MessageResponse ToResponse(this MessageView view) =>
-        new()
-        {
-            Id = view.Id,
-            Role = view.Role,
-            Content = view.Content,
-            RewrittenQuery = view.RewrittenQuery,
-            Provider = view.Provider,
-            Model = view.Model,
-            InputTokens = view.InputTokens,
-            OutputTokens = view.OutputTokens,
-            LatencyMs = view.LatencyMs,
-            RetrievalMs = view.RetrievalMs,
-            CreatedAt = view.CreatedAt,
-            Citations = view.Citations.Select(ToResponse).ToArray()
-        };
+    public static MessageResponse ToResponse(this MessageView view) =>
+            new()
+            {
+                Id = view.Id,
+                Role = view.Role,
+                Content = view.Content,
+                RewrittenQuery = view.RewrittenQuery,
+                Provider = view.Provider,
+                Model = view.Model,
+                InputTokens = view.InputTokens,
+                OutputTokens = view.OutputTokens,
+                LatencyMs = view.LatencyMs,
+                RetrievalMs = view.RetrievalMs,
+                CreatedAt = view.CreatedAt,
+                Citations = view.Citations.Select(ToResponse).ToArray()
+            };
 
-private static CitationResponse ToResponse(this CitationView view) =>
-        new()
-        {
-            ChunkId = view.ChunkId,
-            MarkerIndex = view.MarkerIndex,
-            Score = view.Score,
-            DocumentId = view.DocumentId,
-            DocumentTitle = view.DocumentTitle,
-            HeadingPath = view.HeadingPath
-        };
+    private static CitationResponse ToResponse(this CitationView view) =>
+            new()
+            {
+                ChunkId = view.ChunkId,
+                MarkerIndex = view.MarkerIndex,
+                Score = view.Score,
+                DocumentId = view.DocumentId,
+                DocumentTitle = view.DocumentTitle,
+                HeadingPath = view.HeadingPath
+            };
 }

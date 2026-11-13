@@ -11,159 +11,159 @@ public class DocxDocumentParserTests
     private IReadOnlyList<DocumentBlock> _blocks = null!;
     private string _allText = null!;
 
-[OneTimeSetUp]
+    [OneTimeSetUp]
     public async Task ParseTheFixtureOnce()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "fixtures", "sample-traps.docx");
         await using var stream = File.OpenRead(path);
 
-var parsed = await new DocxDocumentParser().ParseAsync(stream, CancellationToken.None);
+        var parsed = await new DocxDocumentParser().ParseAsync(stream, CancellationToken.None);
 
-_blocks = parsed.Blocks;
+        _blocks = parsed.Blocks;
         _allText = string.Join("\n", _blocks.Select(block => block.Text));
     }
 
-[Test]
+    [Test]
     public void Parse_RecognisesHeadingLevelFromParagraphStyle()
     {
 
-_blocks.Should().Contain(block => block.Kind == BlockKind.Heading && block.Text == "Cai dat" && block.HeadingLevel == 1);
+        _blocks.Should().Contain(block => block.Kind == BlockKind.Heading && block.Text == "Cai dat" && block.HeadingLevel == 1);
     }
 
-[Test]
+    [Test]
     public void Parse_RecognisesHeadingFromOutlineLevel_WhenStyleNameIsCustom()
     {
 
-_blocks.Should().Contain(
-            block => block.Kind == BlockKind.Heading && block.Text == "Cau hinh he thong" && block.HeadingLevel == 1,
-            "enterprise templates often use custom style names, so it must fall back to w:outlineLvl");
+        _blocks.Should().Contain(
+                    block => block.Kind == BlockKind.Heading && block.Text == "Cau hinh he thong" && block.HeadingLevel == 1,
+                    "enterprise templates often use custom style names, so it must fall back to w:outlineLvl");
     }
 
-[Test]
+    [Test]
     public void Parse_TrackedChanges_DeletedContentNeverReachesOutput()
     {
 
-_allText.Should().NotContain(
-            "KHONG_DUOC_XUAT_HIEN_TRONG_INDEX",
-            "content inside w:del has been deleted; indexing it would make ichat cite struck-out clauses");
+        _allText.Should().NotContain(
+                    "KHONG_DUOC_XUAT_HIEN_TRONG_INDEX",
+                    "content inside w:del has been deleted; indexing it would make ichat cite struck-out clauses");
     }
 
-[Test]
+    [Test]
     public void Parse_TrackedChanges_InsertedContentIsKept()
     {
 
-_allText.Should().Contain("VAN_CON_HIEU_LUC");
+        _allText.Should().Contain("VAN_CON_HIEU_LUC");
     }
 
-[Test]
+    [Test]
     public void Parse_FragmentedRunsAreMergedIntoOneBlock()
     {
 
-_blocks.Should().Contain(
-            block => block.Text == "Day la mot cau bi Word cat thanh nhieu run lien nhau.",
-            "join every w:t within a paragraph, otherwise the chunker receives a few characters of noise");
+        _blocks.Should().Contain(
+                    block => block.Text == "Day la mot cau bi Word cat thanh nhieu run lien nhau.",
+                    "join every w:t within a paragraph, otherwise the chunker receives a few characters of noise");
     }
 
-[Test]
+    [Test]
     public void Parse_TableBecomesSingleAtomicBlock()
     {
 
-var tables = _blocks.Where(block => block.Kind == BlockKind.Table).ToList();
+        var tables = _blocks.Where(block => block.Kind == BlockKind.Table).ToList();
 
-tables.Should().ContainSingle("a table is an atomic unit and is never split");
+        tables.Should().ContainSingle("a table is an atomic unit and is never split");
         tables[0].Text.Should().Contain("| Ten | Gia tri | Ghi chu |").And.Contain("| --- | --- | --- |");
     }
 
-[Test]
+    [Test]
     public void Parse_MergedCellKeepsColumnCountConsistent()
     {
 
-var table = _blocks.Single(block => block.Kind == BlockKind.Table);
+        var table = _blocks.Single(block => block.Kind == BlockKind.Table);
         var rows = table.Text.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-var columnCounts = rows.Select(row => row.Count(character => character == '|')).Distinct().ToList();
+        var columnCounts = rows.Select(row => row.Count(character => character == '|')).Distinct().ToList();
 
-columnCounts.Should().ContainSingle("merged cells must be padded so every row has the same column count");
+        columnCounts.Should().ContainSingle("merged cells must be padded so every row has the same column count");
     }
 
-[Test]
+    [Test]
     public void Parse_TextBoxContentIsNotMissed()
     {
 
-_allText.Should().Contain(
-            "NOI_DUNG_TRONG_TEXTBOX",
-            "w:txbxContent sits outside the main paragraph flow, so it needs its own traversal");
+        _allText.Should().Contain(
+                    "NOI_DUNG_TRONG_TEXTBOX",
+                    "w:txbxContent sits outside the main paragraph flow, so it needs its own traversal");
     }
 
-[Test]
+    [Test]
     public void Parse_TextBoxContentIsNotDuplicated()
     {
 
-var occurrences = _blocks.Count(block => block.Text.Contains("NOI_DUNG_TRONG_TEXTBOX", StringComparison.Ordinal));
+        var occurrences = _blocks.Count(block => block.Text.Contains("NOI_DUNG_TRONG_TEXTBOX", StringComparison.Ordinal));
 
-occurrences.Should().Be(1);
+        occurrences.Should().Be(1);
     }
 
-[Test]
+    [Test]
     public void Parse_HeaderAndFooterAreExcluded()
     {
 
-_allText.Should().NotContain("HEADER_CONG_TY_KHONG_DUOC_VAO_INDEX");
+        _allText.Should().NotContain("HEADER_CONG_TY_KHONG_DUOC_VAO_INDEX");
         _allText.Should().NotContain("FOOTER_TRANG_KHONG_DUOC_VAO_INDEX");
     }
 
-[Test]
+    [Test]
     public void Parse_AutomaticTableOfContentsIsExcluded()
     {
 
-_allText.Should().NotContain(
-            "MUC_LUC_TU_DONG_KHONG_DUOC_VAO_INDEX",
-            "an auto-generated table of contents produces a chunk that matches every query about section names");
+        _allText.Should().NotContain(
+                    "MUC_LUC_TU_DONG_KHONG_DUOC_VAO_INDEX",
+                    "an auto-generated table of contents produces a chunk that matches every query about section names");
     }
 
-[Test]
+    [Test]
     public void Parse_HyperlinkKeepsDisplayText()
     {
 
-_allText.Should().Contain("Trang tai lieu chinh thuc");
+        _allText.Should().Contain("Trang tai lieu chinh thuc");
     }
 
-[Test]
+    [Test]
     public void Parse_ImageAltTextIsCaptured()
     {
 
-_allText.Should().Contain("SO_DO_KIEN_TRUC_ALT_TEXT");
+        _allText.Should().Contain("SO_DO_KIEN_TRUC_ALT_TEXT");
     }
 
-[Test]
+    [Test]
     public void Parse_ListItemsAreFlattenedWithMarker()
     {
 
-var listItems = _blocks.Where(block => block.Kind == BlockKind.ListItem).ToList();
+        var listItems = _blocks.Where(block => block.Kind == BlockKind.ListItem).ToList();
 
-listItems.Should().HaveCount(2);
+        listItems.Should().HaveCount(2);
         listItems.Should().OnlyContain(block => block.Text.Contains("Muc danh sach"));
     }
 
-[Test]
+    [Test]
     public void Parse_BlockOrderIsSequential()
     {
 
-var orders = _blocks.Select(block => block.Order);
+        var orders = _blocks.Select(block => block.Order);
 
-orders.Should().BeInAscendingOrder();
+        orders.Should().BeInAscendingOrder();
     }
 
-[Test]
+    [Test]
     public void Parse_LegacyDocBinary_ThrowsRatherThanProducingGarbage()
     {
 
-var path = Path.Combine(AppContext.BaseDirectory, "fixtures", "sample-legacy.doc");
+        var path = Path.Combine(AppContext.BaseDirectory, "fixtures", "sample-legacy.doc");
         using var stream = File.OpenRead(path);
         var parser = new DocxDocumentParser();
 
-var act = () => parser.ParseAsync(stream, CancellationToken.None).GetAwaiter().GetResult();
+        var act = () => parser.ParseAsync(stream, CancellationToken.None).GetAwaiter().GetResult();
 
-act.Should().Throw<Exception>();
+        act.Should().Throw<Exception>();
     }
 }

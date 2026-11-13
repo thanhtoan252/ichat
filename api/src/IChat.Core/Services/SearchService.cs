@@ -16,7 +16,7 @@ public sealed class SearchService(RetrievalPipeline pipeline) : ISearchService
                 turn.Content))
             .ToList();
 
-var retrievalRequest = new RetrievalRequest
+        var retrievalRequest = new RetrievalRequest
         {
             Query = request.Query,
             Mode = request.Mode,
@@ -28,28 +28,28 @@ var retrievalRequest = new RetrievalRequest
             Rerank = request.Rerank
         };
 
-var outcome = await pipeline.ExecuteAsync(retrievalRequest, cancellationToken);
+        var outcome = await pipeline.ExecuteAsync(retrievalRequest, cancellationToken);
 
-var stages = outcome.Stages.ToDictionary(
-            stage => stage.Name,
-            stage => new SearchStageView
-            {
-                Name = stage.Name,
-                Count = stage.Count,
-                ElapsedMs = stage.ElapsedMs,
-                TsQuery = stage.TsQuery,
-                Top = stage.Top.Select(candidate => new SearchHit
-                {
-                    ChunkId = candidate.ChunkId,
-                    DocumentId = candidate.DocumentId,
-                    HeadingPath = candidate.HeadingPath,
-                    Snippet = candidate.Content,
-                    ChunkIndex = candidate.ChunkIndex,
-                    Score = candidate.Score
-                }).ToList()
-            });
+        var stages = outcome.Stages.ToDictionary(
+                    stage => stage.Name,
+                    stage => new SearchStageView
+                    {
+                        Name = stage.Name,
+                        Count = stage.Count,
+                        ElapsedMs = stage.ElapsedMs,
+                        TsQuery = stage.TsQuery,
+                        Top = stage.Top.Select(candidate => new SearchHit
+                        {
+                            ChunkId = candidate.ChunkId,
+                            DocumentId = candidate.DocumentId,
+                            HeadingPath = candidate.HeadingPath,
+                            Snippet = candidate.Content,
+                            ChunkIndex = candidate.ChunkIndex,
+                            Score = candidate.Score
+                        }).ToList()
+                    });
 
-return Result.Success(new SearchChunksResult
+        return Result.Success(new SearchChunksResult
         {
             OriginalQuery = outcome.OriginalQuery,
             RewrittenQuery = outcome.RewrittenQuery,

@@ -10,16 +10,16 @@ public sealed class JwtBearerSecuritySchemeTransformer(IAuthenticationSchemeProv
 {
     public const string SchemeName = JwtBearerDefaults.AuthenticationScheme;
 
-public async Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
+    public async Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
     {
         var schemes = await schemeProvider.GetAllSchemesAsync();
 
-if (!schemes.Any(scheme => scheme.Name == SchemeName))
+        if (!schemes.Any(scheme => scheme.Name == SchemeName))
         {
             return;
         }
 
-document.Components ??= new OpenApiComponents();
+        document.Components ??= new OpenApiComponents();
         document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
         document.Components.SecuritySchemes[SchemeName] = new OpenApiSecurityScheme
         {

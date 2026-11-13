@@ -12,91 +12,91 @@ using Microsoft.Extensions.Options;
 public static class AiServiceCollectionExtensions
 {
 
-public static IServiceCollection AddIChatAi(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddIChatAi(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<AiOptions>()
             .BindConfiguration(AiOptions.SectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
-services.AddSingleton<IValidateOptions<AiOptions>, AiOptionsValidator>();
+        services.AddSingleton<IValidateOptions<AiOptions>, AiOptionsValidator>();
 
-services.AddOptions<RagOptions>()
-            .BindConfiguration(RagOptions.SectionName)
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
+        services.AddOptions<RagOptions>()
+                    .BindConfiguration(RagOptions.SectionName)
+                    .ValidateDataAnnotations()
+                    .ValidateOnStart();
 
-services.AddSingleton<OpenAIChatClientFactory>();
+        services.AddSingleton<OpenAIChatClientFactory>();
         services.AddSingleton<OpenAIEmbeddingClientFactory>();
 
-services.AddSingleton<IChatClientFactory, ChatClientFactory>();
+        services.AddSingleton<IChatClientFactory, ChatClientFactory>();
         services.AddSingleton<IEmbeddingGeneratorFactory, EmbeddingGeneratorFactory>();
         services.AddSingleton<IModelCatalog, ModelCatalog>();
         services.AddSingleton<ITokenEstimator, SimpleTokenEstimator>();
 
-services.AddDistributedMemoryCache();
+        services.AddDistributedMemoryCache();
 
-var pipeline = configuration.GetSection($"{AiOptions.SectionName}:Pipeline").Get<PipelineOptions>() ?? new PipelineOptions();
+        var pipeline = configuration.GetSection($"{AiOptions.SectionName}:Pipeline").Get<PipelineOptions>() ?? new PipelineOptions();
 
-var chatBuilder = services.AddChatClient(serviceProvider =>
-            serviceProvider.GetRequiredService<IChatClientFactory>().Create());
+        var chatBuilder = services.AddChatClient(serviceProvider =>
+                    serviceProvider.GetRequiredService<IChatClientFactory>().Create());
 
-ApplyPipeline(chatBuilder, pipeline, "IChat.Chat");
+        ApplyPipeline(chatBuilder, pipeline, "IChat.Chat");
 
-var utilityBuilder = services.AddKeyedChatClient(
-            AiServiceKeys.UtilityChat,
-            serviceProvider => serviceProvider.GetRequiredService<IChatClientFactory>().CreateUtility());
+        var utilityBuilder = services.AddKeyedChatClient(
+                    AiServiceKeys.UtilityChat,
+                    serviceProvider => serviceProvider.GetRequiredService<IChatClientFactory>().CreateUtility());
 
-ApplyPipeline(utilityBuilder, pipeline, "IChat.UtilityChat");
+        ApplyPipeline(utilityBuilder, pipeline, "IChat.UtilityChat");
 
-var embeddingBuilder = services.AddEmbeddingGenerator(serviceProvider =>
-            serviceProvider.GetRequiredService<IEmbeddingGeneratorFactory>().Create());
+        var embeddingBuilder = services.AddEmbeddingGenerator(serviceProvider =>
+                    serviceProvider.GetRequiredService<IEmbeddingGeneratorFactory>().Create());
 
-if (pipeline.EnableOpenTelemetry)
+        if (pipeline.EnableOpenTelemetry)
         {
             embeddingBuilder.UseOpenTelemetry(sourceName: "IChat.Embedding");
         }
 
-embeddingBuilder.UseLogging();
+        embeddingBuilder.UseLogging();
 
-services.AddScoped<BatchingEmbeddingService>();
+        services.AddScoped<BatchingEmbeddingService>();
         services.AddScoped<IQueryRewriter, LlmQueryRewriter>();
         services.AddScoped<IReranker>(ResolveReranker);
 
-services.AddHostedService<EmbeddingModelGuard>();
+        services.AddHostedService<EmbeddingModelGuard>();
 
-return services;
+        return services;
     }
 
-private static void ApplyPipeline(ChatClientBuilder builder, PipelineOptions pipeline, string telemetrySourceName)
+    private static void ApplyPipeline(ChatClientBuilder builder, PipelineOptions pipeline, string telemetrySourceName)
     {
         if (pipeline.EnableFunctionInvocation)
         {
             builder.UseFunctionInvocation();
         }
 
-if (pipeline.EnableCaching)
+        if (pipeline.EnableCaching)
         {
             builder.UseDistributedCache();
         }
 
-if (pipeline.EnableOpenTelemetry)
+        if (pipeline.EnableOpenTelemetry)
         {
             builder.UseOpenTelemetry(sourceName: telemetrySourceName);
         }
 
-builder.UseLogging();
+        builder.UseLogging();
     }
 
-private static IReranker ResolveReranker(IServiceProvider serviceProvider)
+    private static IReranker ResolveReranker(IServiceProvider serviceProvider)
     {
         var mode = serviceProvider.GetRequiredService<IOptions<RagOptions>>().Value.Reranking.Mode;
 
-return mode switch
+        return mode switch
         {
             RerankMode.Llm => ActivatorUtilities.CreateInstance<LlmReranker>(serviceProvider),
 
-_ => new NoOpReranker()
+            _ => new NoOpReranker()
         };
     }
 }

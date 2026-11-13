@@ -6,121 +6,121 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace IChat.Infrastructure.Persistence.Migrations
 {
 
-public partial class AddIdentity : Migration
+    public partial class AddIdentity : Migration
     {
 
-protected override void Up(MigrationBuilder migrationBuilder)
+        protected override void Up(MigrationBuilder migrationBuilder)
         {
 
-migrationBuilder.Sql("DELETE FROM conversations;");
+            migrationBuilder.Sql("DELETE FROM conversations;");
 
-migrationBuilder.DropColumn(name: "user_id", table: "conversations");
+            migrationBuilder.DropColumn(name: "user_id", table: "conversations");
 
-migrationBuilder.AddColumn<Guid>(
-                name: "user_id",
-                table: "conversations",
-                type: "uuid",
-                nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+            migrationBuilder.AddColumn<Guid>(
+                            name: "user_id",
+                            table: "conversations",
+                            type: "uuid",
+                            nullable: false,
+                            defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
-migrationBuilder.Sql("ALTER TABLE conversations ALTER COLUMN user_id DROP DEFAULT;");
+            migrationBuilder.Sql("ALTER TABLE conversations ALTER COLUMN user_id DROP DEFAULT;");
 
-migrationBuilder.CreateIndex(
-                name: "ix_conversations_user_id",
-                table: "conversations",
-                column: "user_id");
+            migrationBuilder.CreateIndex(
+                            name: "ix_conversations_user_id",
+                            table: "conversations",
+                            column: "user_id");
 
-migrationBuilder.CreateTable(
-                name: "users",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    display_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    password_hash = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    role = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    is_active = table.Column<bool>(type: "boolean", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_users", x => x.id);
-                });
+            migrationBuilder.CreateTable(
+                            name: "users",
+                            columns: table => new
+                            {
+                                id = table.Column<Guid>(type: "uuid", nullable: false),
+                                user_name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                                display_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                                password_hash = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                                role = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                                is_active = table.Column<bool>(type: "boolean", nullable: false),
+                                created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                                updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                            },
+                            constraints: table =>
+                            {
+                                table.PrimaryKey("pk_users", x => x.id);
+                            });
 
-migrationBuilder.CreateTable(
-                name: "refresh_tokens",
-                columns: table => new
-                {
-                    id = table.Column<Guid>(type: "uuid", nullable: false),
-                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    token_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    expires_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    revoked_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    replaced_by_token_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_refresh_tokens", x => x.id);
-                    table.ForeignKey(
-                        name: "fk_refresh_tokens_users_user_id",
-                        column: x => x.user_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            migrationBuilder.CreateTable(
+                            name: "refresh_tokens",
+                            columns: table => new
+                            {
+                                id = table.Column<Guid>(type: "uuid", nullable: false),
+                                user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                                token_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                                expires_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                                created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                                revoked_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                                replaced_by_token_hash = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true)
+                            },
+                            constraints: table =>
+                            {
+                                table.PrimaryKey("pk_refresh_tokens", x => x.id);
+                                table.ForeignKey(
+                                    name: "fk_refresh_tokens_users_user_id",
+                                    column: x => x.user_id,
+                                    principalTable: "users",
+                                    principalColumn: "id",
+                                    onDelete: ReferentialAction.Cascade);
+                            });
 
-migrationBuilder.CreateIndex(
-                name: "ix_refresh_tokens_token_hash",
-                table: "refresh_tokens",
-                column: "token_hash",
-                unique: true);
+            migrationBuilder.CreateIndex(
+                            name: "ix_refresh_tokens_token_hash",
+                            table: "refresh_tokens",
+                            column: "token_hash",
+                            unique: true);
 
-migrationBuilder.CreateIndex(
-                name: "ix_refresh_tokens_user_id_expires_at",
-                table: "refresh_tokens",
-                columns: new[] { "user_id", "expires_at" });
+            migrationBuilder.CreateIndex(
+                            name: "ix_refresh_tokens_user_id_expires_at",
+                            table: "refresh_tokens",
+                            columns: new[] { "user_id", "expires_at" });
 
-migrationBuilder.CreateIndex(
-                name: "ix_users_user_name",
-                table: "users",
-                column: "user_name",
-                unique: true);
+            migrationBuilder.CreateIndex(
+                            name: "ix_users_user_name",
+                            table: "users",
+                            column: "user_name",
+                            unique: true);
 
-migrationBuilder.AddForeignKey(
-                name: "fk_conversations_users_user_id",
-                table: "conversations",
-                column: "user_id",
-                principalTable: "users",
-                principalColumn: "id",
-                onDelete: ReferentialAction.Cascade);
+            migrationBuilder.AddForeignKey(
+                            name: "fk_conversations_users_user_id",
+                            table: "conversations",
+                            column: "user_id",
+                            principalTable: "users",
+                            principalColumn: "id",
+                            onDelete: ReferentialAction.Cascade);
         }
 
-protected override void Down(MigrationBuilder migrationBuilder)
+        protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
                 name: "fk_conversations_users_user_id",
                 table: "conversations");
 
-migrationBuilder.DropTable(
-                name: "refresh_tokens");
+            migrationBuilder.DropTable(
+                            name: "refresh_tokens");
 
-migrationBuilder.DropTable(
-                name: "users");
+            migrationBuilder.DropTable(
+                            name: "users");
 
-migrationBuilder.DropColumn(name: "user_id", table: "conversations");
+            migrationBuilder.DropColumn(name: "user_id", table: "conversations");
 
-migrationBuilder.AddColumn<string>(
-                name: "user_id",
-                table: "conversations",
-                type: "text",
-                nullable: true);
+            migrationBuilder.AddColumn<string>(
+                            name: "user_id",
+                            table: "conversations",
+                            type: "text",
+                            nullable: true);
 
-migrationBuilder.CreateIndex(
-                name: "ix_conversations_user_id",
-                table: "conversations",
-                column: "user_id");
+            migrationBuilder.CreateIndex(
+                            name: "ix_conversations_user_id",
+                            table: "conversations",
+                            column: "user_id");
         }
     }
 }

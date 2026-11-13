@@ -6,5 +6,5 @@ public interface IAccessTokenService
 {
     AccessToken Create(UserView user);
 
-TimeSpan RefreshTokenLifetime { get; }
+    TimeSpan RefreshTokenLifetime { get; }
 }

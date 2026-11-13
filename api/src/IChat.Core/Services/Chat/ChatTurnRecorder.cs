@@ -12,12 +12,12 @@ public sealed class ChatTurnRecorder(
     ILogger<ChatTurnRecorder> logger)
 {
 
-public async Task RecordQuestionAsync(
-        Conversation conversation,
-        string content,
-        string rewrittenQuery,
-        long retrievalMs,
-        CancellationToken cancellationToken)
+    public async Task RecordQuestionAsync(
+            Conversation conversation,
+            string content,
+            string rewrittenQuery,
+            long retrievalMs,
+            CancellationToken cancellationToken)
     {
         dbContext.Messages.Add(Message.CreateUser(
             conversation.Id,
@@ -26,7 +26,7 @@ public async Task RecordQuestionAsync(
             (int)retrievalMs,
             timeProvider.GetUtcNow()));
 
-if (ConversationTitle.IsDefault(conversation.Title))
+        if (ConversationTitle.IsDefault(conversation.Title))
         {
             conversation.Rename(ConversationTitle.FromQuestion(content), timeProvider.GetUtcNow());
         }
@@ -35,15 +35,15 @@ if (ConversationTitle.IsDefault(conversation.Title))
             conversation.Touch(timeProvider.GetUtcNow());
         }
 
-await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-public async Task<DonePayload> RecordAnswerAsync(
-        Conversation conversation,
-        GeneratedAnswer answer,
-        AssembledContext assembled,
-        GenerationMetadata metadata,
-        CancellationToken cancellationToken)
+    public async Task<DonePayload> RecordAnswerAsync(
+            Conversation conversation,
+            GeneratedAnswer answer,
+            AssembledContext assembled,
+            GenerationMetadata metadata,
+            CancellationToken cancellationToken)
     {
         var assistantMessage = Message.CreateAssistant(
             conversation.Id,
@@ -56,14 +56,14 @@ public async Task<DonePayload> RecordAnswerAsync(
             (int)metadata.RetrievalMs,
             timeProvider.GetUtcNow());
 
-dbContext.Messages.Add(assistantMessage);
+        dbContext.Messages.Add(assistantMessage);
 
-var citations = RecordCitations(assistantMessage, answer.Text, assembled);
+        var citations = RecordCitations(assistantMessage, answer.Text, assembled);
 
-conversation.Touch(timeProvider.GetUtcNow());
+        conversation.Touch(timeProvider.GetUtcNow());
         await dbContext.SaveChangesAsync(cancellationToken);
 
-return new DonePayload
+        return new DonePayload
         {
             MessageId = assistantMessage.Id,
             Citations = citations,
@@ -78,11 +78,11 @@ return new DonePayload
         };
     }
 
-private List<CitationPayload> RecordCitations(Message assistantMessage, string answerText, AssembledContext assembled)
+    private List<CitationPayload> RecordCitations(Message assistantMessage, string answerText, AssembledContext assembled)
     {
         var extracted = CitationExtractor.Extract(answerText, assembled.Sources.Count, out var invalidMarkers);
 
-if (invalidMarkers.Count > 0)
+        if (invalidMarkers.Count > 0)
         {
             logger.LogWarning(
                 "The answer for message {MessageId} contains out-of-range markers: {Markers}. This signals a problem with the prompt.",
@@ -90,18 +90,18 @@ if (invalidMarkers.Count > 0)
                 string.Join(", ", invalidMarkers));
         }
 
-var citations = new List<CitationPayload>();
+        var citations = new List<CitationPayload>();
 
-foreach (var citation in extracted)
+        foreach (var citation in extracted)
         {
             var source = assembled.Sources[citation.SourceOrdinal];
 
-var chunkId = source.CitationChunkId;
+            var chunkId = source.CitationChunkId;
 
-dbContext.MessageCitations.Add(
-                MessageCitation.Create(assistantMessage.Id, chunkId, citation.MarkerIndex, source.Score));
+            dbContext.MessageCitations.Add(
+                            MessageCitation.Create(assistantMessage.Id, chunkId, citation.MarkerIndex, source.Score));
 
-citations.Add(new CitationPayload
+            citations.Add(new CitationPayload
             {
                 MarkerIndex = citation.MarkerIndex,
                 ChunkId = chunkId,
@@ -112,6 +112,6 @@ citations.Add(new CitationPayload
             });
         }
 
-return citations;
+        return citations;
     }
 }

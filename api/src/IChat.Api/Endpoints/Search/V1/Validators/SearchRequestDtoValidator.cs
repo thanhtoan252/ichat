@@ -12,15 +12,15 @@ public sealed class SearchRequestDtoValidator : AbstractValidator<SearchRequestD
             .MaximumLength(4000)
             .WithName("query");
 
-RuleFor(dto => dto.TopK)
-            .InclusiveBetween(1, 100)
-            .WithName("topK")
-            .When(dto => dto.TopK is not null);
+        RuleFor(dto => dto.TopK)
+                    .InclusiveBetween(1, 100)
+                    .WithName("topK")
+                    .When(dto => dto.TopK is not null);
 
-RuleForEach(dto => dto.History).ChildRules(turn =>
-        {
-            turn.RuleFor(item => item.Role).NotEmpty();
-            turn.RuleFor(item => item.Content).NotEmpty();
-        });
+        RuleForEach(dto => dto.History).ChildRules(turn =>
+                {
+                    turn.RuleFor(item => item.Role).NotEmpty();
+                    turn.RuleFor(item => item.Content).NotEmpty();
+                });
     }
 }
