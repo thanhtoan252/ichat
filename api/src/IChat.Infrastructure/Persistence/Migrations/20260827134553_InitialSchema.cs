@@ -7,29 +7,25 @@ using Pgvector;
 
 namespace IChat.Infrastructure.Persistence.Migrations
 {
-    /// <inheritdoc />
-    public partial class InitialSchema : Migration
+
+public partial class InitialSchema : Migration
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
+
+protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
                 .Annotation("Npgsql:PostgresExtension:pg_trgm", ",,")
                 .Annotation("Npgsql:PostgresExtension:unaccent", ",,")
                 .Annotation("Npgsql:PostgresExtension:vector", ",,");
 
-            // The built-in unaccent() is only STABLE, while a generated column requires an IMMUTABLE expression.
-            // Without this wrapper the CREATE TABLE below fails with
-            // "generation expression is not immutable". The dictionary is named explicitly
-            // ('public.unaccent') so the function does not depend on search_path.
-            migrationBuilder.Sql("""
+migrationBuilder.Sql("""
                 CREATE OR REPLACE FUNCTION immutable_unaccent(text)
                 RETURNS text
                 LANGUAGE sql IMMUTABLE PARALLEL SAFE STRICT
                 AS $$ SELECT public.unaccent('public.unaccent', $1) $$;
                 """);
 
-            migrationBuilder.CreateTable(
+migrationBuilder.CreateTable(
                 name: "conversations",
                 columns: table => new
                 {
@@ -44,7 +40,7 @@ namespace IChat.Infrastructure.Persistence.Migrations
                     table.PrimaryKey("pk_conversations", x => x.id);
                 });
 
-            migrationBuilder.CreateTable(
+migrationBuilder.CreateTable(
                 name: "documents",
                 columns: table => new
                 {
@@ -65,7 +61,7 @@ namespace IChat.Infrastructure.Persistence.Migrations
                     table.PrimaryKey("pk_documents", x => x.id);
                 });
 
-            migrationBuilder.CreateTable(
+migrationBuilder.CreateTable(
                 name: "messages",
                 columns: table => new
                 {
@@ -93,7 +89,7 @@ namespace IChat.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
+migrationBuilder.CreateTable(
                 name: "document_chunks",
                 columns: table => new
                 {
@@ -122,7 +118,7 @@ namespace IChat.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateTable(
+migrationBuilder.CreateTable(
                 name: "message_citations",
                 columns: table => new
                 {
@@ -148,24 +144,24 @@ namespace IChat.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_conversations_updated_at",
                 table: "conversations",
                 column: "updated_at");
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_conversations_user_id",
                 table: "conversations",
                 column: "user_id");
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_chunks_content_trgm",
                 table: "document_chunks",
                 column: "content")
                 .Annotation("Npgsql:IndexMethod", "gin")
                 .Annotation("Npgsql:IndexOperators", new[] { "gin_trgm_ops" });
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_chunks_embedding_hnsw",
                 table: "document_chunks",
                 column: "embedding")
@@ -174,62 +170,61 @@ namespace IChat.Infrastructure.Persistence.Migrations
                 .Annotation("Npgsql:StorageParameter:ef_construction", 64)
                 .Annotation("Npgsql:StorageParameter:m", 16);
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_chunks_tsv",
                 table: "document_chunks",
                 column: "content_tsv")
                 .Annotation("Npgsql:IndexMethod", "gin");
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_document_chunks_document_id_chunk_index",
                 table: "document_chunks",
                 columns: new[] { "document_id", "chunk_index" },
                 unique: true);
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_document_chunks_embedding_model",
                 table: "document_chunks",
                 column: "embedding_model");
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_documents_created_at",
                 table: "documents",
                 column: "created_at");
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_documents_status",
                 table: "documents",
                 column: "status");
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_message_citations_chunk_id",
                 table: "message_citations",
                 column: "chunk_id");
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_messages_conversation_id_created_at",
                 table: "messages",
                 columns: new[] { "conversation_id", "created_at" });
         }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
+protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql("DROP FUNCTION IF EXISTS immutable_unaccent(text);");
 
-            migrationBuilder.DropTable(
+migrationBuilder.DropTable(
                 name: "message_citations");
 
-            migrationBuilder.DropTable(
+migrationBuilder.DropTable(
                 name: "document_chunks");
 
-            migrationBuilder.DropTable(
+migrationBuilder.DropTable(
                 name: "messages");
 
-            migrationBuilder.DropTable(
+migrationBuilder.DropTable(
                 name: "documents");
 
-            migrationBuilder.DropTable(
+migrationBuilder.DropTable(
                 name: "conversations");
         }
     }

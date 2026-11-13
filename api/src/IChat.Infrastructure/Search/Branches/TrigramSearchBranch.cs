@@ -8,15 +8,14 @@ public sealed class TrigramSearchBranch(IChunkSearch chunkSearch, IOptions<RagOp
 {
     private readonly RetrievalOptions _retrieval = ragOptions.Value.Retrieval;
 
-    public string StageName => RetrievalStageName.Trigram;
+public string StageName => RetrievalStageName.Trigram;
 
-    // TrigramCandidates = 0 means the third branch is off.
-    public bool IsEnabledFor(SearchMode mode)
+public bool IsEnabledFor(SearchMode mode)
     {
         return (mode is SearchMode.Hybrid or SearchMode.Trigram) && _retrieval.TrigramCandidates > 0;
     }
 
-    public Task<SearchBranchResult> SearchAsync(string query, CancellationToken cancellationToken)
+public Task<SearchBranchResult> SearchAsync(string query, CancellationToken cancellationToken)
     {
         return chunkSearch.SearchTrigramAsync(query, _retrieval.TrigramCandidates, cancellationToken);
     }

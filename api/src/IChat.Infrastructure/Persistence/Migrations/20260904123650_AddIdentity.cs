@@ -5,42 +5,32 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace IChat.Infrastructure.Persistence.Migrations
 {
-    /// <inheritdoc />
-    public partial class AddIdentity : Migration
+
+public partial class AddIdentity : Migration
     {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
+
+protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // conversations.user_id used to be a free-form string sent by the client — there is no way to map it
-            // onto a real account. The application has not shipped and this is a showcase project, so old
-            // conversations are deleted rather than guessed an owner for.
-            // messages and message_citations follow through the cascade that already exists.
-            migrationBuilder.Sql("DELETE FROM conversations;");
 
-            // Drop and add rather than ALTER TYPE: PostgreSQL has no implicit cast from text to uuid, so
-            // ALTER COLUMN would fail even on an empty table.
-            migrationBuilder.DropColumn(name: "user_id", table: "conversations");
+migrationBuilder.Sql("DELETE FROM conversations;");
 
-            migrationBuilder.AddColumn<Guid>(
+migrationBuilder.DropColumn(name: "user_id", table: "conversations");
+
+migrationBuilder.AddColumn<Guid>(
                 name: "user_id",
                 table: "conversations",
                 type: "uuid",
                 nullable: false,
                 defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
 
-            // The all-zeros default is only what AddColumn needs in order to add a NOT NULL column to an already
-            // empty table. Keeping it would let a raw INSERT that forgets user_id silently receive a junk id, so
-            // it is dropped: from here on every row has to state its owner.
-            migrationBuilder.Sql("ALTER TABLE conversations ALTER COLUMN user_id DROP DEFAULT;");
+migrationBuilder.Sql("ALTER TABLE conversations ALTER COLUMN user_id DROP DEFAULT;");
 
-            // Rebuild the index that DropColumn just took with it: every listing of a user's conversations
-            // goes through it.
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_conversations_user_id",
                 table: "conversations",
                 column: "user_id");
 
-            migrationBuilder.CreateTable(
+migrationBuilder.CreateTable(
                 name: "users",
                 columns: table => new
                 {
@@ -58,7 +48,7 @@ namespace IChat.Infrastructure.Persistence.Migrations
                     table.PrimaryKey("pk_users", x => x.id);
                 });
 
-            migrationBuilder.CreateTable(
+migrationBuilder.CreateTable(
                 name: "refresh_tokens",
                 columns: table => new
                 {
@@ -81,24 +71,24 @@ namespace IChat.Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_refresh_tokens_token_hash",
                 table: "refresh_tokens",
                 column: "token_hash",
                 unique: true);
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_refresh_tokens_user_id_expires_at",
                 table: "refresh_tokens",
                 columns: new[] { "user_id", "expires_at" });
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_users_user_name",
                 table: "users",
                 column: "user_name",
                 unique: true);
 
-            migrationBuilder.AddForeignKey(
+migrationBuilder.AddForeignKey(
                 name: "fk_conversations_users_user_id",
                 table: "conversations",
                 column: "user_id",
@@ -107,28 +97,27 @@ namespace IChat.Infrastructure.Persistence.Migrations
                 onDelete: ReferentialAction.Cascade);
         }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
+protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropForeignKey(
                 name: "fk_conversations_users_user_id",
                 table: "conversations");
 
-            migrationBuilder.DropTable(
+migrationBuilder.DropTable(
                 name: "refresh_tokens");
 
-            migrationBuilder.DropTable(
+migrationBuilder.DropTable(
                 name: "users");
 
-            migrationBuilder.DropColumn(name: "user_id", table: "conversations");
+migrationBuilder.DropColumn(name: "user_id", table: "conversations");
 
-            migrationBuilder.AddColumn<string>(
+migrationBuilder.AddColumn<string>(
                 name: "user_id",
                 table: "conversations",
                 type: "text",
                 nullable: true);
 
-            migrationBuilder.CreateIndex(
+migrationBuilder.CreateIndex(
                 name: "ix_conversations_user_id",
                 table: "conversations",
                 column: "user_id");

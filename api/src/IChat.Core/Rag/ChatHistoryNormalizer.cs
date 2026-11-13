@@ -2,47 +2,43 @@ namespace IChat.Core.Rag;
 
 using Microsoft.Extensions.AI;
 
-/// <summary>
-/// a user message, and merges consecutive messages with the same role.
-/// </summary>
 public static class ChatHistoryNormalizer
 {
     public static IReadOnlyList<ChatMessage> Normalize(IReadOnlyList<ChatMessage> history)
     {
         ArgumentNullException.ThrowIfNull(history);
 
-        var cleaned = new List<ChatMessage>(history.Count);
+var cleaned = new List<ChatMessage>(history.Count);
 
-        foreach (var message in history)
+foreach (var message in history)
         {
             if (message.Role == ChatRole.System)
             {
                 continue;
             }
 
-            var text = message.Text;
+var text = message.Text;
             if (string.IsNullOrWhiteSpace(text))
             {
                 continue;
             }
 
-            var role = message.Role == ChatRole.Assistant ? ChatRole.Assistant : ChatRole.User;
+var role = message.Role == ChatRole.Assistant ? ChatRole.Assistant : ChatRole.User;
 
-            if (cleaned.Count > 0 && cleaned[^1].Role == role)
+if (cleaned.Count > 0 && cleaned[^1].Role == role)
             {
                 cleaned[^1] = new ChatMessage(role, $"{cleaned[^1].Text}\n\n{text.Trim()}");
                 continue;
             }
 
-            cleaned.Add(new ChatMessage(role, text.Trim()));
+cleaned.Add(new ChatMessage(role, text.Trim()));
         }
 
-        // History must not open with an assistant message.
-        while (cleaned.Count > 0 && cleaned[0].Role == ChatRole.Assistant)
+while (cleaned.Count > 0 && cleaned[0].Role == ChatRole.Assistant)
         {
             cleaned.RemoveAt(0);
         }
 
-        return cleaned;
+return cleaned;
     }
 }

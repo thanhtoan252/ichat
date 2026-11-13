@@ -11,7 +11,7 @@ public static class ConversationMapper
             Title = dto.Title
         };
 
-    public static SendMessageRequest ToServiceRequest(this SendMessageDto dto, Guid conversationId) =>
+public static SendMessageRequest ToServiceRequest(this SendMessageDto dto, Guid conversationId) =>
         new()
         {
             ConversationId = conversationId,
@@ -19,7 +19,7 @@ public static class ConversationMapper
             Model = dto.Model
         };
 
-    public static ConversationResponse ToResponse(this ConversationView view) =>
+public static ConversationResponse ToResponse(this ConversationView view) =>
         new()
         {
             Id = view.Id,
@@ -29,7 +29,7 @@ public static class ConversationMapper
             UpdatedAt = view.UpdatedAt
         };
 
-    public static MessageResponse ToResponse(this MessageView view) =>
+public static MessageResponse ToResponse(this MessageView view) =>
         new()
         {
             Id = view.Id,
@@ -46,7 +46,7 @@ public static class ConversationMapper
             Citations = view.Citations.Select(ToResponse).ToArray()
         };
 
-    private static CitationResponse ToResponse(this CitationView view) =>
+private static CitationResponse ToResponse(this CitationView view) =>
         new()
         {
             ChunkId = view.ChunkId,

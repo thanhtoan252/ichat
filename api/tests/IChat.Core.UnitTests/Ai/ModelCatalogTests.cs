@@ -9,73 +9,60 @@ using NUnit.Framework;
 [TestFixture]
 public sealed class ModelCatalogTests
 {
-    // The reasoning-family models only accept their default temperature and answer with HTTP 400 for any other
-    // value. Leaving Temperature unconfigured has to mean "do not send this parameter", not falling back to
-    // some guessed value.
-    [Test]
+
+[Test]
     public void ChatTemperature_IsNull_WhenNotConfigured()
     {
-        // Arrange
-        var catalog = CatalogFor(new ChatModelOptions { Model = "gpt-5.6-luna" });
 
-        // Act
-        var temperature = catalog.ChatTemperature;
+var catalog = CatalogFor(new ChatModelOptions { Model = "gpt-5.6-luna" });
 
-        // Assert
-        temperature.Should().BeNull();
+var temperature = catalog.ChatTemperature;
+
+temperature.Should().BeNull();
     }
 
-    [Test]
+[Test]
     public void ChatTemperature_IsTheConfiguredValue_WhenConfigured()
     {
-        // Arrange
-        var catalog = CatalogFor(new ChatModelOptions { Model = "gpt-4o-mini", Temperature = 0.2 });
 
-        // Act
-        var temperature = catalog.ChatTemperature;
+var catalog = CatalogFor(new ChatModelOptions { Model = "gpt-4o-mini", Temperature = 0.2 });
 
-        // Assert
-        temperature.Should().Be(0.2);
+var temperature = catalog.ChatTemperature;
+
+temperature.Should().Be(0.2);
     }
 
-    // docker-compose passes every `Ai__*` variable into the container even when it is not set: the value arrives
-    // An empty string has to bind to null, otherwise the "do not send a temperature" escape hatch is unusable
-    // through docker-compose.
-    [TestCase("")]
+[TestCase("")]
     [TestCase(null)]
     public void Temperature_BindsToNull_WhenTheEnvironmentVariableIsEmpty(string? configured)
     {
-        // Arrange
-        var configuration = ConfigurationFor(model: "gpt-5.6-luna", temperature: configured);
+
+var configuration = ConfigurationFor(model: "gpt-5.6-luna", temperature: configured);
         var options = new AiOptions();
 
-        // Act
-        configuration.GetSection("Ai").Bind(options);
+configuration.GetSection("Ai").Bind(options);
 
-        // Assert
-        options.Chat.Temperature.Should().BeNull();
+options.Chat.Temperature.Should().BeNull();
     }
 
-    [Test]
+[Test]
     public void Temperature_Binds_WhenTheEnvironmentVariableHasAValue()
     {
-        // Arrange
-        var configuration = ConfigurationFor(model: "gpt-4o-mini", temperature: "0.2");
+
+var configuration = ConfigurationFor(model: "gpt-4o-mini", temperature: "0.2");
         var options = new AiOptions();
 
-        // Act
-        configuration.GetSection("Ai").Bind(options);
+configuration.GetSection("Ai").Bind(options);
 
-        // Assert
-        options.Chat.Temperature.Should().Be(0.2);
+options.Chat.Temperature.Should().Be(0.2);
     }
 
-    private static ModelCatalog CatalogFor(ChatModelOptions chat)
+private static ModelCatalog CatalogFor(ChatModelOptions chat)
     {
         return new ModelCatalog(Options.Create(new AiOptions { Chat = chat }));
     }
 
-    private static IConfiguration ConfigurationFor(string model, string? temperature)
+private static IConfiguration ConfigurationFor(string model, string? temperature)
     {
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>

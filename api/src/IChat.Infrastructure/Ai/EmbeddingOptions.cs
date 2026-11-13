@@ -7,21 +7,20 @@ public sealed class EmbeddingOptions
     [Required(AllowEmptyStrings = false)]
     public string Model { get; set; } = string.Empty;
 
-    [Range(1, 8192)]
+[Range(1, 8192)]
     public int Dimensions { get; set; } = 1536;
 
-    [Range(1, 2048)]
+[Range(1, 2048)]
     public int BatchSize { get; set; } = 64;
 
-    [Range(1, 600)]
+[Range(1, 600)]
     public int TimeoutSeconds { get; set; } = 60;
 
-    public string? ApiKey { get; set; }
+public string? ApiKey { get; set; }
 
-    public string Qualified => $"openai:{Model}";
+public string Qualified => $"openai:{Model}";
 
-    /// <summary>A safety net, like ResolvedChatSettings.RequireApiKey.</summary>
-    public string RequireApiKey()
+public string RequireApiKey()
     {
         if (string.IsNullOrWhiteSpace(ApiKey))
         {
@@ -30,6 +29,6 @@ public sealed class EmbeddingOptions
                 "as an environment variable, in user secrets, or in a secret store.");
         }
 
-        return ApiKey;
+return ApiKey;
     }
 }

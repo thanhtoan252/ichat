@@ -6,17 +6,13 @@ using IChat.Core.Domain.Conversations;
 using IChat.Core.Rag;
 using Microsoft.Extensions.Logging;
 
-/// <summary>
-/// Writes one chat turn to the database: the question before streaming starts, the answer and its
-/// citations once streaming is done.
-/// </summary>
 public sealed class ChatTurnRecorder(
     IApplicationDbContext dbContext,
     TimeProvider timeProvider,
     ILogger<ChatTurnRecorder> logger)
 {
-    /// <summary>Saved BEFORE streaming, together with rewritten_query and retrieval_ms.</summary>
-    public async Task RecordQuestionAsync(
+
+public async Task RecordQuestionAsync(
         Conversation conversation,
         string content,
         string rewrittenQuery,
@@ -30,9 +26,7 @@ public sealed class ChatTurnRecorder(
             (int)retrievalMs,
             timeProvider.GetUtcNow()));
 
-        // A conversation created from the "New chat" button has no name yet; the first question names it,
-        // otherwise the conversation list would be nothing but "New conversation".
-        if (ConversationTitle.IsDefault(conversation.Title))
+if (ConversationTitle.IsDefault(conversation.Title))
         {
             conversation.Rename(ConversationTitle.FromQuestion(content), timeProvider.GetUtcNow());
         }
@@ -41,10 +35,10 @@ public sealed class ChatTurnRecorder(
             conversation.Touch(timeProvider.GetUtcNow());
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<DonePayload> RecordAnswerAsync(
+public async Task<DonePayload> RecordAnswerAsync(
         Conversation conversation,
         GeneratedAnswer answer,
         AssembledContext assembled,
@@ -62,14 +56,14 @@ public sealed class ChatTurnRecorder(
             (int)metadata.RetrievalMs,
             timeProvider.GetUtcNow());
 
-        dbContext.Messages.Add(assistantMessage);
+dbContext.Messages.Add(assistantMessage);
 
-        var citations = RecordCitations(assistantMessage, answer.Text, assembled);
+var citations = RecordCitations(assistantMessage, answer.Text, assembled);
 
-        conversation.Touch(timeProvider.GetUtcNow());
+conversation.Touch(timeProvider.GetUtcNow());
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new DonePayload
+return new DonePayload
         {
             MessageId = assistantMessage.Id,
             Citations = citations,
@@ -84,15 +78,11 @@ public sealed class ChatTurnRecorder(
         };
     }
 
-    /// <summary>
-    /// The markers a model produces cannot be trusted: a citation is only recorded for a marker that falls
-    /// inside the context range. This step still runs over whatever text exists, even after an interruption.
-    /// </summary>
-    private List<CitationPayload> RecordCitations(Message assistantMessage, string answerText, AssembledContext assembled)
+private List<CitationPayload> RecordCitations(Message assistantMessage, string answerText, AssembledContext assembled)
     {
         var extracted = CitationExtractor.Extract(answerText, assembled.Sources.Count, out var invalidMarkers);
 
-        if (invalidMarkers.Count > 0)
+if (invalidMarkers.Count > 0)
         {
             logger.LogWarning(
                 "The answer for message {MessageId} contains out-of-range markers: {Markers}. This signals a problem with the prompt.",
@@ -100,37 +90,28 @@ public sealed class ChatTurnRecorder(
                 string.Join(", ", invalidMarkers));
         }
 
-        var citations = new List<CitationPayload>();
-        var seenChunks = new HashSet<Guid>();
+var citations = new List<CitationPayload>();
 
-        foreach (var citation in extracted)
+foreach (var citation in extracted)
         {
             var source = assembled.Sources[citation.SourceOrdinal];
 
-            // One context block can merge several original chunks; a citation points at the original chunk,
-            // while neighbouring chunks only enrich the context and never become a citation of their own.
-            foreach (var chunkId in source.AnchorChunkIds)
+var chunkId = source.CitationChunkId;
+
+dbContext.MessageCitations.Add(
+                MessageCitation.Create(assistantMessage.Id, chunkId, citation.MarkerIndex, source.Score));
+
+citations.Add(new CitationPayload
             {
-                if (!seenChunks.Add(chunkId))
-                {
-                    continue;
-                }
-
-                dbContext.MessageCitations.Add(
-                    MessageCitation.Create(assistantMessage.Id, chunkId, citation.MarkerIndex, source.Score));
-
-                citations.Add(new CitationPayload
-                {
-                    MarkerIndex = citation.MarkerIndex,
-                    ChunkId = chunkId,
-                    DocumentId = source.DocumentId,
-                    DocumentTitle = source.DocumentTitle,
-                    HeadingPath = source.HeadingPath,
-                    Score = source.Score
-                });
-            }
+                MarkerIndex = citation.MarkerIndex,
+                ChunkId = chunkId,
+                DocumentId = source.DocumentId,
+                DocumentTitle = source.DocumentTitle,
+                HeadingPath = source.HeadingPath,
+                Score = source.Score
+            });
         }
 
-        return citations;
+return citations;
     }
 }
